@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>GazCRM – Propozycje Maskotki</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: linear-gradient(135deg, #e8f5e9 0%, #e3f2fd 100%);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    padding: 40px 20px 60px;
+  }
+  h1 {
+    text-align: center;
+    color: #1a237e;
+    font-size: 2rem;
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+  }
+  .subtitle {
+    text-align: center;
+    color: #546e7a;
+    font-size: 0.95rem;
+    margin-bottom: 40px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 32px;
+    max-width: 860px;
+    margin: 0 auto;
+  }
+  .card {
+    background: white;
+    border-radius: 24px;
+    padding: 32px 24px 24px;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0,0,50,0.10);
+    transition: transform 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .card:hover { transform: translateY(-4px); }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 6px;
+    border-radius: 24px 24px 0 0;
+  }
+  .card.blue::before   { background: linear-gradient(90deg, #1565C0, #42A5F5); }
+  .card.brown::before  { background: linear-gradient(90deg, #4E342E, #A1887F); }
+  .card.green::before  { background: linear-gradient(90deg, #1B5E20, #66BB6A); }
+  .card.orange::before { background: linear-gradient(90deg, #E65100, #FFA726); }
+  .card svg { width: 200px; height: 240px; }
+  .card h2 { margin: 12px 0 6px; font-size: 1.25rem; color: #1a237e; }
+  .card p  { color: #607d8b; font-size: 0.875rem; line-height: 1.5; }
+  .tag {
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+  .tag.blue   { background:#E3F2FD; color:#1565C0; }
+  .tag.brown  { background:#EFEBE9; color:#4E342E; }
+  .tag.green  { background:#E8F5E9; color:#2E7D32; }
+  .tag.orange { background:#FFF3E0; color:#E65100; }
+  .footer { text-align:center; margin-top:40px; color:#90a4ae; font-size:0.8rem; }
+</style>
+</head>
+<body>
+
+<h1>🔥 GazCRM — Propozycje Maskotki Asystenta</h1>
+<p class="subtitle">Wybierz postać, która będzie towarzyszyć Ci w systemie GazCRM</p>
+
+<div class="grid">
+
+  <!-- ══════════════════════════════════════════
+       POSTAĆ 1: GAZEK — Niebieski Płomień-Monter
+  ══════════════════════════════════════════ -->
+  <div class="card blue">
+    <div class="tag blue">Propozycja 1</div>
+    <svg viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="bodyBlue" cx="45%" cy="40%" r="60%">
+          <stop offset="0%" stop-color="#64B5F6"/>
+          <stop offset="100%" stop-color="#1565C0"/>
+        </radialGradient>
+        <radialGradient id="flameBlue" cx="50%" cy="30%" r="60%">
+          <stop offset="0%" stop-color="#90CAF9"/>
+          <stop offset="100%" stop-color="#1976D2"/>
+        </radialGradient>
+        <filter id="shadow1" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="2" dy="4" stdDeviation="6" flood-opacity="0.2"/>
+        </filter>
+      </defs>
+
+      <!-- Shadow -->
+      <ellipse cx="100" cy="228" rx="52" ry="10" fill="rgba(0,0,0,0.12)"/>
+
+      <!-- LEGS -->
+      <rect x="72" y="188" width="22" height="34" rx="11" fill="#1565C0"/>
+      <rect x="106" y="188" width="22" height="34" rx="11" fill="#1565C0"/>
+      <!-- Shoes -->
+      <ellipse cx="83" cy="220" rx="14" ry="8" fill="#0D47A1"/>
+      <ellipse cx="117" cy="220" rx="14" ry="8" fill="#0D47A1"/>
+
+      <!-- TOOL BELT -->
+      <rect x="58" y="160" width="84" height="16" rx="8" fill="#795548"/>
+      <rect x="93" y="158" width="14" height="20" rx="4" fill="#9E9E9E"/>
+      <rect x="95" y="160" width="10" height="16" rx="3" fill="#BDBDBD"/>
+      <!-- Belt pouches -->
+      <rect x="62" y="162" width="18" height="12" rx="4" fill="#6D4C41"/>
+      <rect x="120" y="162" width="18" height="12" rx="4" fill="#6D4C41"/>
+
+      <!-- BODY (rounded blob) -->
+      <ellipse cx="100" cy="130" rx="54" ry="58" fill="url(#bodyBlue)" filter="url(#shadow1)"/>
+
+      <!-- FLAME HAIR -->
+      <path d="M100 30 C90 45 78 38 82 55 C74 42 65 48 70 62 C62 50 56 58 62 72
+               C72 58 75 65 78 72 C82 55 88 58 92 72
+               C94 55 100 48 100 72
+               C106 48 112 55 108 72
+               C112 58 118 65 122 72
+               C125 58 128 55 138 72
+               C138 62 144 50 134 72
+               C140 58 135 42 126 62
+               C130 45 118 42 120 55
+               C124 38 110 45 100 30Z"
+            fill="url(#flameBlue)" opacity="0.9"/>
+
+      <!-- HARD HAT -->
+      <ellipse cx="100" cy="78" rx="46" ry="12" fill="#ECEFF1"/>
+      <path d="M58 78 Q60 50 100 46 Q140 50 142 78Z" fill="#F5F5F5"/>
+      <path d="M60 78 Q62 52 100 48 Q138 52 140 78Z" fill="white"/>
+      <!-- Hat brim shadow -->
+      <ellipse cx="100" cy="78" rx="46" ry="8" fill="rgba(0,0,0,0.05)"/>
+      <!-- Flame logo on hat -->
+      <path d="M100 56 C97 60 94 58 95 62 C93 59 90 61 92 64
+               C94 61 95 62.5 96 64 C97 61 99 62 100 64
+               C101 62 103 61 104 64 C105 62.5 106 61 108 64
+               C110 61 107 59 105 62 C106 58 103 60 100 56Z"
+            fill="#2196F3"/>
+
+      <!-- EYES -->
+      <ellipse cx="84" cy="120" rx="13" ry="14" fill="white"/>
+      <ellipse cx="116" cy="120" rx="13" ry="14" fill="white"/>
+      <!-- Iris -->
+      <circle cx="84" cy="121" r="9" fill="#1976D2"/>
+      <circle cx="116" cy="121" r="9" fill="#1976D2"/>
+      <!-- Pupil -->
+      <circle cx="84" cy="122" r="5" fill="#0D1117"/>
+      <circle cx="116" cy="122" r="5" fill="#0D1117"/>
+      <!-- Eye shine -->
+      <circle cx="87" cy="118" r="3" fill="white"/>
+      <circle cx="119" cy="118" r="3" fill="white"/>
+
+      <!-- EYEBROWS -->
+      <path d="M74 108 Q84 104 94 108" stroke="#1565C0" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M106 108 Q116 104 126 108" stroke="#1565C0" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+
+      <!-- CHEEKS -->
+      <ellipse cx="70" cy="132" rx="10" ry="7" fill="#90CAF9" opacity="0.5"/>
+      <ellipse cx="130" cy="132" rx="10" ry="7" fill="#90CAF9" opacity="0.5"/>
+
+      <!-- SMILE (open mouth) -->
+      <path d="M82 142 Q100 158 118 142" stroke="#0D1117" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <path d="M85 143 Q100 155 115 143 Q100 162 85 143Z" fill="#E91E63" opacity="0.8"/>
+      <path d="M87 143 Q100 150 113 143" fill="white"/>
+
+      <!-- LEFT ARM (thumbs up) -->
+      <path d="M50 140 Q30 130 28 118 Q26 108 36 106 Q40 98 46 104
+               Q50 96 56 100 Q60 92 66 98 Q68 94 72 96 Q74 92 78 95
+               L76 115 Q64 120 56 140Z"
+            fill="url(#bodyBlue)"/>
+      <!-- Thumb -->
+      <path d="M36 106 Q28 108 26 118 Q28 130 40 126 Q48 122 46 110Z"
+            fill="url(#bodyBlue)"/>
+
+      <!-- RIGHT ARM (wrench) -->
+      <path d="M152 135 Q172 125 175 140 L160 160 Q148 165 144 150Z"
+            fill="url(#bodyBlue)"/>
+      <!-- Wrench tool -->
+      <rect x="160" y="148" width="8" height="28" rx="4" fill="#9E9E9E" transform="rotate(-20 164 162)"/>
+      <ellipse cx="162" cy="150" rx="8" ry="6" fill="#757575" transform="rotate(-20 162 150)"/>
+      <ellipse cx="168" cy="172" rx="6" ry="5" fill="#757575" transform="rotate(-20 168 172)"/>
+    </svg>
+    <h2>Gazek — Monter Gazownik</h2>
+    <p>Niebieski płomień-pracownik w kasku i z pasem narzędziowym. Energiczny, pomocny, gotowy do akcji.</p>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       POSTAĆ 2: BOBO — Bóbr Gazownik
+  ══════════════════════════════════════════ -->
+  <div class="card brown">
+    <div class="tag brown">Propozycja 2</div>
+    <svg viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="bodyBrown" cx="40%" cy="35%" r="65%">
+          <stop offset="0%" stop-color="#A1887F"/>
+          <stop offset="100%" stop-color="#4E342E"/>
+        </radialGradient>
+        <radialGradient id="belly" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#FFCCBC"/>
+          <stop offset="100%" stop-color="#FFAB91"/>
+        </radialGradient>
+        <filter id="shadow2" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="2" dy="4" stdDeviation="6" flood-opacity="0.2"/>
+        </filter>
+      </defs>
+
+      <!-- Shadow -->
+      <ellipse cx="100" cy="232" rx="55" ry="10" fill="rgba(0,0,0,0.12)"/>
+
+      <!-- TAIL (flat beaver tail) -->
+      <ellipse cx="100" cy="210" rx="40" ry="14" fill="#3E2723" transform="rotate(-5 100 210)"/>
+      <path d="M68 205 Q100 222 132 205 Q100 230 68 205Z" fill="#5D4037"/>
+      <!-- Tail texture lines -->
+      <path d="M75 207 Q100 218 125 207" stroke="#3E2723" stroke-width="1.5" fill="none" opacity="0.5"/>
+      <path d="M80 212 Q100 221 120 212" stroke="#3E2723" stroke-width="1.5" fill="none" opacity="0.5"/>
+
+      <!-- LEGS -->
+      <ellipse cx="82" cy="195" rx="14" ry="10" fill="#4E342E"/>
+      <ellipse cx="118" cy="195" rx="14" ry="10" fill="#4E342E"/>
+      <!-- Feet (webbed) -->
+      <path d="M68 196 Q72 208 82 206 Q92 208 86 196Z" fill="#3E2723"/>
+      <path d="M114 196 Q118 208 128 206 Q132 208 132 196Z" fill="#3E2723"/>
+
+      <!-- BODY -->
+      <ellipse cx="100" cy="148" rx="50" ry="52" fill="url(#bodyBrown)" filter="url(#shadow2)"/>
+
+      <!-- BELLY (lighter) -->
+      <ellipse cx="100" cy="155" rx="30" ry="34" fill="url(#belly)" opacity="0.7"/>
+
+      <!-- SAFETY VEST -->
+      <path d="M60 160 L70 140 L100 150 L130 140 L140 160 L130 180 L70 180Z"
+            fill="#43A047" opacity="0.85"/>
+      <path d="M85 140 L100 150 L115 140 L112 170 L88 170Z" fill="#43A047"/>
+      <!-- Vest stripes -->
+      <rect x="62" y="162" width="76" height="6" rx="3" fill="#FFEB3B" opacity="0.9"/>
+      <!-- On Gaz logo on vest -->
+      <circle cx="100" cy="153" r="10" fill="white" opacity="0.9"/>
+      <path d="M100 146 C97 149 94 148 95 151 C93 149 91 150 92 153
+               C94 150.5 95 152 96 153 C97 150.5 99 151 100 153
+               C101 151 103 150.5 104 153 C105 152 106 150.5 108 153
+               C109 150 107 149 105 151 C106 148 103 149 100 146Z"
+            fill="#43A047"/>
+
+      <!-- EARS -->
+      <ellipse cx="62" cy="84" rx="12" ry="16" fill="#4E342E"/>
+      <ellipse cx="62" cy="84" rx="7" ry="10" fill="#795548"/>
+      <ellipse cx="138" cy="84" rx="12" ry="16" fill="#4E342E"/>
+      <ellipse cx="138" cy="84" rx="7" ry="10" fill="#795548"/>
+
+      <!-- HEAD -->
+      <ellipse cx="100" cy="98" rx="46" ry="44" fill="url(#bodyBrown)" filter="url(#shadow2)"/>
+
+      <!-- HARD HAT -->
+      <ellipse cx="100" cy="66" rx="44" ry="11" fill="#FFEB3B"/>
+      <path d="M60 66 Q62 40 100 36 Q138 40 140 66Z" fill="#FDD835"/>
+      <path d="M62 66 Q64 42 100 38 Q136 42 138 66Z" fill="#FFEE58"/>
+      <!-- On Gaz logo on hat -->
+      <circle cx="100" cy="50" r="9" fill="white" opacity="0.85"/>
+      <text x="100" y="54" text-anchor="middle" font-size="8" font-weight="bold" fill="#43A047">OG</text>
+
+      <!-- EYES -->
+      <ellipse cx="84" cy="100" rx="12" ry="13" fill="white"/>
+      <ellipse cx="116" cy="100" rx="12" ry="13" fill="white"/>
+      <circle cx="84" cy="101" r="8" fill="#4E342E"/>
+      <circle cx="116" cy="101" r="8" fill="#4E342E"/>
+      <circle cx="84" cy="102" r="4" fill="#0D1117"/>
+      <circle cx="116" cy="102" r="4" fill="#0D1117"/>
+      <circle cx="87" cy="98" r="2.5" fill="white"/>
+      <circle cx="119" cy="98" r="2.5" fill="white"/>
+
+      <!-- NOSE -->
+      <ellipse cx="100" cy="112" rx="6" ry="4" fill="#0D1117"/>
+      <ellipse cx="100" cy="111" rx="3" ry="2" fill="#3E2723"/>
+
+      <!-- BUCK TEETH -->
+      <path d="M88 120 Q100 130 112 120" stroke="#0D1117" stroke-width="1.5" fill="none"/>
+      <rect x="94" y="120" width="6" height="8" rx="2" fill="white" stroke="#E0E0E0" stroke-width="0.5"/>
+      <rect x="101" y="120" width="6" height="8" rx="2" fill="white" stroke="#E0E0E0" stroke-width="0.5"/>
+
+      <!-- LEFT ARM (blueprint roll) -->
+      <path d="M54 148 Q38 140 35 155 Q33 165 42 168 L58 162Z" fill="url(#bodyBrown)"/>
+      <!-- Blueprint -->
+      <rect x="20" y="148" width="26" height="22" rx="3" fill="#1565C0"/>
+      <rect x="22" y="150" width="22" height="18" rx="2" fill="#E3F2FD"/>
+      <line x1="24" y1="154" x2="42" y2="154" stroke="#1565C0" stroke-width="1.5"/>
+      <line x1="24" y1="158" x2="40" y2="158" stroke="#1565C0" stroke-width="1"/>
+      <line x1="24" y1="162" x2="38" y2="162" stroke="#1565C0" stroke-width="1"/>
+      <path d="M26 164 L34 156 L38 162" stroke="#43A047" stroke-width="1.5" fill="none"/>
+
+      <!-- RIGHT ARM (thumbs up) -->
+      <path d="M150 142 Q168 132 172 145 Q174 158 160 162 L148 158Z" fill="url(#bodyBrown)"/>
+      <path d="M172 134 Q176 126 170 120 Q164 116 158 122 Q154 116 148 120
+               Q144 116 140 119 Q138 116 135 120 L136 140 Q148 145 158 140Z" fill="url(#bodyBrown)"/>
+    </svg>
+    <h2>Bobo — Bóbr Gazownik</h2>
+    <p>Pracowity bóbr w kamizelce On Gaz z katem budowlanym. Symbolizuje solidność i zaangażowanie.</p>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       POSTAĆ 3: SOWA — Ekspert On Gaz
+  ══════════════════════════════════════════ -->
+  <div class="card green">
+    <div class="tag green">Propozycja 3</div>
+    <svg viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="bodyOwl" cx="40%" cy="35%" r="65%">
+          <stop offset="0%" stop-color="#81C784"/>
+          <stop offset="100%" stop-color="#2E7D32"/>
+        </radialGradient>
+        <radialGradient id="bellyOwl" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#F5F5F5"/>
+          <stop offset="100%" stop-color="#E8F5E9"/>
+        </radialGradient>
+        <filter id="shadow3" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="2" dy="4" stdDeviation="6" flood-opacity="0.2"/>
+        </filter>
+      </defs>
+
+      <!-- Shadow -->
+      <ellipse cx="100" cy="232" rx="48" ry="9" fill="rgba(0,0,0,0.12)"/>
+
+      <!-- BODY -->
+      <ellipse cx="100" cy="165" rx="48" ry="55" fill="url(#bodyOwl)" filter="url(#shadow3)"/>
+
+      <!-- BELLY -->
+      <ellipse cx="100" cy="170" rx="30" ry="38" fill="url(#bellyOwl)"/>
+      <!-- Belly feather pattern -->
+      <path d="M80 148 Q100 142 120 148 Q110 156 100 154 Q90 156 80 148Z" fill="rgba(46,125,50,0.15)"/>
+      <path d="M76 158 Q100 150 124 158 Q112 168 100 165 Q88 168 76 158Z" fill="rgba(46,125,50,0.12)"/>
+      <path d="M74 170 Q100 161 126 170 Q114 182 100 178 Q86 182 74 170Z" fill="rgba(46,125,50,0.1)"/>
+
+      <!-- WINGS -->
+      <path d="M52 150 Q30 148 22 165 Q18 178 32 185 Q44 188 54 178Z"
+            fill="#2E7D32" opacity="0.85"/>
+      <path d="M24 165 Q28 175 38 180 Q30 170 24 165Z" fill="#1B5E20"/>
+      <path d="M148 150 Q170 148 178 165 Q182 178 168 185 Q156 188 146 178Z"
+            fill="#2E7D32" opacity="0.85"/>
+      <path d="M176 165 Q172 175 162 180 Q170 170 176 165Z" fill="#1B5E20"/>
+
+      <!-- FEET -->
+      <path d="M82 216 Q72 222 68 228 M82 216 Q80 224 76 230 M82 216 Q86 224 86 230 M82 216 Q90 220 92 226"
+            stroke="#2E7D32" stroke-width="4" stroke-linecap="round" fill="none"/>
+      <path d="M118 216 Q108 222 108 228 M118 216 Q116 224 114 230 M118 216 Q122 224 124 230 M118 216 Q128 220 130 226"
+            stroke="#2E7D32" stroke-width="4" stroke-linecap="round" fill="none"/>
+
+      <!-- SUIT / JACKET -->
+      <path d="M62 160 L68 140 L100 148 L132 140 L138 160 L132 195 L68 195Z"
+            fill="#1B5E20" opacity="0.6"/>
+      <!-- Lapels -->
+      <path d="M68 140 L78 160 L100 148Z" fill="#2E7D32"/>
+      <path d="M132 140 L122 160 L100 148Z" fill="#2E7D32"/>
+      <!-- Tie -->
+      <path d="M96 148 L104 148 L106 180 L100 186 L94 180Z" fill="#C62828"/>
+      <path d="M97 149 L103 149 L104 158 L100 162 L96 158Z" fill="#EF5350"/>
+      <!-- Badge -->
+      <rect x="110" y="162" width="20" height="14" rx="3" fill="white"/>
+      <text x="120" y="173" text-anchor="middle" font-size="6" font-weight="bold" fill="#2E7D32">ON GAZ</text>
+
+      <!-- HEAD -->
+      <ellipse cx="100" cy="100" rx="48" ry="48" fill="url(#bodyOwl)" filter="url(#shadow3)"/>
+
+      <!-- FEATHER TUFTS (ears) -->
+      <path d="M72 62 Q68 48 62 52 Q66 58 65 66Z" fill="#2E7D32"/>
+      <path d="M128 62 Q132 48 138 52 Q134 58 135 66Z" fill="#2E7D32"/>
+
+      <!-- EYE RINGS (big owl eyes) -->
+      <circle cx="82" cy="102" r="20" fill="#1B5E20"/>
+      <circle cx="118" cy="102" r="20" fill="#1B5E20"/>
+      <circle cx="82" cy="102" r="17" fill="white"/>
+      <circle cx="118" cy="102" r="17" fill="white"/>
+      <!-- Iris -->
+      <circle cx="82" cy="103" r="12" fill="#F9A825"/>
+      <circle cx="118" cy="103" r="12" fill="#F9A825"/>
+      <!-- Pupil -->
+      <circle cx="82" cy="104" r="7" fill="#0D1117"/>
+      <circle cx="118" cy="104" r="7" fill="#0D1117"/>
+      <!-- Shine -->
+      <circle cx="85" cy="100" r="3.5" fill="white"/>
+      <circle cx="121" cy="100" r="3.5" fill="white"/>
+
+      <!-- GLASSES -->
+      <circle cx="82" cy="102" r="20" fill="none" stroke="#795548" stroke-width="2.5"/>
+      <circle cx="118" cy="102" r="20" fill="none" stroke="#795548" stroke-width="2.5"/>
+      <line x1="102" y1="102" x2="98" y2="102" stroke="#795548" stroke-width="2.5"/>
+      <line x1="62" y1="96" x2="46" y2="92" stroke="#795548" stroke-width="2.5"/>
+      <line x1="138" y1="96" x2="154" y2="92" stroke="#795548" stroke-width="2.5"/>
+
+      <!-- BEAK -->
+      <path d="M92 116 Q100 126 108 116 L100 130Z" fill="#F57F17"/>
+
+      <!-- CLIPBOARD in wing -->
+      <rect x="154" y="148" width="28" height="36" rx="4" fill="#ECEFF1"/>
+      <rect x="156" y="152" width="24" height="28" fill="white"/>
+      <rect x="163" y="145" width="10" height="8" rx="3" fill="#9E9E9E"/>
+      <line x1="158" y1="157" x2="178" y2="157" stroke="#90A4AE" stroke-width="1.5"/>
+      <line x1="158" y1="161" x2="175" y2="161" stroke="#90A4AE" stroke-width="1.5"/>
+      <line x1="158" y1="165" x2="176" y2="165" stroke="#90A4AE" stroke-width="1.5"/>
+      <line x1="158" y1="169" x2="172" y2="169" stroke="#90A4AE" stroke-width="1.5"/>
+      <path d="M159 173 L163 177 L172 170" stroke="#43A047" stroke-width="2" fill="none" stroke-linecap="round"/>
+    </svg>
+    <h2>Mądra Sowa — Ekspert On Gaz</h2>
+    <p>Elegancka sowa w marynarce z okularami i notatnikiem. Uosabia wiedzę, profesjonalizm i precyzję.</p>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       POSTAĆ 4: RUDY — Lis Technik
+  ══════════════════════════════════════════ -->
+  <div class="card orange">
+    <div class="tag orange">Propozycja 4</div>
+    <svg viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="bodyFox" cx="40%" cy="35%" r="65%">
+          <stop offset="0%" stop-color="#FF8A65"/>
+          <stop offset="100%" stop-color="#E64A19"/>
+        </radialGradient>
+        <radialGradient id="bellyFox" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#FFFDE7"/>
+          <stop offset="100%" stop-color="#FFF9C4"/>
+        </radialGradient>
+        <filter id="shadow4" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="2" dy="4" stdDeviation="6" flood-opacity="0.2"/>
+        </filter>
+      </defs>
+
+      <!-- Shadow -->
+      <ellipse cx="100" cy="232" rx="52" ry="10" fill="rgba(0,0,0,0.12)"/>
+
+      <!-- TAIL (big bushy) -->
+      <path d="M130 165 Q165 155 175 175 Q180 195 168 210 Q155 220 140 215
+               Q125 210 120 195 Q115 178 130 165Z"
+            fill="#E64A19"/>
+      <path d="M134 168 Q162 160 170 178 Q174 194 163 207 Q153 215 142 212
+               Q130 208 126 195 Q122 180 134 168Z"
+            fill="#FF8A65"/>
+      <!-- Tail white tip -->
+      <ellipse cx="162" cy="202" rx="14" ry="12" fill="#FFFDE7" transform="rotate(-20 162 202)"/>
+
+      <!-- LEGS -->
+      <rect x="74" y="188" width="20" height="34" rx="10" fill="#E64A19"/>
+      <rect x="106" y="188" width="20" height="34" rx="10" fill="#E64A19"/>
+      <!-- Shoes/paws -->
+      <ellipse cx="84" cy="220" rx="14" ry="8" fill="#BF360C"/>
+      <ellipse cx="116" cy="220" rx="14" ry="8" fill="#BF360C"/>
+
+      <!-- JUMPSUIT / OVERALLS -->
+      <rect x="60" y="150" width="80" height="50" rx="8" fill="#1565C0"/>
+      <!-- Overalls straps -->
+      <rect x="82" y="120" width="10" height="36" rx="5" fill="#1565C0"/>
+      <rect x="108" y="120" width="10" height="36" rx="5" fill="#1565C0"/>
+      <!-- Chest pocket -->
+      <rect x="86" y="155" width="28" height="18" rx="4" fill="#1976D2"/>
+      <rect x="88" y="157" width="24" height="14" rx="3" fill="#42A5F5" opacity="0.5"/>
+      <!-- Tools in pocket -->
+      <rect x="91" y="155" width="3" height="12" rx="1.5" fill="#FDD835"/>
+      <rect x="96" y="155" width="3" height="12" rx="1.5" fill="#9E9E9E"/>
+      <rect x="101" y="155" width="3" height="12" rx="1.5" fill="#F44336"/>
+      <!-- Logo badge -->
+      <circle cx="76" cy="162" r="8" fill="white"/>
+      <text x="76" y="165" text-anchor="middle" font-size="5" font-weight="bold" fill="#43A047">OG</text>
+
+      <!-- BODY -->
+      <ellipse cx="100" cy="138" rx="46" ry="40" fill="url(#bodyFox)" filter="url(#shadow4)"/>
+
+      <!-- BELLY -->
+      <ellipse cx="100" cy="143" rx="26" ry="26" fill="url(#bellyFox)"/>
+
+      <!-- EARS -->
+      <path d="M68 80 L58 50 L82 68Z" fill="#E64A19"/>
+      <path d="M68 80 L62 58 L80 70Z" fill="#FF5722"/>
+      <!-- Inner ear -->
+      <path d="M69 77 L63 57 L78 69Z" fill="#FF8A65"/>
+      <path d="M132 80 L142 50 L118 68Z" fill="#E64A19"/>
+      <path d="M132 80 L138 58 L120 70Z" fill="#FF5722"/>
+      <path d="M131 77 L137 57 L122 69Z" fill="#FF8A65"/>
+
+      <!-- HEAD -->
+      <ellipse cx="100" cy="94" rx="44" ry="40" fill="url(#bodyFox)" filter="url(#shadow4)"/>
+
+      <!-- FACE MARKINGS (white/cream) -->
+      <path d="M74 100 Q100 112 126 100 Q120 122 100 124 Q80 122 74 100Z" fill="url(#bellyFox)"/>
+
+      <!-- EYES -->
+      <ellipse cx="84" cy="88" rx="11" ry="12" fill="white"/>
+      <ellipse cx="116" cy="88" rx="11" ry="12" fill="white"/>
+      <circle cx="84" cy="89" r="8" fill="#2E7D32"/>
+      <circle cx="116" cy="89" r="8" fill="#2E7D32"/>
+      <circle cx="84" cy="90" r="4.5" fill="#0D1117"/>
+      <circle cx="116" cy="90" r="4.5" fill="#0D1117"/>
+      <circle cx="87" cy="86" r="2.5" fill="white"/>
+      <circle cx="119" cy="86" r="2.5" fill="white"/>
+
+      <!-- EYEBROWS (mischievous) -->
+      <path d="M74 78 Q84 73 94 78" stroke="#BF360C" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M106 78 Q116 73 126 78" stroke="#BF360C" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+
+      <!-- NOSE -->
+      <path d="M92 104 Q100 100 108 104 L104 110 Q100 113 96 110Z" fill="#0D1117"/>
+      <ellipse cx="100" cy="104" rx="4" ry="2.5" fill="#3E2723"/>
+
+      <!-- SMILE -->
+      <path d="M85 115 Q100 125 115 115" stroke="#0D1117" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <!-- Dimples -->
+      <circle cx="78" cy="110" r="4" fill="#FF5722" opacity="0.4"/>
+      <circle cx="122" cy="110" r="4" fill="#FF5722" opacity="0.4"/>
+
+      <!-- WHISKERS -->
+      <line x1="68" y1="106" x2="86" y2="108" stroke="#BF360C" stroke-width="1" opacity="0.6"/>
+      <line x1="68" y1="110" x2="86" y2="110" stroke="#BF360C" stroke-width="1" opacity="0.6"/>
+      <line x1="132" y1="106" x2="114" y2="108" stroke="#BF360C" stroke-width="1" opacity="0.6"/>
+      <line x1="132" y1="110" x2="114" y2="110" stroke="#BF360C" stroke-width="1" opacity="0.6"/>
+
+      <!-- ARM left (tablet/phone) -->
+      <path d="M54 135 Q36 130 32 145 Q30 158 44 162 L56 155Z" fill="url(#bodyFox)"/>
+      <!-- Tablet -->
+      <rect x="14" y="130" width="24" height="32" rx="4" fill="#37474F"/>
+      <rect x="16" y="133" width="20" height="25" rx="2" fill="#64B5F6"/>
+      <!-- Screen content -->
+      <rect x="18" y="135" width="16" height="3" rx="1" fill="white" opacity="0.8"/>
+      <rect x="18" y="140" width="12" height="2" rx="1" fill="white" opacity="0.6"/>
+      <rect x="18" y="144" width="14" height="2" rx="1" fill="white" opacity="0.6"/>
+      <path d="M19 149 L23 153 L31 147" stroke="#43A047" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+      <!-- ARM right (pointing up) -->
+      <path d="M148 130 Q165 120 168 135 L162 155 Q150 160 146 145Z" fill="url(#bodyFox)"/>
+      <!-- Pointing finger up -->
+      <path d="M166 120 Q162 110 168 106 Q174 104 176 110 Q180 106 182 112
+               Q184 108 186 114 L184 130 Q174 134 166 120Z" fill="url(#bodyFox)"/>
+    </svg>
+    <h2>Rudy — Lis Technik On Gaz</h2>
+    <p>Sprytny lis w roboczym kombinezonie z tabletem. Energiczny, bystry i zawsze o krok przed problemem.</p>
+  </div>
+
+</div>
+
+<p class="footer">GazCRM · On Gaz Sp. z o.o. · Propozycje maskotki systemu · 2025</p>
+
+</body>
+</html>

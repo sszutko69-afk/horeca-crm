@@ -1,0 +1,47 @@
+{
+  "name": "GazCRM",
+  "short_name": "GazCRM",
+  "description": "System zarządzania firmą ON Gaz – sprzedaż LPG, przetargi, kadry, budżet",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#f9fafb",
+  "theme_color": "#1e293b",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Przetargi",
+      "url": "/przetargi",
+      "description": "Lista przetargów"
+    },
+    {
+      "name": "Sprzedaż",
+      "url": "/sprzedaz",
+      "description": "Ewidencja sprzedaży LPG"
+    },
+    {
+      "name": "Budżet",
+      "url": "/budzet",
+      "description": "Plan vs realizacja"
+    },
+    {
+      "name": "Klienci",
+      "url": "/klienci",
+      "description": "Baza klientów"
+    }
+  ],
+  "categories": ["business", "productivity"]
+}

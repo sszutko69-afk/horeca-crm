@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>System CRM – Nowy wymiar Twojej firmy</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+
+body{
+  background:#e8e4dc;
+  display:flex;align-items:center;justify-content:center;
+  min-height:100vh;
+  font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+  overflow:hidden;
+}
+
+/* ── Phone frame ── */
+.phone{
+  width:390px;height:844px;max-height:100dvh;
+  background:#faf8f4;
+  border-radius:44px;overflow:hidden;position:relative;
+  box-shadow:0 2px 0 1px #d8d4cc,0 40px 100px rgba(0,0,0,.18);
+}
+@media(max-height:870px){.phone{width:100vw;height:100dvh;border-radius:0}}
+
+/* ── Soft background ── */
+.bg{
+  position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 100% 50% at 80% 10%,rgba(220,252,231,.8) 0%,transparent 55%),
+    radial-gradient(ellipse 80% 60% at 10% 90%,rgba(219,234,254,.6) 0%,transparent 55%),
+    linear-gradient(170deg,#faf8f4 0%,#f5f2eb 60%,#f0eee8 100%);
+}
+
+/* ── Decorative circles ── */
+.circle{
+  position:absolute;border-radius:50%;
+  animation:floatCircle ease-in-out infinite alternate
+}
+@keyframes floatCircle{from{transform:translateY(0) scale(1)}to{transform:translateY(-12px) scale(1.04)}}
+
+/* ── Scenes ── */
+.scene{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:72px 28px 56px;text-align:center;
+  opacity:0;animation-fill-mode:both;
+  animation-timing-function:cubic-bezier(.16,1,.3,1);
+}
+.s1{animation:sFade 2.9s   0s}
+.s2{animation:sFade 2.9s 2.75s}
+.s3{animation:sFade 2.9s 5.5s}
+.s4{animation:sStay 2.9s 8.25s forwards}
+
+@keyframes sFade{
+  0%  {opacity:0;transform:scale(.96) translateY(16px)}
+  12% {opacity:1;transform:scale(1) translateY(0)}
+  78% {opacity:1;transform:scale(1) translateY(0)}
+  100%{opacity:0;transform:scale(1.02) translateY(-8px)}
+}
+@keyframes sStay{
+  0%  {opacity:0;transform:scale(.96) translateY(16px)}
+  12% {opacity:1;transform:scale(1) translateY(0)}
+  100%{opacity:1;transform:scale(1) translateY(0)}
+}
+
+/* ── Typography ── */
+.kicker{
+  font-size:11px;font-weight:800;letter-spacing:3px;text-transform:uppercase;
+  color:#16a34a;margin-bottom:12px
+}
+.headline{
+  font-size:34px;font-weight:800;line-height:1.15;color:#1a1a2e;margin-bottom:12px
+}
+.headline em{
+  font-style:normal;
+  background:linear-gradient(135deg,#16a34a,#2563eb);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text
+}
+.sub{font-size:13.5px;color:#64748b;line-height:1.6;max-width:290px}
+
+/* ── Price badge ── */
+.price-badge{
+  display:inline-flex;flex-direction:column;align-items:center;
+  background:linear-gradient(135deg,#16a34a,#15803d);
+  border-radius:28px;padding:20px 38px;margin-bottom:22px;
+  box-shadow:0 12px 48px rgba(22,163,74,.35),0 4px 12px rgba(22,163,74,.2);
+  animation:gPulse 2.2s ease-in-out infinite
+}
+@keyframes gPulse{
+  0%,100%{box-shadow:0 12px 48px rgba(22,163,74,.35),0 4px 12px rgba(22,163,74,.2)}
+  50%    {box-shadow:0 12px 72px rgba(22,163,74,.55),0 4px 12px rgba(22,163,74,.25)}
+}
+.price-amt{font-size:56px;font-weight:900;color:#fff;line-height:1;letter-spacing:-2px}
+.price-per{font-size:14px;font-weight:600;color:rgba(255,255,255,.88);margin-top:3px}
+
+/* ── Modules grid ── */
+.modules{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:7px;width:100%;max-width:316px;margin-bottom:16px
+}
+.mod{
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  background:#fff;border:1px solid rgba(0,0,0,.07);
+  border-radius:14px;padding:10px 4px;
+  box-shadow:0 2px 8px rgba(0,0,0,.06);
+  animation:popIn .4s cubic-bezier(.34,1.56,.64,1) both
+}
+@keyframes popIn{from{opacity:0;transform:scale(.65)}to{opacity:1;transform:scale(1)}}
+.mod:nth-child(1){animation-delay:.04s}
+.mod:nth-child(2){animation-delay:.10s}
+.mod:nth-child(3){animation-delay:.16s}
+.mod:nth-child(4){animation-delay:.22s}
+.mod:nth-child(5){animation-delay:.28s}
+.mod:nth-child(6){animation-delay:.34s}
+.mod:nth-child(7){animation-delay:.40s;grid-column:span 2}
+.mod-icon{font-size:22px}
+.mod-name{font-size:9px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.6px;text-align:center}
+
+/* ── Pills ── */
+.pills{display:flex;flex-direction:column;gap:10px;width:100%;max-width:310px;margin-bottom:16px}
+.pill{
+  display:flex;align-items:center;gap:12px;
+  background:#fff;border:1px solid rgba(0,0,0,.07);
+  border-radius:14px;padding:12px 14px;
+  box-shadow:0 2px 8px rgba(0,0,0,.05)
+}
+.pill-icon{font-size:26px;flex-shrink:0}
+.pill-text strong{display:block;font-size:13.5px;font-weight:700;color:#1a1a2e;margin-bottom:1px}
+.pill-text span{font-size:11px;color:#94a3b8}
+
+/* ── CTA ── */
+.cta-btn{
+  display:inline-block;
+  background:linear-gradient(135deg,#2563eb,#4f46e5);
+  color:#fff;font-size:16px;font-weight:700;
+  padding:17px 32px;border-radius:50px;text-decoration:none;
+  margin-top:16px;
+  box-shadow:0 12px 40px rgba(37,99,235,.4),0 4px 12px rgba(37,99,235,.2);
+  animation:bPulse 1.6s ease-in-out infinite;letter-spacing:.2px
+}
+@keyframes bPulse{
+  0%,100%{box-shadow:0 12px 40px rgba(37,99,235,.4),0 4px 12px rgba(37,99,235,.2);transform:scale(1)}
+  50%    {box-shadow:0 12px 60px rgba(37,99,235,.6),0 4px 12px rgba(37,99,235,.25);transform:scale(1.03)}
+}
+.cta-checklist{display:flex;flex-direction:column;gap:7px;width:100%;max-width:280px;margin-bottom:4px}
+.cta-check{
+  display:flex;align-items:center;gap:10px;
+  background:#fff;border:1px solid rgba(0,0,0,.07);
+  border-radius:12px;padding:9px 13px;
+  box-shadow:0 2px 6px rgba(0,0,0,.05)
+}
+.cta-check-icon{font-size:15px;flex-shrink:0}
+.cta-check span{font-size:12px;font-weight:600;color:#374151}
+.cta-sub{font-size:11px;color:#9ca3af;margin-top:9px;letter-spacing:.8px;text-transform:uppercase}
+
+/* ── Brand strip ── */
+.brand{
+  position:absolute;top:34px;left:50%;transform:translateX(-50%);
+  display:flex;align-items:center;gap:8px;white-space:nowrap;z-index:10
+}
+.bdot{width:8px;height:8px;background:#16a34a;border-radius:50%;animation:blink 2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.bname{font-size:13px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#374151}
+
+/* ── Voice btn ── */
+.vbtn{
+  position:absolute;top:30px;right:22px;
+  width:36px;height:36px;border-radius:50%;
+  background:#fff;border:1px solid rgba(0,0,0,.1);
+  color:#374151;font-size:16px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);transition:background .2s;z-index:20
+}
+.vbtn:hover{background:#f1f5f9}
+
+/* ── Voice info panel ── */
+.vinfo{
+  position:absolute;top:74px;right:14px;
+  background:#fff;border:1px solid rgba(0,0,0,.1);
+  border-radius:12px;padding:10px 13px;
+  font-size:11px;color:#374151;max-width:220px;line-height:1.5;
+  box-shadow:0 4px 20px rgba(0,0,0,.12);z-index:30;display:none
+}
+.vinfo.show{display:block}
+.vinfo strong{color:#16a34a}
+
+/* ── Progress bar ── */
+.prog{
+  position:absolute;bottom:18px;left:50%;transform:translateX(-50%);
+  width:52%;height:3px;background:rgba(0,0,0,.08);border-radius:2px;overflow:hidden
+}
+.prog-fill{
+  height:100%;
+  background:linear-gradient(90deg,#16a34a,#2563eb);
+  border-radius:2px;
+  animation:progAnim 11s linear forwards
+}
+@keyframes progAnim{from{width:0}to{width:100%}}
+
+/* ── Replay ── */
+.replay{
+  position:absolute;bottom:34px;right:22px;
+  width:38px;height:38px;border-radius:50%;
+  background:#fff;border:1px solid rgba(0,0,0,.1);
+  color:#374151;font-size:17px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);
+  opacity:0;transition:opacity .6s,background .2s;z-index:20
+}
+.replay.on{opacity:1}
+.replay:hover{background:#f1f5f9}
+</style>
+</head>
+<body>
+<div class="phone" id="phone">
+  <div class="bg"></div>
+
+  <!-- Decorative blobs -->
+  <div class="circle" style="width:180px;height:180px;top:-60px;right:-50px;background:rgba(220,252,231,.7);animation-duration:5s"></div>
+  <div class="circle" style="width:140px;height:140px;bottom:-40px;left:-40px;background:rgba(219,234,254,.6);animation-duration:6.5s;animation-delay:1s"></div>
+
+  <div class="brand"><div class="bdot"></div><span class="bname">System CRM</span></div>
+  <button class="vbtn" id="vbtn">🔊</button>
+  <div class="vinfo" id="vinfo"></div>
+
+  <!-- SCENE 1: Cena -->
+  <div class="scene s1">
+    <div class="kicker">Nowoczesny system dla każdej firmy</div>
+    <div class="price-badge">
+      <div class="price-amt">25 zł</div>
+      <div class="price-per">miesięcznie</div>
+    </div>
+    <div class="headline">Pełna<br><em>funkcjonalność</em></div>
+    <p class="sub">Wszystko, czego potrzebuje Twoja firma — w jednej cenie</p>
+  </div>
+
+  <!-- SCENE 2: Moduły -->
+  <div class="scene s2">
+    <div class="kicker">Co otrzymujesz</div>
+    <div class="modules">
+      <div class="mod"><div class="mod-icon">📈</div><div class="mod-name">Sprzedaż</div></div>
+      <div class="mod"><div class="mod-icon">🛒</div><div class="mod-name">Zakupy</div></div>
+      <div class="mod"><div class="mod-icon">🏗</div><div class="mod-name">Inwestycje</div></div>
+      <div class="mod"><div class="mod-icon">📋</div><div class="mod-name">Przetargi</div></div>
+      <div class="mod"><div class="mod-icon">👥</div><div class="mod-name">Kadry</div></div>
+      <div class="mod"><div class="mod-icon">💰</div><div class="mod-name">Płace</div></div>
+      <div class="mod"><div class="mod-icon">📊</div><div class="mod-name">Księgowość</div></div>
+    </div>
+    <p class="sub" style="font-size:12.5px">Jeden system — wszystkie obszary działalności firmy</p>
+  </div>
+
+  <!-- SCENE 3: Wsparcie + AI + Personalizacja -->
+  <div class="scene s3">
+    <div class="kicker">W cenie zawarte</div>
+    <div class="pills">
+      <div class="pill">
+        <div class="pill-icon">🕐</div>
+        <div class="pill-text">
+          <strong>Wsparcie 24h / 7 dni</strong>
+          <span>Zawsze jesteśmy do Twojej dyspozycji</span>
+        </div>
+      </div>
+      <div class="pill">
+        <div class="pill-icon">🤖</div>
+        <div class="pill-text">
+          <strong>Sztuczna Inteligencja</strong>
+          <span>AI wspierające pracę na każdym kroku</span>
+        </div>
+      </div>
+      <div class="pill">
+        <div class="pill-icon">⚙️</div>
+        <div class="pill-text">
+          <strong>Pełna personalizacja</strong>
+          <span>Dostosowany do Twojej branży i profilu</span>
+        </div>
+      </div>
+    </div>
+    <div class="headline" style="font-size:26px">Wszystko za <em>25 zł</em></div>
+  </div>
+
+  <!-- SCENE 4: CTA -->
+  <div class="scene s4">
+    <div class="kicker">Następny krok</div>
+    <div class="headline" style="font-size:28px;margin-bottom:16px">Poznaj nowy wymiar<br><em>swojej firmy</em></div>
+    <div class="cta-checklist">
+      <div class="cta-check"><div class="cta-check-icon">✅</div><span>25 zł/msc · Pełna funkcjonalność</span></div>
+      <div class="cta-check"><div class="cta-check-icon">✅</div><span>Wsparcie 24h + AI w cenie</span></div>
+      <div class="cta-check"><div class="cta-check-icon">✅</div><span>Dostosowany do Twojej branży</span></div>
+    </div>
+    <a href="#" class="cta-btn">📅 Umów prezentację</a>
+    <p class="cta-sub">Kliknij przycisk lub napisz w wiadomości prywatnej</p>
+  </div>
+
+  <div class="prog"><div class="prog-fill" id="pf"></div></div>
+  <button class="replay" id="replay" title="Odtwórz ponownie">↺</button>
+</div>
+
+<script>
+// ── Voice — queue all lines upfront, NO cancel between them ───────────
+const LINES = [
+  'Za jedyne dwadzieścia pięć złotych miesięcznie otrzymujesz pełny system CRM dla Twojej firmy.',
+  'Sprzedaż, zakupy, inwestycje, przetargi, kadry, płace i księgowość — wszystko w jednym systemie.',
+  'Wsparcie przez całą dobę, sztuczna inteligencja oraz pełna personalizacja — w cenie.',
+  'Kliknij przycisk Umów prezentację lub zostaw swoje dane kontaktowe w wiadomości prywatnej. Zapraszamy!',
+]
+
+let voiceOn = true
+const vbtn = document.getElementById('vbtn')
+const vinfo = document.getElementById('vinfo')
+
+function bestPolishVoice(voices){
+  return (
+    voices.find(v=>v.lang.startsWith('pl')&&v.name.includes('Online')&&v.name.includes('Natural'))||
+    voices.find(v=>v.lang.startsWith('pl')&&v.name.toLowerCase().includes('natural'))||
+    voices.find(v=>v.lang.startsWith('pl')&&v.name.includes('Online'))||
+    voices.find(v=>v.lang.startsWith('pl')&&!v.localService)||
+    voices.find(v=>v.lang.startsWith('pl'))
+  )
+}
+
+function showVoiceInfo(voice){
+  if(!voice){
+    vinfo.innerHTML='<strong>Brak głosu pl-PL</strong><br>Zainstaluj pakiet języka polskiego w ustawieniach systemu (Ustawienia → Mowa)'
+  } else {
+    vinfo.innerHTML=`<strong>${voice.name}</strong><br>${voice.lang} · ${voice.localService?'lokalny':'chmura ✨'}`
+  }
+  vinfo.classList.add('show')
+  setTimeout(()=>vinfo.classList.remove('show'),4500)
+}
+
+function queueAll(){
+  speechSynthesis.cancel()
+  if(!voiceOn) return
+  const v = bestPolishVoice(speechSynthesis.getVoices())
+  LINES.forEach(line=>{
+    const u = new SpeechSynthesisUtterance(line)
+    u.lang='pl-PL'; u.rate=1.1; u.pitch=1.0
+    if(v) u.voice=v
+    speechSynthesis.speak(u)
+  })
+}
+
+function startAd(){
+  // reset progress
+  const pf=document.getElementById('pf')
+  pf.style.animation='none'; void pf.offsetWidth; pf.style.animation=''
+  // reset scenes
+  document.querySelectorAll('.scene').forEach(s=>{s.style.animation='none';void s.offsetWidth;s.style.animation=''})
+  // reset replay
+  const rpl=document.getElementById('replay')
+  rpl.classList.remove('on')
+  setTimeout(()=>rpl.classList.add('on'),10800)
+  queueAll()
+}
+
+vbtn.addEventListener('click',()=>{
+  voiceOn=!voiceOn
+  vbtn.textContent=voiceOn?'🔊':'🔇'
+  if(!voiceOn){speechSynthesis.cancel();return}
+  showVoiceInfo(bestPolishVoice(speechSynthesis.getVoices()))
+  queueAll()
+})
+
+function init(){
+  if(speechSynthesis.getVoices().length===0) return
+  startAd()
+}
+
+if(speechSynthesis.getVoices().length>0){init()}
+else{speechSynthesis.addEventListener('voiceschanged',init,{once:true})}
+
+document.getElementById('replay').addEventListener('click',startAd)
+setTimeout(()=>document.getElementById('replay').classList.add('on'),10800)
+</script>
+</body>
+</html>
