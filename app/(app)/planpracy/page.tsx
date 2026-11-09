@@ -38,8 +38,7 @@ export default function PlanPracyPage() {
   const [viewMode, setViewMode] = useState<'tabela'|'kalendarz'|'tydzien'>('tabela')
   const [plan, setPlan] = useState<any[]>([])
   const [pracownicy, setPracownicy] = useState<any[]>([])
-  const [inwestycje, setInwestycje] = useState<any[]>([])
-  const [przetargi, setPrzetargi] = useState<any[]>([])
+  const [wydarzenia, setWydarzenia] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [showModal, setShowModal] = useState(false)
@@ -49,7 +48,7 @@ export default function PlanPracyPage() {
 
   const [fPrac, setFPrac] = useState('')
   const [fInw, setFInw] = useState('')
-  const [fPrzetarg, setFPrzetarg] = useState('')
+  const [fStrefa, setFStrefa] = useState('Sala')
   const [fDateOd, setFDateOd] = useState('')
   const [fDateDo, setFDateDo] = useState('')
   const [fGodziny, setFGodziny] = useState('40')
@@ -63,22 +62,22 @@ export default function PlanPracyPage() {
     setErrMsg('')
     try {
       const dateOd = `${rok}-${String(miesiac).padStart(2,'0')}-01`
-      const dateDo = `${rok}-${String(miesiac + 1).padStart(2,'0')}-01` // następny miesiąc
-      const [planRes, pracRes, inwRes, przeRes] = await Promise.all([
+      const nextY = miesiac === 12 ? rok + 1 : rok
+      const nextM = miesiac === 12 ? 1 : miesiac + 1
+      const dateDoOk = `${nextY}-${String(nextM).padStart(2,'0')}-01`
+      const [planRes, pracRes, inwRes] = await Promise.all([
         supabase.from('plan_pracy')
-          .select('*, pracownicy(id,imie,nazwisko), inwestycje(id,nazwa), przetargi(id,tytul)')
-          .gte('data_od', dateOd).lt('data_od', dateDo)
+          .select('*, pracownicy(id,imie,nazwisko), wydarzenia(id,nazwa)')
+          .gte('data_od', dateOd).lt('data_od', dateDoOk)
           .order('data_od'),
         supabase.from('pracownicy').select('id, imie, nazwisko, stanowisko').eq('aktywny', true).order('nazwisko'),
-        supabase.from('inwestycje').select('id, nazwa').order('nazwa'),
-        supabase.from('przetargi').select('id, tytul').eq('usuniete', false).order('tytul').limit(100),
+        supabase.from('wydarzenia').select('id, nazwa').order('nazwa'),
       ])
       if (planRes.error) throw new Error('plan_pracy: ' + planRes.error.message)
       if (pracRes.error) throw new Error('pracownicy: ' + pracRes.error.message)
       setPlan(planRes.data ?? [])
       setPracownicy(pracRes.data ?? [])
-      setInwestycje(inwRes.data ?? [])
-      setPrzetargi(przeRes.data ?? [])
+      setWydarzenia(inwRes.data ?? [])
     } catch(e: any) {
       setErrMsg(e.message)
       console.error('loadAll error:', e)
@@ -90,7 +89,7 @@ export default function PlanPracyPage() {
     setEditing(null)
     setFPrac('')
     setFInw('')
-    setFPrzetarg('')
+    setFStrefa('Sala')
     const m = String(miesiac).padStart(2,'0')
     setFDateOd(`${rok}-${m}-01`)
     setFDateDo(`${rok}-${m}-07`)
@@ -103,8 +102,8 @@ export default function PlanPracyPage() {
   function openEdit(p: any) {
     setEditing(p)
     setFPrac(p.pracownik_id)
-    setFInw(p.inwestycja_id ?? '')
-    setFPrzetarg(p.przetarg_id ?? '')
+    setFInw(p.wydarzenie_id ?? '')
+    setFStrefa(p.strefa ?? 'Sala')
     setFDateOd(p.data_od ?? '')
     setFDateDo(p.data_do ?? '')
     setFGodziny(String(p.godziny ?? 40))
@@ -120,8 +119,8 @@ export default function PlanPracyPage() {
     const dateObj = new Date(fDateOd)
     const payload = {
       pracownik_id: fPrac,
-      inwestycja_id: fInw || null,
-      przetarg_id: fPrzetarg || null,
+      wydarzenie_id: fInw || null,
+      strefa: fStrefa || null,
       rok: dateObj.getFullYear(),
       miesiac: dateObj.getMonth() + 1,
       data_od: fDateOd,
@@ -163,10 +162,10 @@ export default function PlanPracyPage() {
     const wpisTygodnia = plan.filter(p => p.data_od <= dateDo && (p.data_do || p.data_od) >= dateOd)
     const pracW = filterPrac ? pracownicy.filter(p => p.id === filterPrac) : pracownicy
 
-    // Mapowanie kolorów inwestycji
+    // Mapowanie kolorów wydarzeń
     const inwKolory: Record<string, string> = {}
     const kolCSS = ['#3b82f6','#10b981','#8b5cf6','#f59e0b','#ec4899','#14b8a6','#f97316','#6366f1']
-    inwestycje.forEach((inv, i) => { inwKolory[inv.id] = kolCSS[i % kolCSS.length] })
+    wydarzenia.forEach((inv, i) => { inwKolory[inv.id] = kolCSS[i % kolCSS.length] })
 
     const dniLabels = ['Poniedziałek','Wtorek','Środa','Czwartek','Piątek','Sobota','Niedziela']
 
@@ -223,12 +222,12 @@ export default function PlanPracyPage() {
         )
         if (!wpisDnia.length) return `<td class="empty">-</td>`
         const content = wpisDnia.map(w => {
-          const inv = inwestycje.find(i => i.id === w.inwestycja_id)
-          const kol = w.inwestycja_id ? (inwKolory[w.inwestycja_id] || '#6b7280') : '#374151'
+          const inv = wydarzenia.find(i => i.id === w.wydarzenie_id)
+          const kol = w.wydarzenie_id ? (inwKolory[w.wydarzenie_id] || '#6b7280') : '#374151'
           const st = STATUSY[w.status as keyof typeof STATUSY]?.l || w.status
           sumaGodz += +(w.godziny || 0)
           return `<div class="wpis" style="background:${kol}">
-            <div style="font-weight:bold">${inv?.nazwa || st}</div>
+            <div style="font-weight:bold">${inv?.nazwa || w.strefa || st}</div>
             <div>${w.godziny || 0}h${w.opis ? ' · ' + w.opis.substring(0, 20) : ''}</div>
           </div>`
         }).join('')
@@ -244,13 +243,13 @@ export default function PlanPracyPage() {
     html += `</tbody>
 </table>
 <div class="legenda">
-  <strong style="font-size:7px">Legenda inwestycji:</strong>
-  ${inwestycje.filter(inv => wpisTygodnia.some(w => w.inwestycja_id === inv.id)).map(inv =>
+  <strong style="font-size:7px">Legenda wydarzeń:</strong>
+  ${wydarzenia.filter(inv => wpisTygodnia.some(w => w.wydarzenie_id === inv.id)).map(inv =>
     `<div class="leg-item"><div class="leg-dot" style="background:${inwKolory[inv.id]||'#6b7280'}"></div><span>${inv.nazwa}</span></div>`
   ).join('')}
 </div>
 <div class="footer">
-  <div>GazCRM · Plan pracy · Tydzień ${tydzien}/${rok}</div>
+  <div>HoReCa CRM · Plan pracy · Tydzień ${tydzien}/${rok}</div>
   <div style="display:flex;gap:40px">
     <div class="sign">Sporządził</div>
     <div class="sign">Zatwierdził</div>
@@ -263,12 +262,12 @@ export default function PlanPracyPage() {
     if (win) { win.document.write(html); win.document.close(); setTimeout(() => win.print(), 500) }
   }
 
-  // ── Kolory inwestycji ─────────────────────────────────────────
+  // ── Kolory wydarzeń ─────────────────────────────────────────
   const inwKolMap = useMemo(() => {
     const m: Record<string, string> = {}
-    inwestycje.forEach((inv, i) => { m[inv.id] = KOLORY_INW[i % KOLORY_INW.length] })
+    wydarzenia.forEach((inv, i) => { m[inv.id] = KOLORY_INW[i % KOLORY_INW.length] })
     return m
-  }, [inwestycje])
+  }, [wydarzenia])
 
   // ── Widok tygodniowy ─────────────────────────────────────────
   const weekDates = useMemo(() => getWeekDates(rok, tydzien), [rok, tydzien])
@@ -365,7 +364,7 @@ export default function PlanPracyPage() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  {['Pracownik','Data od','Data do','Godziny','Inwestycja / Przetarg','Status','Opis','Akcje'].map(h => (
+                  {['Pracownik','Data od','Data do','Godziny','Strefa / Wydarzenie','Status','Opis','Akcje'].map(h => (
                     <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">{h}</th>
                   ))}
                 </tr>
@@ -385,12 +384,12 @@ export default function PlanPracyPage() {
                     <td className="px-4 py-3 text-gray-600 font-mono text-xs">{p.data_do}</td>
                     <td className="px-4 py-3 font-medium text-blue-700">{p.godziny}h</td>
                     <td className="px-4 py-3 text-xs text-gray-600 max-w-xs">
-                      {p.inwestycje?.nazwa && (
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-white text-xs ${inwKolMap[p.inwestycja_id] || 'bg-gray-500'}`}>
-                          🏗 {p.inwestycje.nazwa}
+                      {p.strefa && <span className="inline-block px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs mr-1">🍽 {p.strefa}</span>}
+                      {p.wydarzenia?.nazwa && (
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-white text-xs ${inwKolMap[p.wydarzenie_id] || 'bg-gray-500'}`}>
+                          🎉 {p.wydarzenia.nazwa}
                         </span>
                       )}
-                      {p.przetargi?.tytul && <span className="block text-gray-400 truncate">🏆 {p.przetargi.tytul.substring(0,40)}</span>}
                     </td>
                     <td className="px-4 py-3">
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${STATUSY[p.status as keyof typeof STATUSY]?.bg || 'bg-gray-100'} ${STATUSY[p.status as keyof typeof STATUSY]?.border || ''}`}>
@@ -418,7 +417,7 @@ export default function PlanPracyPage() {
                 <span className="text-xs text-gray-500">{weekDates[0].toLocaleDateString('pl-PL')} – {weekDates[6].toLocaleDateString('pl-PL')}</span>
               </div>
               <div className="flex gap-1 text-xs text-gray-500">
-                {inwestycje.filter(inv => planTygodnia.some(w => w.inwestycja_id === inv.id)).map((inv, i) => (
+                {wydarzenia.filter(inv => planTygodnia.some(w => w.wydarzenie_id === inv.id)).map((inv, i) => (
                   <span key={inv.id} className={`px-2 py-0.5 rounded-full text-white text-xs ${inwKolMap[inv.id]}`}>{inv.nazwa}</span>
                 ))}
               </div>
@@ -460,13 +459,13 @@ export default function PlanPracyPage() {
                             <td key={i} className={`px-1 py-1 ${isWe ? 'bg-red-50' : ''}`}>
                               {wpisDnia.map(w => (
                                 <div key={w.id} onClick={() => openEdit(w)}
-                                  className={`rounded-lg px-2 py-1 mb-0.5 cursor-pointer text-white text-xs leading-tight ${inwKolMap[w.inwestycja_id] || 'bg-gray-500'}`}>
-                                  <div className="font-medium truncate">{w.inwestycje?.nazwa || STATUSY[w.status as keyof typeof STATUSY]?.l || w.status}</div>
+                                  className={`rounded-lg px-2 py-1 mb-0.5 cursor-pointer text-white text-xs leading-tight ${inwKolMap[w.wydarzenie_id] || 'bg-gray-500'}`}>
+                                  <div className="font-medium truncate">{w.wydarzenia?.nazwa || w.strefa || STATUSY[w.status as keyof typeof STATUSY]?.l || w.status}</div>
                                   <div className="opacity-80">{w.godziny}h{w.opis ? ' · ' + w.opis.substring(0,12) : ''}</div>
                                 </div>
                               ))}
                               {!wpisDnia.length && !isWe && (
-                                <button onClick={() => { setFPrac(pr.id); setFDateOd(ds); setFDateDo(ds); setFGodziny('8'); setFStatus('planowany'); setFOpis(''); setFInw(''); setEditing(null); setShowModal(true) }}
+                                <button onClick={() => { setFPrac(pr.id); setFDateOd(ds); setFDateDo(ds); setFGodziny('8'); setFStatus('planowany'); setFOpis(''); setFInw(''); setFStrefa('Sala'); setEditing(null); setShowModal(true) }}
                                   className="w-full h-8 text-gray-200 hover:text-gray-400 hover:bg-gray-50 rounded text-lg">+</button>
                               )}
                             </td>
@@ -514,8 +513,8 @@ export default function PlanPracyPage() {
                           <td key={i} className={`px-0.5 py-0.5 ${isWe ? 'bg-red-50' : ''}`}>
                             {wpisy.map(w => (
                               <div key={w.id} onClick={() => openEdit(w)}
-                                className={`rounded text-xs py-0.5 px-1 mb-0.5 cursor-pointer text-white truncate ${inwKolMap[w.inwestycja_id] || 'bg-gray-400'}`}
-                                title={w.inwestycje?.nazwa || w.status}>
+                                className={`rounded text-xs py-0.5 px-1 mb-0.5 cursor-pointer text-white truncate ${inwKolMap[w.wydarzenie_id] || 'bg-gray-400'}`}
+                                title={w.wydarzenia?.nazwa || w.status}>
                                 {w.godziny}h
                               </div>
                             ))}
@@ -547,7 +546,7 @@ export default function PlanPracyPage() {
                   <option value="">— wybierz pracownika —</option>
                   {pracownicy.map(p => <option key={p.id} value={p.id}>{p.imie} {p.nazwisko} — {p.stanowisko}</option>)}
                 </select>
-                {pracownicy.length === 0 && <p className="text-xs text-red-500 mt-1">Brak pracowników — dodaj najpierw pracowników w module Inwestycje</p>}
+                {pracownicy.length === 0 && <p className="text-xs text-red-500 mt-1">Brak pracowników — dodaj najpierw pracowników w module <a href="/kadry" className="underline">Kadry</a></p>}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -572,23 +571,22 @@ export default function PlanPracyPage() {
                 </div>
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-600 block mb-1">Inwestycja</label>
-                <select value={fInw} onChange={e => setFInw(e.target.value)} className={inp}>
-                  <option value="">— brak —</option>
-                  {inwestycje.map(i => <option key={i.id} value={i.id}>{i.nazwa}</option>)}
+                <label className="text-xs font-medium text-gray-600 block mb-1">Strefa / stanowisko pracy</label>
+                <select value={fStrefa} onChange={e => setFStrefa(e.target.value)} className={inp}>
+                  {['Sala','Kuchnia','Bar','Recepcja','Catering / wydarzenie','Dostawy','Zaplecze / magazyn','Administracja'].map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-600 block mb-1">Przetarg (opcjonalnie)</label>
-                <select value={fPrzetarg} onChange={e => setFPrzetarg(e.target.value)} className={inp}>
+                <label className="text-xs font-medium text-gray-600 block mb-1">Wydarzenie (opcjonalnie)</label>
+                <select value={fInw} onChange={e => setFInw(e.target.value)} className={inp}>
                   <option value="">— brak —</option>
-                  {przetargi.map(p => <option key={p.id} value={p.id}>{p.tytul.substring(0,80)}</option>)}
+                  {wydarzenia.map(i => <option key={i.id} value={i.id}>{i.nazwa}</option>)}
                 </select>
               </div>
               <div>
                 <label className="text-xs font-medium text-gray-600 block mb-1">Opis / notatka</label>
                 <textarea value={fOpis} onChange={e => setFOpis(e.target.value)} rows={2}
-                  placeholder="Np. montaż instalacji LPG..."
+                  placeholder="Np. zmiana poranna 8-16, obsługa wesela..."
                   className={inp + ' resize-none'} />
               </div>
             </div>

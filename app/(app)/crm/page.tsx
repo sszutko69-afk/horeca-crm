@@ -41,7 +41,7 @@ export default function CrmPage() {
   const [aktywnosci, setAktywnosci] = useState<any[]>([])
   const [zadania, setZadania] = useState<any[]>([])
   const [kontakty, setKontakty] = useState<any[]>([])
-  const [inwestycje, setInwestycje] = useState<any[]>([])
+  const [wydarzeniaLista, setWydarzeniaLista] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedKlient, setSelectedKlient] = useState<any>(null)
   const [tab, setTab] = useState<'aktywnosci'|'zadania'|'kontakty'>('aktywnosci')
@@ -87,16 +87,16 @@ export default function CrmPage() {
     setLoading(true)
     const [{ data: kl }, { data: akt }, { data: zad }, { data: kont }, { data: inw }] = await Promise.all([
       supabase.from('klienci').select('*').order('nazwa'),
-      supabase.from('crm_aktywnosci').select('*, kontakty(imie,nazwisko), klienci(nazwa), inwestycje(nazwa)').order('data_aktywnosci', { ascending: false }).limit(200),
-      supabase.from('crm_zadania').select('*, kontakty(imie,nazwisko), klienci(nazwa), inwestycje(nazwa)').order('termin').limit(200),
+      supabase.from('crm_aktywnosci').select('*, kontakty(imie,nazwisko), klienci(nazwa), wydarzenia(nazwa)').order('data_aktywnosci', { ascending: false }).limit(200),
+      supabase.from('crm_zadania').select('*, kontakty(imie,nazwisko), klienci(nazwa), wydarzenia(nazwa)').order('termin').limit(200),
       supabase.from('kontakty').select('*, klienci(nazwa)').order('nazwisko'),
-      supabase.from('inwestycje').select('id, nazwa, klient_id').order('nazwa'),
+      supabase.from('wydarzenia').select('id, nazwa, klient_id').order('nazwa'),
     ])
     setKlienci(kl ?? [])
     setAktywnosci(akt ?? [])
     setZadania(zad ?? [])
     setKontakty(kont ?? [])
-    setInwestycje(inw ?? [])
+    setWydarzeniaLista(inw ?? [])
     setLoading(false)
   }
 
@@ -131,7 +131,7 @@ export default function CrmPage() {
       setFData(edit.data_aktywnosci?.slice(0,16) ?? '')
       setFDataPlan(edit.data_planowana?.slice(0,16) ?? '')
       setFStatus(edit.status); setFPriorytet(edit.priorytet)
-      setFKontaktId(edit.kontakt_id ?? ''); setFInwId(edit.inwestycja_id ?? '')
+      setFKontaktId(edit.kontakt_id ?? ''); setFInwId(edit.wydarzenie_id ?? '')
     } else {
       setFTyp('telefon'); setFKierunek('wychodzacy'); setFTytul(''); setFTresc('')
       setFData(new Date().toISOString().slice(0,16)); setFDataPlan('')
@@ -145,7 +145,7 @@ export default function CrmPage() {
     if (edit) {
       setFZTytul(edit.tytul); setFZOpis(edit.opis ?? ''); setFZTermin(edit.termin ?? '')
       setFZStatus(edit.status); setFZPriorytet(edit.priorytet)
-      setFZKontakt(edit.kontakt_id ?? ''); setFZInw(edit.inwestycja_id ?? '')
+      setFZKontakt(edit.kontakt_id ?? ''); setFZInw(edit.wydarzenie_id ?? '')
     } else {
       setFZTytul(''); setFZOpis(''); setFZTermin(''); setFZStatus('otwarte')
       setFZPriorytet('normalny'); setFZKontakt(''); setFZInw('')
@@ -175,7 +175,7 @@ export default function CrmPage() {
       typ: fTyp, kierunek: fKierunek, tytul: fTytul, tresc: fTresc || null,
       data_aktywnosci: fData || new Date().toISOString(),
       data_planowana: fDataPlan || null, status: fStatus, priorytet: fPriorytet,
-      kontakt_id: fKontaktId || null, inwestycja_id: fInwId || null,
+      kontakt_id: fKontaktId || null, wydarzenie_id: fInwId || null,
     }
     if (editItem) await supabase.from('crm_aktywnosci').update(payload).eq('id', editItem.id)
     else await supabase.from('crm_aktywnosci').insert(payload)
@@ -189,7 +189,7 @@ export default function CrmPage() {
       klient_id: selectedKlient.id,
       tytul: fZTytul, opis: fZOpis || null,
       termin: fZTermin || null, status: fZStatus, priorytet: fZPriorytet,
-      kontakt_id: fZKontakt || null, inwestycja_id: fZInw || null,
+      kontakt_id: fZKontakt || null, wydarzenie_id: fZInw || null,
     }
     if (editItem) await supabase.from('crm_zadania').update(payload).eq('id', editItem.id)
     else await supabase.from('crm_zadania').insert(payload)
@@ -429,7 +429,7 @@ export default function CrmPage() {
                             <span className={`px-2 py-0.5 rounded-full ${TYPY[a.typ as keyof typeof TYPY]?.bg}`}>{TYPY[a.typ as keyof typeof TYPY]?.l}</span>
                             <span>{new Date(a.data_aktywnosci).toLocaleString('pl-PL')}</span>
                             {a.kontakty && <span>👤 {a.kontakty.imie} {a.kontakty.nazwisko}</span>}
-                            {a.inwestycje && <span>🏗 {a.inwestycje.nazwa}</span>}
+                            {a.wydarzenia && <span>🎉 {a.wydarzenia.nazwa}</span>}
                             {a.kierunek && <span className="text-gray-400">{a.kierunek === 'przychodzacy' ? '↓ przych.' : a.kierunek === 'wychodzacy' ? '↑ wych.' : '↔ wewn.'}</span>}
                           </div>
                         </div>
@@ -469,7 +469,7 @@ export default function CrmPage() {
                               <span className={`px-2 py-0.5 rounded-full ${STATUS_ZAD[z.status as keyof typeof STATUS_ZAD]?.bg}`}>{STATUS_ZAD[z.status as keyof typeof STATUS_ZAD]?.l}</span>
                               {z.termin && <span className={przet ? 'text-red-600 font-medium' : 'text-gray-500'}>📅 {z.termin}{przet ? ' ⚠ PRZETERMINOWANE' : ''}</span>}
                               {z.kontakty && <span className="text-gray-500">👤 {z.kontakty.imie} {z.kontakty.nazwisko}</span>}
-                              {z.inwestycje && <span className="text-gray-500">🏗 {z.inwestycje.nazwa}</span>}
+                              {z.wydarzenia && <span className="text-gray-500">🎉 {z.wydarzenia.nazwa}</span>}
                             </div>
                           </div>
                         </div>
@@ -576,10 +576,10 @@ export default function CrmPage() {
                 </select>
               </div>
               <div>
-                <label className="text-xs text-gray-500 block mb-1">Inwestycja (opcjonalnie)</label>
+                <label className="text-xs text-gray-500 block mb-1">Wydarzenie (opcjonalnie)</label>
                 <select value={fInwId} onChange={e => setFInwId(e.target.value)} className={inp}>
                   <option value="">— brak —</option>
-                  {inwestycje.filter(i => !selectedKlient || i.klient_id === selectedKlient.id || !i.klient_id).map(i => <option key={i.id} value={i.id}>{i.nazwa}</option>)}
+                  {wydarzeniaLista.filter(i => !selectedKlient || i.klient_id === selectedKlient.id || !i.klient_id).map(i => <option key={i.id} value={i.id}>{i.nazwa}</option>)}
                 </select>
               </div>
               <div>
@@ -644,10 +644,10 @@ export default function CrmPage() {
                 </select>
               </div>
               <div>
-                <label className="text-xs text-gray-500 block mb-1">Inwestycja</label>
+                <label className="text-xs text-gray-500 block mb-1">Wydarzenie</label>
                 <select value={fZInw} onChange={e => setFZInw(e.target.value)} className={inp}>
                   <option value="">— brak —</option>
-                  {inwestycje.map(i => <option key={i.id} value={i.id}>{i.nazwa}</option>)}
+                  {wydarzeniaLista.map(i => <option key={i.id} value={i.id}>{i.nazwa}</option>)}
                 </select>
               </div>
             </div>
@@ -675,7 +675,7 @@ export default function CrmPage() {
                 <div><label className="text-xs text-gray-500 block mb-1">Imię *</label><input value={fKImie} onChange={e => setFKImie(e.target.value)} className={inp} /></div>
                 <div><label className="text-xs text-gray-500 block mb-1">Nazwisko *</label><input value={fKNazwisko} onChange={e => setFKNazwisko(e.target.value)} className={inp} /></div>
               </div>
-              <div><label className="text-xs text-gray-500 block mb-1">Stanowisko</label><input value={fKStanowisko} onChange={e => setFKStanowisko(e.target.value)} placeholder="np. Kierownik projektu" className={inp} /></div>
+              <div><label className="text-xs text-gray-500 block mb-1">Stanowisko</label><input value={fKStanowisko} onChange={e => setFKStanowisko(e.target.value)} placeholder="np. Event manager" className={inp} /></div>
               <div><label className="text-xs text-gray-500 block mb-1">Telefon</label><input type="tel" value={fKTelefon} onChange={e => setFKTelefon(e.target.value)} className={inp} /></div>
               <div><label className="text-xs text-gray-500 block mb-1">Email</label><input type="email" value={fKEmail} onChange={e => setFKEmail(e.target.value)} className={inp} /></div>
               <div><label className="text-xs text-gray-500 block mb-1">Notatki</label><textarea value={fKNotatki} onChange={e => setFKNotatki(e.target.value)} rows={2} className={inp + ' resize-none'} /></div>

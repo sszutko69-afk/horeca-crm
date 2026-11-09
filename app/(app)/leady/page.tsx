@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase'
 // ================================================================
 // TYPY
 // ================================================================
-type Produkt = { id:string; nazwa:string; kategoria:'inwestycja'|'dostawa'|'inne' }
+type Produkt = { id:string; nazwa:string; kategoria:'wydarzenie'|'catering'|'inne' }
 type Lead = {
   id:string; numer:string; tytul:string
   klient_id:string|null; klient_nazwa:string|null; klient_kontakt:string|null
@@ -18,7 +18,7 @@ type Lead = {
   klient_lat:number|null; klient_lng:number|null
   data_pierwszego_kontaktu:string|null; data_planowanego_zamkniecia:string|null
   przypisany_do:string|null; notatki:string|null
-  inwestycja_id:string|null; zamowienie_id:string|null
+  wydarzenie_id:string|null; zamowienie_id:string|null
   created_at:string
 }
 type Historia = {
@@ -39,8 +39,8 @@ const ETAPY_DOMYSLNE = [
   'Realizacja',
 ]
 
-// Uproszczone etapy dla dostaw gazu
-const ETAPY_DOSTAWA = [
+// Uproszczone etapy dla cateringu i dostaw
+const ETAPY_CATERING = [
   'Kontakt',
   'Oferta',
   'Zamówienie',
@@ -50,10 +50,10 @@ const ETAPY_DOSTAWA = [
 // Zwraca efektywną listę etapów dla danego leadu
 function leadEtapy(lead:{etapy_custom?:string[]|null; produkt?:Produkt|null}):string[] {
   if(lead.etapy_custom&&lead.etapy_custom.length) return lead.etapy_custom
-  if(lead.produkt?.kategoria==='dostawa') return ETAPY_DOSTAWA
+  if(lead.produkt?.kategoria==='catering') return ETAPY_CATERING
   return ETAPY_DOMYSLNE
 }
-function isDostawa(lead:{produkt?:Produkt|null}):boolean { return lead.produkt?.kategoria==='dostawa' }
+function isDostawa(lead:{produkt?:Produkt|null}):boolean { return lead.produkt?.kategoria==='catering' }
 function isLastStage(lead:{etap:string; etapy_custom?:string[]|null; produkt?:Produkt|null}):boolean {
   const e=leadEtapy(lead); return lead.etap===e[e.length-1]
 }
@@ -136,12 +136,12 @@ const STATUS_LABEL: Record<string,string> = {
 }
 
 const KAT_BADGE: Record<string,string> = {
-  inwestycja: 'bg-purple-50 text-purple-700',
-  dostawa:    'bg-cyan-50 text-cyan-700',
+  wydarzenie: 'bg-purple-50 text-purple-700',
+  catering:    'bg-cyan-50 text-cyan-700',
   inne:       'bg-gray-100 text-gray-600',
 }
 const KAT_LABEL: Record<string,string> = {
-  inwestycja:'Inwestycja', dostawa:'Dostawa', inne:'Inne'
+  wydarzenie:'Wydarzenie', catering:'Catering', inne:'Inne'
 }
 const WYNIK_BADGE: Record<string,string> = {
   pozytywny: 'bg-green-100 text-green-700',
@@ -321,20 +321,20 @@ export default function LeadyPage() {
     setDokumenty(prev=>prev.filter(d=>d.id!==docId))
   }
 
-  // ── Konwersja do Inwestycja / Zamówienie ──────────────────
-  async function konwertujDoInwestycji(lead:Lead){
-    if(!confirm('Przekazać lead do modułu Inwestycje? Zostanie utworzona nowa inwestycja.')) return
-    const {data:inv} = await supabase.from('inwestycje').insert({
+  // ── Konwersja do Wydarzenia / Zamówienia ──────────────────
+  async function konwertujDoWydarzenia(lead:Lead){
+    if(!confirm('Przekazać lead do modułu Wydarzenia? Zostanie utworzone nowe wydarzenie (np. bankiet, wesele).')) return
+    const {data:inv} = await supabase.from('wydarzenia').insert({
       nazwa: lead.tytul,
-      typ: 'inne',
+      typ: 'bankiet',
       opis: `Lead: ${lead.numer} — ${lead.klient_nazwa??''}`,
-      status:'planowana',
+      status:'zapytanie', klient_id: lead.klient_id,
     }).select().single()
     if(inv){
-      await supabase.from('crm_leady').update({inwestycja_id:inv.id, status:'wygrany', updated_at:new Date().toISOString()}).eq('id',lead.id)
-      setLeady(prev=>prev.map(l=>l.id===lead.id?{...l,inwestycja_id:inv.id,status:'wygrany'}:l))
-      if(openLead?.id===lead.id) setOpenLead(l=>l?{...l,inwestycja_id:inv.id,status:'wygrany'}:l)
-      showMsg('Inwestycja utworzona! Przejdź do modułu Inwestycje.')
+      await supabase.from('crm_leady').update({wydarzenie_id:inv.id, status:'wygrany', updated_at:new Date().toISOString()}).eq('id',lead.id)
+      setLeady(prev=>prev.map(l=>l.id===lead.id?{...l,wydarzenie_id:inv.id,status:'wygrany'}:l))
+      if(openLead?.id===lead.id) setOpenLead(l=>l?{...l,wydarzenie_id:inv.id,status:'wygrany'}:l)
+      showMsg('Wydarzenie utworzone! Widoczne w Planie pracy i CRM.')
     }
   }
 
@@ -351,7 +351,7 @@ export default function LeadyPage() {
       klient_lat: lead.klient_lat, klient_lng: lead.klient_lng,
       produkt: lead.produkt?.nazwa??'',
       ilosc: lead.ilosc ?? 1,
-      jednostka: lead.jednostka ?? 'l',
+      jednostka: lead.jednostka ?? 'porcja',
       cena_brutto: cenaBrutto,
       cena_netto: cenaBrutto ? Math.round((cenaBrutto/1.23)*100)/100 : null,
       status:'nowe',
@@ -393,7 +393,7 @@ export default function LeadyPage() {
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
           <h1 className="text-xl font-medium text-gray-900">Leady CRM</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Pipeline sprzedaży · Klienci potencjalni · Konwersja do inwestycji i zamówień</p>
+          <p className="text-sm text-gray-500 mt-0.5">Pipeline sprzedaży · Klienci potencjalni · Konwersja do wydarzeń i zamówień</p>
         </div>
         <button onClick={()=>{setEditLead(null);setShowForm(true)}}
           className="text-sm bg-gray-900 text-white rounded-lg px-4 py-2 hover:bg-gray-700">
@@ -441,8 +441,8 @@ export default function LeadyPage() {
         </select>
         <select value={filterEtap} onChange={e=>setFilterEtap(e.target.value)} className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white">
           <option value="">Wszystkie etapy</option>
-          <optgroup label="🏗 Inwestycje / inne">{ETAPY_DOMYSLNE.map(e=><option key={e} value={e}>{e}</option>)}</optgroup>
-          <optgroup label="🚛 Dostawy gazu">{ETAPY_DOSTAWA.map(e=><option key={e} value={e}>{e}</option>)}</optgroup>
+          <optgroup label="🎉 Wydarzenia / inne">{ETAPY_DOMYSLNE.map(e=><option key={e} value={e}>{e}</option>)}</optgroup>
+          <optgroup label="🍽 Catering i dostawy">{ETAPY_CATERING.map(e=><option key={e} value={e}>{e}</option>)}</optgroup>
         </select>
         {(search||filterStatus||filterKat||filterEtap)&&(
           <button onClick={()=>{setSearch('');setFilterStatus('');setFilterKat('');setFilterEtap('')}}
@@ -476,7 +476,7 @@ export default function LeadyPage() {
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_BADGE[lead.status]}`}>{STATUS_LABEL[lead.status]}</span>
                         {kat&&<span className={`text-xs px-2 py-0.5 rounded-full font-medium ${KAT_BADGE[kat]}`}>{KAT_LABEL[kat]}</span>}
                         <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${ETAP_KOLOR[lead.etap]??'bg-gray-100 text-gray-600 border-gray-200'}`}>{lead.etap}</span>
-                        {lead.inwestycja_id&&<span className="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full">→ Inwestycja</span>}
+                        {lead.wydarzenie_id&&<span className="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full">→ Wydarzenie</span>}
                         {lead.zamowienie_id&&<span className="text-xs bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded-full">→ Zamówienie</span>}
                       </div>
                       <p className="font-semibold text-gray-900 text-sm mb-0.5">{lead.tytul}</p>
@@ -514,7 +514,7 @@ export default function LeadyPage() {
           <div className="flex gap-3 min-w-max">
             {(() => {
               // Kolumny = unia etapów występujących + domyślne, zachowując kolejność
-              const wszystkie = [...ETAPY_DOMYSLNE, ...ETAPY_DOSTAWA]
+              const wszystkie = [...ETAPY_DOMYSLNE, ...ETAPY_CATERING]
               const obecne = Array.from(new Set(filtered.map(l=>l.etap)))
               const kolumny = wszystkie.filter(e=>obecne.includes(e))
               // Dodaj nietypowe etapy (custom) na koniec
@@ -635,17 +635,17 @@ export default function LeadyPage() {
               </div>
 
               {/* Konwersja do modułu */}
-              {isLastStage(openLead)&&!openLead.inwestycja_id&&!openLead.zamowienie_id&&(
+              {isLastStage(openLead)&&!openLead.wydarzenie_id&&!openLead.zamowienie_id&&(
                 <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-xl">
                   <p className="text-xs font-semibold text-green-800 mb-2">🎯 Lead w fazie końcowej — przenieś do modułu:</p>
                   <div className="flex gap-2">
-                    {openLead.produkt?.kategoria==='inwestycja'&&(
-                      <button onClick={()=>konwertujDoInwestycji(openLead)}
+                    {openLead.produkt?.kategoria==='wydarzenie'&&(
+                      <button onClick={()=>konwertujDoWydarzenia(openLead)}
                         className="text-xs px-3 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
-                        🏗 → Inwestycja
+                        🎉 → Wydarzenie
                       </button>
                     )}
-                    {openLead.produkt?.kategoria==='dostawa'&&(
+                    {openLead.produkt?.kategoria==='catering'&&(
                       <button onClick={()=>konwertujDoZamowienia(openLead)}
                         className="text-xs px-3 py-1.5 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700">
                         📦 → Zamówienie
@@ -653,9 +653,9 @@ export default function LeadyPage() {
                     )}
                     {openLead.produkt?.kategoria==='inne'&&(
                       <>
-                        <button onClick={()=>konwertujDoInwestycji(openLead)}
+                        <button onClick={()=>konwertujDoWydarzenia(openLead)}
                           className="text-xs px-3 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
-                          🏗 → Inwestycja
+                          🎉 → Wydarzenie
                         </button>
                         <button onClick={()=>konwertujDoZamowienia(openLead)}
                           className="text-xs px-3 py-1.5 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700">
@@ -666,9 +666,9 @@ export default function LeadyPage() {
                   </div>
                 </div>
               )}
-              {openLead.inwestycja_id&&(
+              {openLead.wydarzenie_id&&(
                 <div className="mt-2 text-xs text-purple-700 bg-purple-50 px-3 py-2 rounded-lg">
-                  ✓ Przekazano do modułu <a href="/inwestycje" className="underline font-medium">Inwestycje</a>
+                  ✓ Przekazano do modułu <a href="/crm" className="underline font-medium">CRM (Wydarzenia)</a>
                 </div>
               )}
               {openLead.zamowienie_id&&(
@@ -719,7 +719,7 @@ export default function LeadyPage() {
                         ['Kategoria',       openLead.produkt?.kategoria ? KAT_LABEL[openLead.produkt.kategoria] : null],
                         ...(isDostawa(openLead) ? [
                           ['Cena jedn. brutto', openLead.cena_jednostkowa ? fmt(openLead.cena_jednostkowa)+' zł' : null],
-                          ['Ilość',             openLead.ilosc ? `${openLead.ilosc} ${openLead.jednostka??'l'}` : null],
+                          ['Ilość',             openLead.ilosc ? `${openLead.ilosc} ${openLead.jednostka??'porcja'}` : null],
                           ['Wartość brutto',    openLead.wartosc_szacunkowa ? fmt(openLead.wartosc_szacunkowa)+' zł' : null],
                         ] : [
                           ['Wartość szac.',   openLead.wartosc_szacunkowa ? fmt(openLead.wartosc_szacunkowa)+' '+openLead.waluta : null],
@@ -877,7 +877,7 @@ function LeadForm({lead,produkty,klienci,pracownicy,saving,onSave,onClose}:{
     prawdopodobienstwo:lead?.prawdopodobienstwo?.toString()??'50',
     cena_jednostkowa:  lead?.cena_jednostkowa?.toString()??'',
     ilosc:             lead?.ilosc?.toString()??'',
-    jednostka:         lead?.jednostka??'l',
+    jednostka:         lead?.jednostka??'porcja',
     data_planowanego_zamkniecia: lead?.data_planowanego_zamkniecia??'',
     przypisany_do:     lead?.przypisany_do??'',
     notatki:           lead?.notatki??'',
@@ -890,8 +890,8 @@ function LeadForm({lead,produkty,klienci,pracownicy,saving,onSave,onClose}:{
 
   // Aktualnie wybrany produkt i jego kategoria
   const selProdukt = produkty.find(p=>p.id===form.produkt_id)
-  const dostawa = selProdukt?.kategoria==='dostawa'
-  const etapyDlaProduktu = dostawa ? ETAPY_DOSTAWA : ETAPY_DOMYSLNE
+  const dostawa = selProdukt?.kategoria==='catering'
+  const etapyDlaProduktu = dostawa ? ETAPY_CATERING : ETAPY_DOMYSLNE
 
   // Wartość zamówienia (brutto) = cena jednostkowa × ilość
   const wartoscBrutto = dostawa && form.cena_jednostkowa && form.ilosc
@@ -907,7 +907,7 @@ function LeadForm({lead,produkty,klienci,pracownicy,saving,onSave,onClose}:{
   function handleProduktChange(e:React.ChangeEvent<HTMLSelectElement>){
     const id = e.target.value
     const p = produkty.find(x=>x.id===id)
-    const noweEtapy = p?.kategoria==='dostawa' ? ETAPY_DOSTAWA : ETAPY_DOMYSLNE
+    const noweEtapy = p?.kategoria==='catering' ? ETAPY_CATERING : ETAPY_DOMYSLNE
     setForm(f=>({...f, produkt_id:id, etap: noweEtapy.includes(f.etap)?f.etap:noweEtapy[0]}))
   }
 
@@ -941,7 +941,7 @@ function LeadForm({lead,produkty,klienci,pracownicy,saving,onSave,onClose}:{
       klient_adres: form.klient_adres, klient_nip: form.klient_nip,
       produkt_id: form.produkt_id||null,
       etap: form.etap, status: form.status,
-      // dla dostaw: wartość = cena × ilość; dla reszty: wartość ręczna
+      // dla cateringu: wartość = cena × ilość; dla reszty: wartość ręczna
       wartosc_szacunkowa: dostawa ? (wartoscBrutto||null) : (form.wartosc_szacunkowa?parseFloat(form.wartosc_szacunkowa):null),
       prawdopodobienstwo: dostawa ? 100 : (parseInt(form.prawdopodobienstwo)||50),
       cena_jednostkowa: dostawa&&form.cena_jednostkowa ? parseFloat(form.cena_jednostkowa) : null,
@@ -964,7 +964,7 @@ function LeadForm({lead,produkty,klienci,pracownicy,saving,onSave,onClose}:{
             <div className="col-span-2">
               <label className={lbl}>Tytuł leadu *</label>
               <input value={form.tytul} onChange={e=>setForm(f=>({...f,tytul:e.target.value}))} required
-                placeholder="np. Budowa gazociągu — Kowalski" className={inp}/>
+                placeholder="np. Wesele — rodzina Kowalskich" className={inp}/>
             </div>
 
             <div className="col-span-2">
@@ -1026,30 +1026,30 @@ function LeadForm({lead,produkty,klienci,pracownicy,saving,onSave,onClose}:{
               <label className={lbl}>Produkt / Usługa *</label>
               <select value={form.produkt_id} onChange={handleProduktChange} className={inp} required>
                 <option value="">— Wybierz —</option>
-                {['inwestycja','dostawa','inne'].map(kat=>(
-                  <optgroup key={kat} label={kat==='inwestycja'?'🏗 Inwestycje':kat==='dostawa'?'🚛 Dostawy gazu':'📋 Inne'}>
+                {['wydarzenie','catering','inne'].map(kat=>(
+                  <optgroup key={kat} label={kat==='wydarzenie'?'🎉 Wydarzenia':kat==='catering'?'🍽 Catering i dostawy':'📋 Inne'}>
                     {produkty.filter(p=>p.kategoria===kat).map(p=><option key={p.id} value={p.id}>{p.nazwa}</option>)}
                   </optgroup>
                 ))}
               </select>
             </div>
 
-            {/* ── POLA SPECYFICZNE DLA DOSTAWY GAZU ── */}
+            {/* ── POLA SPECYFICZNE DLA CATERINGU ── */}
             {dostawa ? (
               <>
                 <div>
-                  <label className={lbl}>Cena jednostkowa BRUTTO [zł]</label>
+                  <label className={lbl}>Cena za porcję BRUTTO [zł]</label>
                   <input type="number" min="0" step="0.01" value={form.cena_jednostkowa}
-                    onChange={e=>setForm(f=>({...f,cena_jednostkowa:e.target.value}))} placeholder="np. 3.50" className={inp}/>
+                    onChange={e=>setForm(f=>({...f,cena_jednostkowa:e.target.value}))} placeholder="np. 85.00" className={inp}/>
                 </div>
                 <div>
-                  <label className={lbl}>Ilość gazu</label>
+                  <label className={lbl}>Ilość (porcje / osoby)</label>
                   <div className="flex gap-2">
                     <input type="number" min="0" step="0.01" value={form.ilosc}
-                      onChange={e=>setForm(f=>({...f,ilosc:e.target.value}))} placeholder="np. 2700" className={inp}/>
+                      onChange={e=>setForm(f=>({...f,ilosc:e.target.value}))} placeholder="np. 80" className={inp}/>
                     <select value={form.jednostka} onChange={e=>setForm(f=>({...f,jednostka:e.target.value}))}
                       className="px-2 py-2 border border-gray-200 rounded-lg text-sm bg-white shrink-0">
-                      {['l','kg','m³'].map(j=><option key={j} value={j}>{j}</option>)}
+                      {['porcja','os.','szt.','kg'].map(j=><option key={j} value={j}>{j}</option>)}
                     </select>
                   </div>
                 </div>

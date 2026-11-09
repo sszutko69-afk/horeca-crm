@@ -398,7 +398,7 @@ export default function InFaktPage() {
         <div className="mt-5 p-3 bg-blue-50 rounded-xl text-xs text-blue-700 space-y-1">
           <p className="font-semibold">API systemu księgowego — dostępne dane:</p>
           <p>• Faktury przychodowe (lista, filtrowanie po datach)</p>
-          <p>• Klienci — z możliwością importu do GazCRM</p>
+          <p>• Klienci — z możliwością importu do HoReCa CRM</p>
           <p>• Faktury kosztowe</p>
           <p>• Produkty i usługi cennikowe</p>
           <p>• Przychody miesięczne do modułu Budżet</p>
@@ -535,7 +535,7 @@ export default function InFaktPage() {
                 {loading?'⏳':'🔍 Pobierz'}</button>
               {klienci.length>0&&(
                 <button onClick={importKlientow} disabled={loading} className="px-4 py-2 bg-emerald-600 text-white text-sm rounded-lg hover:bg-emerald-700 disabled:opacity-50">
-                  📥 Importuj do GazCRM</button>
+                  📥 Importuj do HoReCa CRM</button>
               )}
             </div>
             {klienci.length>0&&(

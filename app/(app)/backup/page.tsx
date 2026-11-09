@@ -21,7 +21,7 @@ export default function BackupPage() {
         const url = URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
-        a.download = `gazcrm-backup-${new Date().toISOString().split('T')[0]}.json`
+        a.download = `horeca-crm-backup-${new Date().toISOString().split('T')[0]}.json`
         document.body.appendChild(a)
         a.click()
         document.body.removeChild(a)
@@ -37,7 +37,7 @@ export default function BackupPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-medium text-gray-900">Archiwizacja danych</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Backup bazy danych GazCRM do pliku JSON</p>
+          <p className="text-sm text-gray-500 mt-0.5">Backup bazy danych HoReCa CRM do pliku JSON</p>
         </div>
         <button onClick={runBackup} disabled={loading}
           className="text-sm bg-gray-900 text-white rounded-lg px-4 py-1.5 hover:bg-gray-700 transition-colors disabled:opacity-50">
@@ -48,7 +48,7 @@ export default function BackupPage() {
       <div className="bg-white border border-gray-200 rounded-xl p-5 mb-6">
         <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-4">Co jest archiwizowane</h2>
         <div className="grid grid-cols-2 gap-2">
-          {['Klienci','Zakupy gazu (EDD)','Sprzedaż','Inwestycje i etapy','Trasy cysterny','Profile użytkowników'].map(t => (
+          {['Klienci i goście','Sprzedaż (faktury)','Zakupy od dostawców','Zamówienia','Pracownicy i kadry','Plan pracy i czas pracy','Płace','Wydarzenia i imprezy','Leady i zadania CRM','Budżet','Dane firmy','Profile użytkowników'].map(t => (
             <div key={t} className="flex items-center gap-2 text-sm text-gray-600">
               <span className="text-green-500 text-xs">✓</span>{t}
             </div>

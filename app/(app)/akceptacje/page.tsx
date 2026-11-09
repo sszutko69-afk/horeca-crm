@@ -80,9 +80,8 @@ export default function AkceptacjePage() {
   const pobierzZTabeli = useCallback(async (m: Modul, tylkoMoje: boolean, uid: string) => {
     const select =
       m.tabela === 'czas_pracy' ? 'id,data,godziny,rodzaj,opis,stan_akceptacji,akceptacja_uwagi,zglosil_id,created_at,pracownicy(imie,nazwisko)'
-      : m.tabela === 'inwestycje' ? 'id,nazwa,typ,lokalizacja,budzet,stan_akceptacji,akceptacja_uwagi,zglosil_id,created_at'
-      : m.tabela === 'dostawy'    ? 'id,data_planowana,adres_dostawy,ilosc_litry_plan,stan_akceptacji,akceptacja_uwagi,zglosil_id,created_at'
-      :                             'id,klient_nazwa,ilosc_litry,status,stan_akceptacji,akceptacja_uwagi,zglosil_id,created_at'
+      : m.tabela === 'wydarzenia' ? 'id,nazwa,typ,miejsce,budzet,stan_akceptacji,akceptacja_uwagi,zglosil_id,created_at'
+      :                             'id,klient_nazwa,produkt,ilosc,jednostka,status,stan_akceptacji,akceptacja_uwagi,zglosil_id,created_at'
 
     // Nazwa tabeli jest tu zmienną, a nie literałem, więc typy generowane przez
     // Supabase rozwijają się w unię wszystkich tabel i TypeScript to odrzuca.
@@ -101,16 +100,13 @@ export default function AkceptacjePage() {
         const prac = r.pracownicy ? `${r.pracownicy.imie ?? ''} ${r.pracownicy.nazwisko ?? ''}`.trim() : ''
         opis = `${fmtData(r.data)} — ${r.godziny ?? '?'} h`
         szczegol = [prac, r.rodzaj, r.opis].filter(Boolean).join(' · ')
-      } else if (m.tabela === 'inwestycje') {
-        opis = r.nazwa ?? 'Inwestycja'
-        szczegol = [r.typ, r.lokalizacja, r.budzet ? `budżet ${Number(r.budzet).toLocaleString('pl-PL')} zł` : null]
+      } else if (m.tabela === 'wydarzenia') {
+        opis = r.nazwa ?? 'Wydarzenie'
+        szczegol = [r.typ, r.miejsce, r.budzet ? `budżet ${Number(r.budzet).toLocaleString('pl-PL')} zł` : null]
           .filter(Boolean).join(' · ')
-      } else if (m.tabela === 'dostawy') {
-        opis = `Dostawa na ${fmtData(r.data_planowana)}`
-        szczegol = [r.adres_dostawy, r.ilosc_litry_plan ? `${r.ilosc_litry_plan} l` : null].filter(Boolean).join(' · ')
       } else {
         opis = `Zamówienie — ${r.klient_nazwa ?? '—'}`
-        szczegol = [r.ilosc_litry ? `${r.ilosc_litry} l` : null, r.status].filter(Boolean).join(' · ')
+        szczegol = [r.produkt, r.ilosc ? `${r.ilosc} ${r.jednostka ?? ''}`.trim() : null, r.status].filter(Boolean).join(' · ')
       }
       return {
         modul: m.modul, etykieta: m.etykieta, id: r.id, opis, szczegol,

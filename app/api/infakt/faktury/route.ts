@@ -279,7 +279,7 @@ export async function GET(req: NextRequest) {
 }
 
 // ─── POST — utwórz fakturę VAT w inFakt ──────────────────────────────────────
-// Body: { klient_nazwa, klient_nip?, klient_typ, data, ilosc_litry, cena_sprzedazy_brutto, forma_platnosci, nr_edd }
+// Body: { klient_nazwa, klient_nip?, klient_typ, data, opis_uslugi, ilosc?, jednostka?, cena_brutto, forma_platnosci, uwagi? }
 export async function POST(req: NextRequest) {
   const key = getKey(req)
   if (!key) return NextResponse.json({ error: 'Brak klucza API inFakt (INFAKT_API_KEY)' }, { status: 401 })
@@ -289,19 +289,19 @@ export async function POST(req: NextRequest) {
 
   const {
     klient_nazwa, klient_nip, klient_typ,
-    data, ilosc_litry, cena_sprzedazy_brutto,
-    forma_platnosci, nr_edd,
+    data, opis_uslugi, ilosc = 1, jednostka = 'szt', cena_brutto,
+    forma_platnosci, uwagi,
     termin_dni = 14,
   } = body
 
-  if (!klient_nazwa || !data || !ilosc_litry || !cena_sprzedazy_brutto) {
-    return NextResponse.json({ error: 'Brak wymaganych pól: klient_nazwa, data, ilosc_litry, cena_sprzedazy_brutto' }, { status: 400 })
+  if (!klient_nazwa || !data || !opis_uslugi || !cena_brutto) {
+    return NextResponse.json({ error: 'Brak wymaganych pól: klient_nazwa, data, opis_uslugi, cena_brutto' }, { status: 400 })
   }
 
-  // Przelicz cenę: cena_sprzedazy_brutto → cena netto per litr
-  const cenaNetto = Number((cena_sprzedazy_brutto / 1.23).toFixed(6))
+  // Przelicz cenę: cena_brutto → cena netto za jednostkę (8% VAT na gastronomię nie jest zakładany — 23%)
+  const cenaNetto = Number((cena_brutto / 1.23).toFixed(6))
   const unitNetPriceGrosze = Math.round(cenaNetto * 100)   // grosze!
-  const iloscLitry = Number(Number(ilosc_litry).toFixed(3))
+  const iloscPozycji = Number(Number(ilosc).toFixed(3))
 
   // Termin płatności
   const dataTerMin = new Date(data)
@@ -321,15 +321,14 @@ export async function POST(req: NextRequest) {
       sell_date: data,
       payment_method: paymentMethod,
       payment_date: paymentDate,
-      notes: nr_edd ? `Dokument EDD: ${nr_edd}` : undefined,
+      notes: uwagi || undefined,
       services: [
         {
-          name: `Gaz propan-butan LPG${nr_edd ? ` (EDD ${nr_edd.slice(-10)})` : ''}`,
-          count: iloscLitry,
-          unit: 'l',
+          name: String(opis_uslugi),
+          count: iloscPozycji,
+          unit: jednostka,
           unit_net_price: unitNetPriceGrosze,
           tax_symbol: '23',
-          pkwiu: '19.20.29.0',  // PKWIU dla LPG
         },
       ],
     },

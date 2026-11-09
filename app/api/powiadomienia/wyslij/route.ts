@@ -14,9 +14,9 @@ import { serviceClient, getToken, getOwnerUserId } from '@/lib/przetargi-mail'
 
 export const maxDuration = 60
 
-const SECRET      = process.env.PRZETARGI_MAIL_SECRET ?? 'gazcrm2025'
+const SECRET      = process.env.PRZETARGI_MAIL_SECRET ?? 'horeca2026'
 const OPOZNIENIE  = Number(process.env.POWIADOMIENIA_OPOZNIENIE_MIN ?? 10)
-const APP_URL     = process.env.NEXT_PUBLIC_APP_URL ?? 'https://gazcrm.vercel.app'
+const APP_URL     = process.env.NEXT_PUBLIC_APP_URL ?? 'https://horeca-crm.vercel.app'
 
 function escapeHtml(s: string) {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
 
     const html = `
 <div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;padding:24px">
-  <p style="margin:0 0 4px 0;font-size:13px;color:#5A6472">GazCRM</p>
+  <p style="margin:0 0 4px 0;font-size:13px;color:#5A6472">HoReCa CRM</p>
   <h1 style="margin:0 0 16px 0;font-size:20px;color:#14171C">
     ${moje.length === 1 ? 'Jedna pozycja czeka na Ciebie' : `${moje.length} pozycji czeka na Ciebie`}
   </h1>
@@ -128,7 +128,7 @@ export async function POST(req: NextRequest) {
 
     try {
       await wyslijMail(token, mail,
-        moje.length === 1 ? moje[0].tytul : `GazCRM — ${moje.length} pozycji do przejrzenia`,
+        moje.length === 1 ? moje[0].tytul : `HoReCa CRM — ${moje.length} pozycji do przejrzenia`,
         html)
 
       await supabase.from('powiadomienia')

@@ -106,7 +106,6 @@ export default function GooglePage() {
   const [composeBody, setComposeBody] = useState('')
   const [sending, setSending] = useState(false)
   const [sendOk, setSendOk] = useState('')
-  const [importMsg, setImportMsg] = useState('')
 
   // Init
   const [googleError, setGoogleError] = useState<string|null>(null)
@@ -284,31 +283,6 @@ export default function GooglePage() {
     setSending(false)
   }
 
-  // Importuj mail jako przetargi
-  async function importujJakoPrzetarg(m: GmailMsg) {
-    if (!m.payload) { setImportMsg('Brak treści maila'); return }
-    const headers = m.payload.headers
-    const subject = getHeader(headers,'Subject')
-    const from = getHeader(headers,'From')
-    let body = ''
-    if (m.payload.parts) {
-      const txt = m.payload.parts.find(p=>p.mimeType==='text/plain')
-      const html = m.payload.parts.find(p=>p.mimeType==='text/html')
-      body = txt?.body?.data ? decodeB64(txt.body.data) : html?.body?.data ? decodeB64(html.body.data).replace(/<[^>]+>/g,' ') : ''
-    } else if (m.payload.body?.data) {
-      body = decodeB64(m.payload.body.data)
-    }
-
-    const r = await fetch('https://uonrijvmqelsgoclfnqh.supabase.co/functions/v1/email-przetargi', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ subject, from, text: body }),
-    })
-    const j = await r.json()
-    setImportMsg(j.dodano > 0 ? `✓ Dodano ${j.dodano} przetarg(i) do modułu Przetargi` : j.duplikaty > 0 ? 'Przetarg już istnieje w systemie' : 'Nie rozpoznano przetargu w tym mailu')
-    setTimeout(()=>setImportMsg(''), 5000)
-  }
-
   // Zaznacz wszystkie / odznacz
   const toggleSelEvent = (id:string) => setSelEvents(prev=>{ const s=new Set(prev); s.has(id)?s.delete(id):s.add(id); return s })
   const toggleSelTask  = (id:string) => setSelTasks(prev=>{ const s=new Set(prev); s.has(id)?s.delete(id):s.add(id); return s })
@@ -328,8 +302,8 @@ export default function GooglePage() {
         <ul className="text-xs text-gray-400 mb-6 space-y-1.5 text-left bg-gray-50 rounded-xl p-4">
           <li>📅 Google Calendar — przeglądaj, dodawaj, usuwaj, checkboxy</li>
           <li>✅ Google Tasks — zarządzaj zadaniami, oznaczaj ukończone</li>
-          <li>✉ Gmail — czytaj, wysyłaj, importuj przetargi z maili</li>
-          <li>📥 Maile zbiorcze ORLEN → osobne przetargi automatycznie</li>
+          <li>✉ Gmail — czytaj, wysyłaj, zamieniaj zapytania ofertowe w leady</li>
+          <li>🍽 Zapytania o rezerwacje i catering — w jednym miejscu</li>
         </ul>
         {googleError && (
           <div className="mb-4 text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-left">
@@ -392,7 +366,6 @@ export default function GooglePage() {
 
       <div className="p-6 w-full">
         {sendOk  && <div className="mb-4 bg-green-50 border border-green-200 text-green-700 text-sm px-4 py-3 rounded-xl">✓ {sendOk}</div>}
-        {importMsg && <div className="mb-4 bg-blue-50 border border-blue-200 text-blue-700 text-sm px-4 py-3 rounded-xl">{importMsg}</div>}
 
         {/* ══════════════ KALENDARZ ══════════════ */}
         {tab==='calendar' && (

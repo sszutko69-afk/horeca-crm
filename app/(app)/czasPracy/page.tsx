@@ -7,7 +7,7 @@ const RODZAJE = {
   urlop:           { l:'Urlop',         bg:'bg-purple-100 text-purple-800', short:'U' },
   l4:              { l:'L4',            bg:'bg-red-100 text-red-800',     short:'L4' },
   szkolenie:       { l:'Szkolenie',     bg:'bg-yellow-100 text-yellow-800', short:'Sz' },
-  delegacja:       { l:'Delegacja',     bg:'bg-orange-100 text-orange-800', short:'D' },
+  delegacja:       { l:'Wyjazd cateringowy',     bg:'bg-orange-100 text-orange-800', short:'D' },
   swieto:          { l:'Święto',        bg:'bg-gray-100 text-gray-500',   short:'Św' },
   nieobecnosc_inna:{ l:'Nieobecność',   bg:'bg-gray-100 text-gray-600',   short:'N' },
   nadgodziny:      { l:'Nadgodziny',    bg:'bg-green-100 text-green-800', short:'NG' },
@@ -23,7 +23,7 @@ export default function CzasPracyPage() {
   const [miesiac, setMiesiac] = useState(now.getMonth()+1)
   const [viewMode, setViewMode] = useState<'miesiac'|'tydzien'|'dzien'|'roczny'|'lista_obecnosci'>('miesiac')
   const [pracownicy, setPracownicy] = useState<any[]>([])
-  const [inwestycje, setInwestycje] = useState<any[]>([])
+  const [wydarzenia, setWydarzenia] = useState<any[]>([])
   const [wpisy, setWpisy] = useState<any[]>([])
   const [wpisyRok, setWpisyRok] = useState<any[]>([])
   const [loadingRoczne, setLoadingRoczne] = useState(false)
@@ -108,7 +108,7 @@ export default function CzasPracyPage() {
     // Lista obecności pokazuje wyłącznie pozycje zatwierdzone.
     // Swoje oczekujące pracownik widzi w module Akceptacje → Moje zgłoszenia.
     const { data } = await supabase.from('czas_pracy')
-      .select('*,pracownicy(imie,nazwisko),inwestycje(nazwa)')
+      .select('*,pracownicy(imie,nazwisko),wydarzenia(nazwa)')
       .eq('stan_akceptacji', 'zaakceptowany')
       .gte('data', `${rok}-01-01`)
       .lte('data', `${rok}-12-31`)
@@ -125,11 +125,11 @@ export default function CzasPracyPage() {
     const dateDo = `${rok}-${String(miesiac).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`
     const [{data:pr},{data:inv},{data:wp}] = await Promise.all([
       supabase.from('pracownicy').select('id,imie,nazwisko,stanowisko,stawka_godzinowa,wynagrodzenie_brutto').eq('aktywny',true).order('nazwisko'),
-      supabase.from('inwestycje').select('id,nazwa').eq('stan_akceptacji','zaakceptowany').order('nazwa'),
-      supabase.from('czas_pracy').select('*,pracownicy(imie,nazwisko),inwestycje(nazwa)').eq('stan_akceptacji','zaakceptowany').gte('data',dateOd).lte('data',dateDo).order('data'),
+      supabase.from('wydarzenia').select('id,nazwa').order('nazwa'),
+      supabase.from('czas_pracy').select('*,pracownicy(imie,nazwisko),wydarzenia(nazwa)').eq('stan_akceptacji','zaakceptowany').gte('data',dateOd).lte('data',dateDo).order('data'),
     ])
     setPracownicy(pr??[])
-    setInwestycje(inv??[])
+    setWydarzenia(inv??[])
     setWpisy(wp??[])
     setLoading(false)
   }
@@ -154,8 +154,8 @@ export default function CzasPracyPage() {
   function sumKoszt(pracId:string):number{
     return wpisy.filter(w=>w.pracownik_id===pracId).reduce((a:number,w:any)=>a+(+w.koszt_calkowity||0),0)
   }
-  function sumKosztInwestycja(inwestycjaId:string):number{
-    return wpisy.filter(w=>w.inwestycja_id===inwestycjaId).reduce((a:number,w:any)=>a+(+w.koszt_calkowity||0),0)
+  function sumKosztWydarzenie(wydarzenieId:string):number{
+    return wpisy.filter(w=>w.wydarzenie_id===wydarzenieId).reduce((a:number,w:any)=>a+(+w.koszt_calkowity||0),0)
   }
   function sumUrlop(pracId:string){return wpisy.filter(w=>w.pracownik_id===pracId&&w.rodzaj==='urlop').length}
   function sumL4(pracId:string){return wpisy.filter(w=>w.pracownik_id===pracId&&w.rodzaj==='l4').length}
@@ -173,7 +173,7 @@ export default function CzasPracyPage() {
     setFPrac(w.pracownik_id); setFData(w.data)
     setFOd(w.godzina_od||'08:00'); setFDo(w.godzina_do||'16:00')
     setFRodzaj(w.rodzaj); setFGodziny(String(w.godziny))
-    setFInw(w.inwestycja_id||''); setFDelegacja(w.delegacja||false); setFDelegacjaStawka(String(w.delegacja_stawka||45)); setFOpis(w.opis||'')
+    setFInw(w.wydarzenie_id||''); setFDelegacja(w.delegacja||false); setFDelegacjaStawka(String(w.delegacja_stawka||45)); setFOpis(w.opis||'')
     setShowModal(true)
   }
 
@@ -192,7 +192,7 @@ export default function CzasPracyPage() {
       delegacja:fDelegacja,
       delegacja_stawka:parseFloat(fDelegacjaStawka)||45,
       koszt_calkowity:kosztCalkowity,
-      inwestycja_id:fInw||null,
+      wydarzenie_id:fInw||null,
       opis:fOpis,
     }
     let err: any = null
@@ -263,13 +263,13 @@ th{background:#f0f0f0;font-weight:bold}.name{text-align:left;min-width:120px}
   const totalGodziny = filtPrac.reduce((a,p)=>a+sumGodziny(p.id),0)
   const totalKoszt = filtPrac.reduce((a,p)=>a+sumKoszt(p.id),0)
 
-  // Koszty per inwestycja (z widocznych wpisów)
-  const kosztPerInwestycja = useMemo(() => {
+  // Koszty per wydarzenie (z widocznych wpisów)
+  const kosztPerWydarzenie = useMemo(() => {
     const map: Record<string, {nazwa:string, koszt:number, godziny:number}> = {}
-    wpisy.filter(w => w.inwestycja_id && (!filterPrac || w.pracownik_id === filterPrac)).forEach((w:any) => {
-      if (!map[w.inwestycja_id]) map[w.inwestycja_id] = { nazwa: w.inwestycje?.nazwa || '?', koszt: 0, godziny: 0 }
-      map[w.inwestycja_id].koszt += (+w.koszt_calkowity || 0)
-      map[w.inwestycja_id].godziny += (+w.godziny || 0)
+    wpisy.filter(w => w.wydarzenie_id && (!filterPrac || w.pracownik_id === filterPrac)).forEach((w:any) => {
+      if (!map[w.wydarzenie_id]) map[w.wydarzenie_id] = { nazwa: w.wydarzenia?.nazwa || '?', koszt: 0, godziny: 0 }
+      map[w.wydarzenie_id].koszt += (+w.koszt_calkowity || 0)
+      map[w.wydarzenie_id].godziny += (+w.godziny || 0)
     })
     return Object.values(map).sort((a,b) => b.koszt - a.koszt)
   }, [wpisy, filterPrac])
@@ -396,11 +396,11 @@ th{background:#f0f0f0;font-weight:bold}.name{text-align:left;min-width:120px}
           </div>
         )}
 
-        {kosztPerInwestycja.length > 0 && (
+        {kosztPerWydarzenie.length > 0 && (
           <div className="bg-white border border-gray-200 rounded-xl p-4 mb-4">
-            <h3 className="text-sm font-semibold text-gray-700 mb-2">💰 Koszty pracy per inwestycja — {MIESIACE[miesiac-1]} {rok}</h3>
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">💰 Koszty pracy per wydarzenie — {MIESIACE[miesiac-1]} {rok}</h3>
             <div className="flex flex-wrap gap-2">
-              {kosztPerInwestycja.map((inv,i)=>(
+              {kosztPerWydarzenie.map((inv,i)=>(
                 <div key={i} className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
                   <span className="text-xs font-medium text-blue-800">{inv.nazwa}</span>
                   <span className="text-xs text-blue-600">{inv.godziny}h</span>
@@ -609,12 +609,12 @@ th{background:#f0f0f0;font-weight:bold}.name{text-align:left;min-width:120px}
                   <div className="flex items-center gap-3 mb-2">
                     <input type="checkbox" id="delegacja" checked={fDelegacja} onChange={e=>setFDelegacja(e.target.checked)} className="rounded" />
                     <label htmlFor="delegacja" className="text-sm font-medium text-orange-800 cursor-pointer">
-                      🚗 Delegacja (+{fDelegacjaStawka} zł do kosztu dnia)
+                      🚗 Wyjazd cateringowy (+{fDelegacjaStawka} zł do kosztu dnia)
                     </label>
                   </div>
                   {fDelegacja && (
                     <div>
-                      <label className="text-xs text-gray-500 block mb-1">Stawka delegacji (zł/dzień)</label>
+                      <label className="text-xs text-gray-500 block mb-1">Dodatek za wyjazd (zł/dzień)</label>
                       <input type="number" value={fDelegacjaStawka} onChange={e=>setFDelegacjaStawka(e.target.value)}
                         min="0" step="1" className={inp} />
                     </div>
@@ -622,15 +622,15 @@ th{background:#f0f0f0;font-weight:bold}.name{text-align:left;min-width:120px}
                 </div>
               )}
               <div>
-                <label className="text-xs text-gray-500 block mb-1">Inwestycja (opcjonalnie)</label>
+                <label className="text-xs text-gray-500 block mb-1">Wydarzenie / impreza (opcjonalnie)</label>
                 <select value={fInw} onChange={e=>setFInw(e.target.value)} className={inp}>
                   <option value="">— brak —</option>
-                  {inwestycje.map(i=><option key={i.id} value={i.id}>{i.nazwa}</option>)}
+                  {wydarzenia.map(i=><option key={i.id} value={i.id}>{i.nazwa}</option>)}
                 </select>
               </div>
               <div>
                 <label className="text-xs text-gray-500 block mb-1">Opis / notatka</label>
-                <input value={fOpis} onChange={e=>setFOpis(e.target.value)} placeholder="np. praca na placu budowy..." className={inp}/>
+                <input value={fOpis} onChange={e=>setFOpis(e.target.value)} placeholder="np. obsługa wesela, catering zewnętrzny..." className={inp}/>
               </div>
             </div>
             {saveError && (

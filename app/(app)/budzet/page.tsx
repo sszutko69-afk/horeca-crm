@@ -250,7 +250,7 @@ export default function BudzetPage() {
     const planPrz = kategorie.filter(k=>k.typ==='przychod').reduce((a:number,k:any)=>a+getSumPlan(k.id),0)
     const planKosz = kategorie.filter(k=>k.typ==='koszt').reduce((a:number,k:any)=>a+getSumPlan(k.id),0)
 
-    const context = `Dane budżetowe firmy ON-Gaz (sp. z o.o., dystrybucja LPG) za rok ${rok}:
+    const context = `Dane budżetowe restauracji / firmy HoReCa (catering, bankiety, sala) za rok ${rok}:
 Plan przychodów: ${fmt(planPrz)}, realizacja: ${fmt(przychodySuma)} (${planPrz ? Math.round(przychodySuma/planPrz*100) : 0}%)
 Plan kosztów: ${fmt(planKosz)}, realizacja: ${fmt(kosztySuma)} (${planKosz ? Math.round(kosztySuma/planKosz*100) : 0}%)
 Marża brutto: ${fmt(marza)}
@@ -263,7 +263,7 @@ Pytanie: ${aiQ}`
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514', max_tokens: 1000,
-          system: 'Jesteś ekspertem finansowym dla małej firmy sp. z o.o. Analizujesz budżet i dajesz konkretne, praktyczne wskazówki po polsku. Odpowiadaj zwięźle.',
+          system: 'Jesteś ekspertem finansowym dla restauracji i firmy cateringowej Analizujesz budżet i dajesz konkretne, praktyczne wskazówki po polsku. Odpowiadaj zwięźle.',
           messages: [{ role: 'user', content: context }]
         })
       })

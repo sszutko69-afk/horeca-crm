@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
+import { MODULY_GRUPY, WSZYSTKIE_MODULY, ROLE, ROLE_LABEL, ROLE_COLOR, ROLE_DOMYSLNE } from '@/lib/moduly'
 
 type Profile = {
   id: string
@@ -15,32 +16,9 @@ type Profile = {
   twofa_enabled: boolean | null
 }
 
-const WSZYSTKIE_MODULY = [
-  'Dashboard','Klienci','Zakupy','Sprzedaż','Raporty',
-  'AI — Finanse','Mapa klientów','Cysterna & GPS','Ewidencja EDD','EMCS PL 2',
-  'Inwestycje','inFakt','Import danych','Archiwizacja','Przetargi','Użytkownicy',
-]
-
-const roleLabel: Record<string, string> = {
-  admin: 'Administrator',
-  pracownik_admin: 'Prac. administracyjny',
-  pracownik_inwestycji: 'Prac. inwestycji',
-  kierowca: 'Kierowca',
-}
-const roleColor: Record<string, string> = {
-  admin: 'bg-red-50 text-red-700',
-  pracownik_admin: 'bg-blue-50 text-blue-700',
-  pracownik_inwestycji: 'bg-green-50 text-green-700',
-  kierowca: 'bg-yellow-50 text-yellow-700',
-}
-
-// Domyślne moduły dla roli
-const roleDomyslne: Record<string, string[]> = {
-  admin: WSZYSTKIE_MODULY,
-  pracownik_admin: ['Dashboard','Klienci','Zakupy','Sprzedaż','Raporty','AI — Finanse','Import danych','Przetargi'],
-  pracownik_inwestycji: ['Dashboard','Inwestycje','Przetargi'],
-  kierowca: ['Dashboard','Cysterna & GPS'],
-}
+const roleLabel = ROLE_LABEL
+const roleColor = ROLE_COLOR
+const roleDomyslne = ROLE_DOMYSLNE
 
 const inputCls = "px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
 const labelCls = "text-xs font-medium text-gray-500 uppercase tracking-wide"
@@ -52,12 +30,12 @@ export default function UzytkownicyPage() {
   const [currentUser, setCurrentUser] = useState<string | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ email: '', imie_nazwisko: '', login: '', telefon: '', rola: 'pracownik_admin', haslo: '' })
+  const [form, setForm] = useState({ email: '', imie_nazwisko: '', login: '', telefon: '', rola: 'kelner', haslo: '' })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [editId, setEditId] = useState<string | null>(null)
-  const [editForm, setEditForm] = useState({ imie_nazwisko: '', login: '', telefon: '', rola: 'pracownik_admin', aktywny: true, twofa_enabled: false })
+  const [editForm, setEditForm] = useState({ imie_nazwisko: '', login: '', telefon: '', rola: 'kelner', aktywny: true, twofa_enabled: false })
   const [editModuly, setEditModuly] = useState<string[]>([])
   const [editSaving, setEditSaving] = useState(false)
   const [detailId, setDetailId] = useState<string | null>(null)
@@ -89,7 +67,7 @@ export default function UzytkownicyPage() {
       setError(json.error ?? 'Błąd tworzenia konta')
     } else {
       setSuccess('Konto utworzone!')
-      setForm({ email: '', imie_nazwisko: '', login: '', telefon: '', rola: 'pracownik_admin', haslo: '' })
+      setForm({ email: '', imie_nazwisko: '', login: '', telefon: '', rola: 'kelner', haslo: '' })
       setShowForm(false); fetchAll()
       setTimeout(() => setSuccess(''), 4000)
     }
@@ -200,6 +178,7 @@ export default function UzytkownicyPage() {
                 <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-3 px-4">Rola</th>
                 <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-3 px-4">Dostępne moduły</th>
                 <th className="text-center text-xs font-medium text-gray-400 uppercase tracking-wide py-3 px-4">Status</th>
+                <th className="text-center text-xs font-medium text-gray-400 uppercase tracking-wide py-3 px-4">2FA</th>
                 <th className="text-center text-xs font-medium text-gray-400 uppercase tracking-wide py-3 px-4">Akcje</th>
               </tr>
             </thead>
@@ -298,10 +277,7 @@ export default function UzytkownicyPage() {
                 <div className="flex flex-col gap-1.5 col-span-2">
                   <label className={labelCls}>Rola</label>
                   <select value={form.rola} onChange={e => setForm(f => ({ ...f, rola: e.target.value }))} className={inputCls}>
-                    <option value="pracownik_admin">Pracownik administracyjny</option>
-                    <option value="pracownik_inwestycji">Pracownik inwestycji</option>
-                    <option value="kierowca">Kierowca</option>
-                    <option value="admin">Administrator</option>
+                    {ROLE.map(r => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
                   </select>
                 </div>
               </div>
@@ -342,10 +318,7 @@ export default function UzytkownicyPage() {
                     onChange={e => handleRolaChange(e.target.value)}
                     disabled={editId === currentUser}
                     className={inputCls}>
-                    <option value="pracownik_admin">Pracownik administracyjny</option>
-                    <option value="pracownik_inwestycji">Pracownik inwestycji</option>
-                    <option value="kierowca">Kierowca</option>
-                    <option value="admin">Administrator</option>
+                    {ROLE.map(r => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
                   </select>
                 </div>
                 <div className="flex flex-col gap-1.5">
@@ -393,21 +366,28 @@ export default function UzytkownicyPage() {
                       className="text-xs text-gray-500 hover:text-gray-700">Wyczyść</button>
                   </div>
                 </div>
-                <div className="bg-gray-50 rounded-lg p-3 grid grid-cols-2 gap-2">
-                  {WSZYSTKIE_MODULY.map(modul => (
-                    <label key={modul} className="flex items-center gap-2 cursor-pointer group">
-                      <input
-                        type="checkbox"
-                        checked={editModuly.includes(modul)}
-                        onChange={() => toggleModul(modul)}
-                        disabled={modul === 'Dashboard'}
-                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                      />
-                      <span className={`text-sm ${modul === 'Dashboard' ? 'text-gray-400' : 'text-gray-700 group-hover:text-gray-900'}`}>
-                        {modul}
-                        {modul === 'Dashboard' && <span className="text-xs text-gray-400 ml-1">(zawsze)</span>}
-                      </span>
-                    </label>
+                <div className="bg-gray-50 rounded-lg p-3 space-y-3">
+                  {MODULY_GRUPY.map(g => (
+                    <div key={g.grupa}>
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1.5">{g.grupa}</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {g.moduly.map(modul => (
+                          <label key={modul} className="flex items-center gap-2 cursor-pointer group">
+                            <input
+                              type="checkbox"
+                              checked={editModuly.includes(modul)}
+                              onChange={() => toggleModul(modul)}
+                              disabled={modul === 'Dashboard'}
+                              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                            />
+                            <span className={`text-sm ${modul === 'Dashboard' ? 'text-gray-400' : 'text-gray-700 group-hover:text-gray-900'}`}>
+                              {modul}
+                              {modul === 'Dashboard' && <span className="text-xs text-gray-400 ml-1">(zawsze)</span>}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
                 <p className="text-xs text-gray-400 mt-2">

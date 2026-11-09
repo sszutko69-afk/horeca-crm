@@ -1,13 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
-
-const DOMYSLNE_MODULY: Record<string, string[]> = {
-  admin: ['Dashboard','Klienci','Zakupy','Sprzedaż','Raporty','AI — Finanse','Mapa klientów','Cysterna & GPS','Ewidencja EDD','EMCS PL 2','Inwestycje','inFakt','Import danych','Archiwizacja','Użytkownicy'],
-  pracownik_admin: ['Dashboard','Klienci','Zakupy','Sprzedaż','Raporty','AI — Finanse','Import danych'],
-  pracownik_inwestycji: ['Dashboard','Inwestycje'],
-  kierowca: ['Dashboard','Cysterna & GPS'],
-}
+import { ROLE, ROLE_DOMYSLNE } from '@/lib/moduly'
 
 export async function POST(request: NextRequest) {
   try {
@@ -58,7 +52,11 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = newUser.user.id
-    const rolaVal = rola ?? 'pracownik_admin'
+    const rolaVal = rola ?? 'kelner'
+    if (!(ROLE as string[]).includes(rolaVal)) {
+      await adminClient.auth.admin.deleteUser(userId)
+      return NextResponse.json({ error: 'Nieprawidłowa rola.' }, { status: 400 })
+    }
 
     // 2. Utwórz profil (service role — omija RLS)
     const { error: profileError } = await adminClient.from('profiles').insert({
@@ -68,7 +66,7 @@ export async function POST(request: NextRequest) {
       telefon: telefon?.trim() || null,
       rola: rolaVal,
       aktywny: true,
-      moduly: DOMYSLNE_MODULY[rolaVal] ?? DOMYSLNE_MODULY.pracownik_admin,
+      moduly: ROLE_DOMYSLNE[rolaVal],
     })
 
     if (profileError) {

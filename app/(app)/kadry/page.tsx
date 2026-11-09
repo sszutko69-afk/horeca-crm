@@ -39,9 +39,10 @@ const UMOWY = [
 ]
 
 const STANOWISKA = [
-  'Kierownik robót gazowych', 'Monter gazowy', 'Spawacz gazowy',
-  'Operator sprzętu', 'Monter sanitarny', 'Kierownik budowy',
-  'Pracownik fizyczny', 'Geodeta', 'Inżynier nadzoru', 'Kierowca', 'Inne',
+  'Menedżer restauracji', 'Kierownik zmiany', 'Szef kuchni', 'Sous chef', 'Kucharz',
+  'Pomoc kuchenna', 'Cukiernik', 'Kelner', 'Barman', 'Barista', 'Sommelier',
+  'Hostessa', 'Recepcjonista', 'Pokojowa', 'Obsługa cateringu / eventów',
+  'Zmywak', 'Dostawca / kierowca', 'Magazynier', 'Księgowa / administracja', 'Inne',
 ]
 
 const UMOWA_BADGE: Record<string, string> = {
@@ -67,7 +68,7 @@ function fmtDate(d: string | null | undefined) {
 }
 
 const emptyForm = {
-  imie: '', nazwisko: '', stanowisko: 'Monter gazowy',
+  imie: '', nazwisko: '', stanowisko: 'Kelner',
   rodzaj_umowy: 'uop', wynagrodzenie_brutto: '', stawka_godzinowa: '',
   wymiar_etatu: '1',
   data_zatrudnienia: '', data_zwolnienia: '', uprawnienia: '',
@@ -552,7 +553,7 @@ export default function KadryPage() {
                 <div className="col-span-2">
                   <label className={lbl}>Uprawnienia / Kwalifikacje</label>
                   <input value={form.uprawnienia} onChange={e => setForm(f => ({ ...f, uprawnienia: e.target.value }))}
-                    placeholder="np. Spawacz G3, SEP do 1 kV, Uprawnienia budowlane..." className={inp} />
+                    placeholder="np. Książeczka sanepidowska, HACCP, kurs barmański, prawo jazdy kat. B..." className={inp} />
                 </div>
                 <div>
                   <label className={lbl}>Telefon</label>
@@ -560,7 +561,7 @@ export default function KadryPage() {
                 </div>
                 <div>
                   <label className={lbl}>Email</label>
-                  <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="jan@firma.pl" className={inp} />
+                  <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="jan@restauracja.pl" className={inp} />
                 </div>
                 <div className="col-span-2">
                   <label className={lbl}>Adres zamieszkania</label>

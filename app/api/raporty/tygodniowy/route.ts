@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 
-// Raport tygodniowy: sprzedaż, budżet, przetargi, CRM
+// Raport tygodniowy: sprzedaż, budżet, wydarzenia, CRM
 // Uruchamiany przez Vercel Cron w każdy poniedziałek o 7:00
 // lub ręcznie z UI (?manual=1)
 
@@ -11,7 +11,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
 
-const RAPORT_SECRET = process.env.NOTIF_SECRET ?? 'gazcrm-notif-2025'
+const RAPORT_SECRET = process.env.NOTIF_SECRET ?? 'horeca-notif-2026'
 
 function fmt(n: number) { return n.toLocaleString('pl-PL', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) }
 function fmtDate(d: string) { return new Date(d).toLocaleDateString('pl-PL') }
@@ -33,8 +33,8 @@ export async function POST(req: NextRequest) {
   // ─── Pobierz dane ───────────────────────────────────────────────────────────
   const [
     { data: sprzedaz },
-    { data: przetargiNowe },
-    { data: przetargiTermin },
+    { data: wydarzeniaNowe },
+    { data: wydarzeniaNajblizsze },
     { data: zadaniaCRM },
     { data: budzKat },
     { data: budzPlan },
@@ -42,8 +42,8 @@ export async function POST(req: NextRequest) {
     { data: emailCfg },
   ] = await Promise.all([
     supabase.from('sprzedaz').select('*, klienci(nazwa)').gte('data_sprzedazy', od).lte('data_sprzedazy', do_).order('data_sprzedazy', { ascending: false }),
-    supabase.from('przetargi').select('id, tytul, wartosc_netto, data_skladania, status, zamawiajacy').eq('usuniete', false).gte('created_at', tygodniaWstecz.toISOString()).order('data_skladania'),
-    supabase.from('przetargi').select('id, tytul, wartosc_netto, data_skladania, status').eq('usuniete', false).eq('status', 'zgłoszony').gte('data_skladania', od).lte('data_skladania', new Date(teraz.getTime() + 14 * 86400000).toISOString().slice(0, 10)).order('data_skladania'),
+    supabase.from('wydarzenia').select('id, nazwa, typ, status, budzet, data_od, liczba_gosci').gte('created_at', tygodniaWstecz.toISOString()).order('data_od'),
+    supabase.from('wydarzenia').select('id, nazwa, typ, status, budzet, data_od, liczba_gosci').neq('status', 'anulowane').gte('data_od', do_).lte('data_od', new Date(teraz.getTime() + 14 * 86400000).toISOString().slice(0, 10)).order('data_od'),
     supabase.from('crm_zadania').select('*').eq('status', 'otwarte').lte('termin', do_).order('termin'),
     supabase.from('budzet_kategorie').select('*'),
     supabase.from('budzet_plan').select('*').eq('rok', rok),
@@ -61,9 +61,8 @@ export async function POST(req: NextRequest) {
   if (!email) return NextResponse.json({ error: 'Brak adresu email w ustawieniach' }, { status: 400 })
 
   // ─── Obliczenia ──────────────────────────────────────────────────────────────
-  const VAT = 0.23
-  const sumaSprzBrutto = (sprzedaz ?? []).reduce((a: number, s: any) => a + s.ilosc_litry * s.cena_sprzedazy, 0)
-  const sumaLitry = (sprzedaz ?? []).reduce((a: number, s: any) => a + s.ilosc_litry, 0)
+  const sumaSprzBrutto = (sprzedaz ?? []).reduce((a: number, s: any) => a + Number(s.kwota_brutto ?? 0), 0)
+  const sredniaFaktura = (sprzedaz ?? []).length > 0 ? sumaSprzBrutto / (sprzedaz ?? []).length : 0
 
   // Budżet YTD (year-to-date)
   const miesiac = teraz.getMonth() + 1
@@ -119,13 +118,13 @@ export async function POST(req: NextRequest) {
 <body><div class="wrap">
 
   <div class="hdr">
-    <h1>📊 Raport tygodniowy GazCRM</h1>
+    <h1>📊 Raport tygodniowy HoReCa CRM</h1>
     <p style="margin:4px 0 0;opacity:0.8;font-size:13px">${tydzienStr}</p>
   </div>
 
-  <!-- SPRZEDAŻ LPG -->
+  <!-- SPRZEDAŻ -->
   <div class="card">
-    <h2>⛽ Sprzedaż LPG (7 dni)</h2>
+    <h2>💰 Sprzedaż (7 dni)</h2>
     <div class="kpi">
       <div class="kpi-box">
         <div class="kpi-lbl">Wartość sprzedaży brutto</div>
@@ -133,19 +132,19 @@ export async function POST(req: NextRequest) {
         <div class="kpi-sub">${(sprzedaz ?? []).length} transakcji</div>
       </div>
       <div class="kpi-box">
-        <div class="kpi-lbl">Ilość sprzedana</div>
-        <div class="kpi-val">${fmt(sumaLitry)} l</div>
-        <div class="kpi-sub">~${fmt(sumaLitry * 0.5 / 1000)} ton</div>
+        <div class="kpi-lbl">Średnia wartość dokumentu</div>
+        <div class="kpi-val">${fmt(sredniaFaktura)} PLN</div>
+        <div class="kpi-sub">brutto</div>
       </div>
     </div>
     ${(sprzedaz ?? []).length > 0 ? `
     <table>
-      <tr><th>Klient</th><th>Ilość [l]</th><th>Wartość</th><th>Data</th></tr>
+      <tr><th>Klient</th><th>Dokument</th><th>Wartość</th><th>Data</th></tr>
       ${(sprzedaz ?? []).slice(0, 10).map((s: any) => `
         <tr>
           <td>${s.klienci?.nazwa ?? '—'}</td>
-          <td>${fmt(s.ilosc_litry)}</td>
-          <td>${fmt(s.ilosc_litry * s.cena_sprzedazy)} PLN</td>
+          <td>${s.nr_faktury ?? '—'}</td>
+          <td>${fmt(Number(s.kwota_brutto ?? 0))} PLN</td>
           <td>${fmtDate(s.data_sprzedazy)}</td>
         </tr>`).join('')}
     </table>
@@ -179,26 +178,26 @@ export async function POST(req: NextRequest) {
     </div>` : ''}
   </div>
 
-  <!-- PRZETARGI -->
+  <!-- WYDARZENIA -->
   <div class="card">
-    <h2>🏆 Przetargi</h2>
-    ${(przetargiNowe ?? []).length > 0 ? `
-    <p style="font-size:12px;color:#374151;margin:0 0 8px;font-weight:500">Nowe w tym tygodniu (${(przetargiNowe ?? []).length}):</p>
+    <h2>🎉 Wydarzenia i catering</h2>
+    ${(wydarzeniaNowe ?? []).length > 0 ? `
+    <p style="font-size:12px;color:#374151;margin:0 0 8px;font-weight:500">Nowe zapytania w tym tygodniu (${(wydarzeniaNowe ?? []).length}):</p>
     <table>
-      <tr><th>Tytuł</th><th>Wartość</th><th>Termin</th></tr>
-      ${(przetargiNowe ?? []).slice(0, 5).map((p: any) => `
+      <tr><th>Wydarzenie</th><th>Budżet</th><th>Termin</th></tr>
+      ${(wydarzeniaNowe ?? []).slice(0, 5).map((w: any) => `
         <tr>
-          <td>${p.tytul.substring(0,50)}${p.tytul.length>50?'…':''}</td>
-          <td>${p.wartosc_netto ? fmt(p.wartosc_netto) + ' PLN' : '—'}</td>
-          <td>${fmtDate(p.data_skladania)}</td>
+          <td>${w.nazwa}</td>
+          <td>${w.budzet ? fmt(w.budzet) + ' PLN' : '—'}</td>
+          <td>${w.data_od ? fmtDate(w.data_od) : '—'}</td>
         </tr>`).join('')}
-    </table>` : '<p style="color:#94a3b8;font-size:13px">Brak nowych przetargów</p>'}
-    ${(przetargiTermin ?? []).length > 0 ? `
-    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px;margin-top:10px">
-      <p style="font-size:12px;font-weight:600;color:#b91c1c;margin:0 0 6px">🔥 Złożone – termin w ciągu 14 dni:</p>
-      ${(przetargiTermin ?? []).map((p: any) => {
-        const dni = Math.ceil((new Date(p.data_skladania).getTime() - Date.now()) / 86400000)
-        return `<div class="row"><span>${p.tytul.substring(0,45)}…</span><span class="badge red">za ${dni} dni</span></div>`
+    </table>` : '<p style="color:#94a3b8;font-size:13px">Brak nowych zapytań o wydarzenia</p>'}
+    ${(wydarzeniaNajblizsze ?? []).length > 0 ? `
+    <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px;margin-top:10px">
+      <p style="font-size:12px;font-weight:600;color:#1d4ed8;margin:0 0 6px">📅 Najbliższe 14 dni:</p>
+      ${(wydarzeniaNajblizsze ?? []).map((w: any) => {
+        const dni = Math.ceil((new Date(w.data_od).getTime() - Date.now()) / 86400000)
+        return `<div class="row"><span>${w.nazwa}${w.liczba_gosci ? ` (${w.liczba_gosci} os.)` : ''}</span><span class="badge blue">za ${Math.max(dni, 0)} dni</span></div>`
       }).join('')}
     </div>` : ''}
   </div>
@@ -219,11 +218,11 @@ export async function POST(req: NextRequest) {
   </div>` : ''}
 
   <div style="text-align:center;margin:16px 0">
-    <a href="${process.env.NEXT_PUBLIC_APP_URL ?? 'https://gazcrm.vercel.app'}/dashboard" class="btn">Otwórz GazCRM →</a>
+    <a href="${process.env.NEXT_PUBLIC_APP_URL ?? 'https://horeca-crm.vercel.app'}/dashboard" class="btn">Otwórz HoReCa CRM →</a>
   </div>
 
   <div class="footer">
-    <p>Raport automatyczny GazCRM · ${new Date().toLocaleDateString('pl-PL')}</p>
+    <p>Raport automatyczny HoReCa CRM · ${new Date().toLocaleDateString('pl-PL')}</p>
     <p>Aby wyłączyć: Ustawienia → Powiadomienia → Raporty tygodniowe</p>
   </div>
 </div></body></html>`
@@ -236,9 +235,9 @@ export async function POST(req: NextRequest) {
 
   const resend = new Resend(resendKey)
   const { data: emailData, error: emailError } = await resend.emails.send({
-    from: 'GazCRM <raporty@ongaz.pl>',
+    from: 'HoReCa CRM <onboarding@resend.dev>',
     to: [email],
-    subject: `📊 Raport tygodniowy GazCRM – ${tydzienStr}`,
+    subject: `📊 Raport tygodniowy HoReCa CRM – ${tydzienStr}`,
     html,
   })
 

@@ -35,8 +35,8 @@ const ZRODLO_BADGE:Record<string,string> = {
   klient:'bg-blue-50 text-blue-700',
   manual:'bg-gray-100 text-gray-600',
 }
-const PRODUKTY_LPG = ['Propan LPG','Gaz płynny LPG','Propan techniczny','Butan-propan mieszanina','Gaz propan-butan']
-const JEDNOSTKI = ['kg','m³','l','szt','t']
+const PRODUKTY_HORECA = ['Catering — lunch box','Catering — bankiet','Zestaw obiadowy','Tort / ciasta','Wypieki i pieczywo','Napoje i alkohole']
+const JEDNOSTKI = ['porcja','os.','szt','kg','l']
 const inp = 'px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full bg-white'
 const lbl = 'text-xs font-medium text-gray-500 uppercase tracking-wide mb-1 block'
 
@@ -119,44 +119,15 @@ export default function ZamowieniaPage() {
     showMsg(`Oznaczono ${ids.length} zamówień do dostawy`)
   }
 
-  async function wyslijDoCysterny(){
+  async function wyslijDoRealizacji(){
     const doDostawy = zamowienia.filter(z=>z.do_dostawy&&z.status==='do_dostawy')
     if(!doDostawy.length){ setError('Brak zamówień oznaczonych do dostawy!'); return }
     setError('')
-
-    // Grupujemy po dacie planowanej dostawy (domyślnie dziś)
-    const dzis = new Date().toISOString().split('T')[0]
-    let dodano = 0
-
     for(const z of doDostawy){
-      const dataPlan = z.data_planowanej_dostawy || dzis
-      // Oblicz kolejność = max dla danej daty + 1
-      const {data:istn} = await supabase.from('dostawy')
-        .select('kolejnosc').eq('data_planowana',dataPlan)
-        .order('kolejnosc',{ascending:false}).limit(1)
-      const kolejnosc = (istn?.[0]?.kolejnosc ?? 0) + 1
-
-      // Konwersja ilości na litry (przyjmujemy że m³ i l ~ litry; kg → litry dla propanu ~1.96 l/kg)
-      const iloscLitry = z.jednostka==='kg' ? z.ilosc*1.96 : z.ilosc
-
-      const {error:e} = await supabase.from('dostawy').insert({
-        klient_id:        z.klient_id || null,
-        data_planowana:   dataPlan,
-        kolejnosc,
-        adres_dostawy:    z.klient_adres || null,
-        ilosc_litry_plan: iloscLitry || null,
-        cena_sprzedazy:   z.cena_netto || null,
-        uwagi:            `Zamówienie ${z.numer} · ${z.produkt}${z.klient_telefon?` · tel. ${z.klient_telefon}`:''}`,
-        status:           'planowana',
-      })
-      if(!e){
-        dodano++
-        await supabase.from('zamowienia').update({status:'w_dostawie',updated_at:new Date().toISOString()}).eq('id',z.id)
-      }
+      await supabase.from('zamowienia').update({status:'w_dostawie',updated_at:new Date().toISOString()}).eq('id',z.id)
     }
-
     setZamowienia(prev=>prev.map(z=>z.do_dostawy&&z.status==='do_dostawy'?{...z,status:'w_dostawie'}:z))
-    showMsg(`✓ Przekazano ${dodano} dostaw do modułu Cysterna. Otwórz Cysterna → Planowanie trasy.`)
+    showMsg(`✓ Przekazano ${doDostawy.length} zamówień do realizacji (kuchnia i dostawa).`)
   }
 
   async function deleteZam(id:string){
@@ -198,13 +169,13 @@ export default function ZamowieniaPage() {
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
           <h1 className="text-xl font-medium text-gray-900">Zamówienia</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Zamówienia klientów · Planowanie dostaw · Integracja z Cysterną</p>
+          <p className="text-sm text-gray-500 mt-0.5">Zamówienia klientów · Catering i dostawy · Realizacja przez kuchnię</p>
         </div>
         <div className="flex gap-2 flex-wrap">
           {doDostawyCount>0&&(
-            <button onClick={wyslijDoCysterny}
+            <button onClick={wyslijDoRealizacji}
               className="text-sm bg-orange-600 text-white rounded-lg px-4 py-2 hover:bg-orange-700 flex items-center gap-2">
-              🚛 Wyślij do Cysterny ({doDostawyCount})
+              🍽 Przekaż do realizacji ({doDostawyCount})
             </button>
           )}
           {zaznaczone.size>0&&(
@@ -359,15 +330,15 @@ export default function ZamowieniaPage() {
         </div>
       )}
 
-      {/* Info o dostawach do Cysterny */}
+      {/* Info o zamówieniach do realizacji */}
       {doDostawyCount>0&&(
         <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center justify-between">
           <p className="text-sm text-amber-800">
-            🚛 <strong>{doDostawyCount}</strong> zamówień gotowych do wysłania do Cysterny
+            🍽 <strong>{doDostawyCount}</strong> zamówień gotowych do przekazania do realizacji
           </p>
-          <button onClick={wyslijDoCysterny}
+          <button onClick={wyslijDoRealizacji}
             className="text-sm bg-orange-600 text-white rounded-lg px-4 py-1.5 hover:bg-orange-700">
-            Wyślij do Cysterny →
+            Przekaż do realizacji →
           </button>
         </div>
       )}
@@ -433,7 +404,7 @@ export default function ZamowieniaPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-900">Dostawa</p>
-                    <p className="text-xs text-gray-500">Zaznacz aby przekazać do trasy w Cysternie</p>
+                    <p className="text-xs text-gray-500">Zaznacz aby przekazać do realizacji (kuchnia + dostawa)</p>
                   </div>
                   <input type="checkbox"
                     checked={openZam.do_dostawy}
@@ -441,9 +412,9 @@ export default function ZamowieniaPage() {
                     className="w-6 h-6 rounded border-gray-300 text-orange-500"/>
                 </div>
                 {openZam.do_dostawy&&(
-                  <button onClick={wyslijDoCysterny}
+                  <button onClick={wyslijDoRealizacji}
                     className="w-full mt-3 px-4 py-2 bg-orange-600 text-white text-sm rounded-lg hover:bg-orange-700">
-                    🚛 Wyślij do Cysterny
+                    🍽 Przekaż do realizacji
                   </button>
                 )}
               </div>
@@ -491,7 +462,7 @@ function ZamowienieForm({zam,klienci,saving,onSave,onClose}:{
     klient_nip:             zam?.klient_nip??'',
     produkt:                zam?.produkt??'',
     ilosc:                  zam?.ilosc?.toString()??'',
-    jednostka:              zam?.jednostka??'kg',
+    jednostka:              zam?.jednostka??'porcja',
     cena_netto:             zam?.cena_netto?.toString()??'',
     vat:                    zam?.vat?.toString()??'23',
     data_zamowienia:        zam?.data_zamowienia??new Date().toISOString().split('T')[0],
@@ -579,12 +550,12 @@ function ZamowienieForm({zam,klienci,saving,onSave,onClose}:{
               <label className={lbl}>Produkt *</label>
               <select value={form.produkt} onChange={e=>setForm(f=>({...f,produkt:e.target.value}))} className={inp} required>
                 <option value="">— Wybierz —</option>
-                <optgroup label="Gaz / LPG">
-                  {PRODUKTY_LPG.map(p=><option key={p} value={p}>{p}</option>)}
+                <optgroup label="Catering i gastronomia">
+                  {PRODUKTY_HORECA.map(p=><option key={p} value={p}>{p}</option>)}
                 </optgroup>
                 <optgroup label="Inne">
-                  <option value="Instalacja gazowa">Instalacja gazowa</option>
-                  <option value="Serwis">Serwis urządzeń</option>
+                  <option value="Wynajem sali">Wynajem sali</option>
+                  <option value="Obsługa kelnerska">Obsługa kelnerska</option>
                   <option value="Inne">Inne</option>
                 </optgroup>
               </select>

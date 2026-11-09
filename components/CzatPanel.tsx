@@ -12,8 +12,8 @@ type Props = {
 }
 
 const IKONY: Record<string, string> = {
-  przetargi: '📋', inwestycje: '🏗', klienci: '👥',
-  trasy: '🚚', raporty: '📊', zakupy: '📦', sprzedaz: '💰', ogolny: '💬',
+  wydarzenia: '🎉', rezerwacje: '📅', klienci: '👥',
+  menu: '🍽', raporty: '📊', zakupy: '📦', sprzedaz: '💰', ogolny: '💬',
 }
 
 export default function CzatPanel({ modul, rekordId, rekordTytul, compact = false }: Props) {

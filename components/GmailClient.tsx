@@ -77,8 +77,9 @@ export default function GmailClient({ userId }: Props) {
     {label:'📬 Nieprzeczytane', q:'in:inbox is:unread'},
     {label:'⭐ Oznaczone', q:'is:starred'},
     {label:'❗ Ważne', q:'is:important'},
-    {label:'📋 Przetargi', q:'przetarg OR oferta OR zamówienie OR SWZ OR RFQ'},
-    {label:'⛽ ORLEN/LPG', q:'orlen OR lpg OR connect OR psg OR gaz'},
+    {label:'📅 Rezerwacje', q:'rezerwacja OR rezerwacje OR stolik OR wesele OR bankiet'},
+    {label:'🚚 Dostawy', q:'dostawa OR zamówienie OR dostawca OR hurtownia'},
+    {label:'🧾 Faktury', q:'faktura OR płatność OR przelew'},
     {label:'📤 Wysłane', q:'in:sent'},
     {label:'🗑 Kosz', q:'in:trash'},
   ]
@@ -264,10 +265,6 @@ export default function GmailClient({ userId }: Props) {
                 <button onClick={()=>bulkAction('markUnread')} className="text-xs bg-white border border-gray-200 px-2 py-1 rounded-lg hover:bg-gray-50">● Nieprzeczytane</button>
                 <button onClick={()=>bulkAction('star')} className="text-xs bg-white border border-gray-200 px-2 py-1 rounded-lg hover:bg-gray-50">⭐ Oznacz</button>
                 <button onClick={()=>bulkAction('trash')} className="text-xs bg-white border border-gray-200 px-2 py-1 rounded-lg hover:bg-gray-50">🗑 Kosz</button>
-                <button onClick={()=>importPrzetargi(Array.from(selectedIds))} disabled={importing}
-                  className="text-xs bg-purple-600 text-white px-2 py-1 rounded-lg hover:bg-purple-700 disabled:opacity-50">
-                  {importing?'⏳...':'📥 → Przetargi'}
-                </button>
                 <button onClick={()=>deletePermanently(Array.from(selectedIds))} className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-lg hover:bg-red-200">🗑 Usuń</button>
               </div>
             </div>
@@ -366,7 +363,6 @@ export default function GmailClient({ userId }: Props) {
                   <button onClick={()=>openCompose('reply',selected)} className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700">↩ Odpowiedz</button>
                   <button onClick={()=>openCompose('reply',{...selected,payload:{...selected.payload!,headers:[...selected.payload!.headers,{name:'From',value:getHeader(selected.payload!.headers,'From')}]}})} className="text-xs border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50">↩↩ Odpowiedz wszystkim</button>
                   <button onClick={()=>openCompose('forward',selected)} className="text-xs border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50">→ Prześlij dalej</button>
-                  <button onClick={()=>importPrzetargi([selected.id])} disabled={importing} className="text-xs bg-purple-600 text-white px-3 py-1.5 rounded-lg hover:bg-purple-700 disabled:opacity-50">📥 Importuj jako przetarg</button>
                   <button onClick={()=>bulkAction('star')} className="text-xs border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50">⭐ Oznacz</button>
                   <button onClick={()=>deletePermanently([selected.id])} className="text-xs border border-red-200 text-red-600 px-3 py-1.5 rounded-lg hover:bg-red-50">🗑 Usuń</button>
                   <a href={`https://mail.google.com/mail/u/0/#inbox/${selected.threadId}`} target="_blank" rel="noopener noreferrer" className="text-xs border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50">↗ Gmail</a>
