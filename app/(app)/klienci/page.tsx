@@ -9,12 +9,12 @@ type Klient = {
   id: string; nazwa: string; typ: string; nip: string | null; pesel: string | null
   adres: string | null; miasto: string | null; kod_pocztowy: string | null
   telefon: string | null; email: string | null; uwagi: string | null
-  pojemnosc_zbiornika: number | null; aktywny: boolean; dokumenty: string[] | null
+  aktywny: boolean; dokumenty: string[] | null
 }
 
 const emptyForm = {
   nazwa: '', typ: 'osoba_fizyczna', nip: '', pesel: '', adres: '',
-  miasto: '', kod_pocztowy: '', telefon: '', email: '', uwagi: '', pojemnosc_zbiornika: '',
+  miasto: '', kod_pocztowy: '', telefon: '', email: '', uwagi: '',
 }
 
 const inputCls = "px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
@@ -152,13 +152,6 @@ function KlientForm({ f, setF, onSubmit, onCancel, saving, title, docs, onUpload
               <label className={labelCls}>Email</label>
               <input type="email" value={f.email} onChange={e => setF(p => ({ ...p, email: e.target.value }))} placeholder="jan@example.pl" className={inputCls} />
             </div>
-            {/* NOWE: Pojemność zbiornika */}
-            <div className="flex flex-col gap-1.5">
-              <label className={labelCls}>Pojemność zbiornika [l]</label>
-              <input type="number" value={f.pojemnosc_zbiornika} onChange={e => setF(p => ({ ...p, pojemnosc_zbiornika: e.target.value }))}
-                placeholder="np. 2700, 4800, 6700" min="0" className={inputCls} />
-            </div>
-            {/* NOWE: Uwagi */}
             <div className="flex flex-col gap-1.5 col-span-2">
               <label className={labelCls}>Uwagi</label>
               <textarea value={f.uwagi} onChange={e => setF(p => ({ ...p, uwagi: e.target.value }))}
@@ -208,8 +201,8 @@ function KlientForm({ f, setF, onSubmit, onCancel, saving, title, docs, onUpload
 type WierszImportu = {
   imie: string; nazwisko: string; kod: string; miasto: string
   adres: string; telefon: string; pesel: string
-  pojemnosc: number | null; uwagi: string
-  nazwa: string // połączone imię + nazwisko
+  uwagi: string
+  nazwa: string
 }
 type DecyzjaDuplikatu = { wiersz: WierszImportu; istniejacy: Klient; akcja: 'polacz' | 'nowy' | 'pominSecond' }
 
@@ -275,7 +268,6 @@ function ImportKlientow({ klienci, onSuccess }: { klienci: Klient[]; onSuccess: 
         const iAdres = header.findIndex(h => h.includes('adres'))
         const iTel   = header.findIndex(h => h.includes('telefon') || h.includes('tel'))
         const iPesel = header.findIndex(h => h.includes('pesel'))
-        const iPoj   = header.findIndex(h => h.includes('pojemnosc') || h.includes('pojemno'))
         const iUwagi = header.findIndex(h => h.includes('uwagi'))
 
         const wyniki: WierszImportu[] = []
@@ -296,7 +288,6 @@ function ImportKlientow({ klienci, onSuccess }: { klienci: Klient[]; onSuccess: 
             adres: String(row[iAdres] ?? '').trim(),
             telefon: String(row[iTel] ?? '').trim(),
             pesel: String(row[iPesel] ?? '').trim(),
-            pojemnosc: row[iPoj] ? parseInt(row[iPoj]) : null,
             uwagi: String(row[iUwagi] ?? '').trim(),
           })
         }
@@ -353,7 +344,6 @@ function ImportKlientow({ klienci, onSuccess }: { klienci: Klient[]; onSuccess: 
         kod_pocztowy: w.kod || null,
         telefon: w.telefon || null,
         pesel: w.pesel || null,
-        pojemnosc_zbiornika: w.pojemnosc,
         uwagi: w.uwagi || null,
         aktywny: true,
       }
@@ -371,7 +361,6 @@ function ImportKlientow({ klienci, onSuccess }: { klienci: Klient[]; onSuccess: 
         if (!istn.kod_pocztowy && w.kod) update.kod_pocztowy = w.kod
         if (!istn.telefon && w.telefon) update.telefon = w.telefon
         if (!istn.pesel && w.pesel) update.pesel = w.pesel
-        if (!istn.pojemnosc_zbiornika && w.pojemnosc) update.pojemnosc_zbiornika = w.pojemnosc
         if (!istn.uwagi && w.uwagi) update.uwagi = w.uwagi
         if (Object.keys(update).length > 0)
           await supabase.from('klienci').update(update).eq('id', akcja)
@@ -398,7 +387,7 @@ function ImportKlientow({ klienci, onSuccess }: { klienci: Klient[]; onSuccess: 
         <div>
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4 text-xs text-blue-800">
             <p className="font-medium mb-1">Format pliku Excel</p>
-            <p>Nagłówki w <b>wierszu 2</b>: Imię, Nazwisko, kod pocztowy, Miejscowość, Adres Zamieszkania, Numer Telefonu, PESEL, Pojemność zbiornika, Uwagi</p>
+            <p>Nagłówki w <b>wierszu 2</b>: Imię, Nazwisko, kod pocztowy, Miejscowość, Adres Zamieszkania, Numer Telefonu, PESEL, Uwagi</p>
             <p className="mt-1 text-blue-600">System automatycznie wykrywa duplikatów i pyta o decyzję.</p>
           </div>
           {error && <p className="text-xs text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded-lg mb-3">{error}</p>}
@@ -407,7 +396,7 @@ function ImportKlientow({ klienci, onSuccess }: { klienci: Klient[]; onSuccess: 
             <label htmlFor="import-klient-file" className="cursor-pointer">
               <div className="text-4xl mb-2">📥</div>
               <p className="text-sm font-medium text-gray-600">Kliknij aby wybrać plik .xlsx</p>
-              <p className="text-xs text-gray-400 mt-1">Plik bazy klientów ON Gaz</p>
+              <p className="text-xs text-gray-400 mt-1">Plik z listą klientów (.xlsx)</p>
             </label>
           </div>
         </div>
@@ -425,7 +414,7 @@ function ImportKlientow({ klienci, onSuccess }: { klienci: Klient[]; onSuccess: 
               <table className="w-full text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-gray-100 bg-gray-50">
-                    {['Imię i nazwisko', 'Kod', 'Miasto', 'Adres', 'Telefon', 'Pojemność', 'Uwagi'].map(h =>
+                    {['Imię i nazwisko', 'Kod', 'Miasto', 'Adres', 'Telefon', 'Uwagi'].map(h =>
                       <th key={h} className="text-left py-2 px-3 text-gray-400 font-medium whitespace-nowrap">{h}</th>
                     )}
                   </tr>
@@ -438,7 +427,6 @@ function ImportKlientow({ klienci, onSuccess }: { klienci: Klient[]; onSuccess: 
                       <td className="py-1.5 px-3">{r.miasto || '—'}</td>
                       <td className="py-1.5 px-3 text-gray-500 max-w-[120px] truncate">{r.adres || '—'}</td>
                       <td className="py-1.5 px-3">{r.telefon || '—'}</td>
-                      <td className="py-1.5 px-3 text-right">{r.pojemnosc ? r.pojemnosc + ' l' : '—'}</td>
                       <td className="py-1.5 px-3 text-gray-500 max-w-[100px] truncate">{r.uwagi || '—'}</td>
                     </tr>
                   ))}
@@ -472,7 +460,6 @@ function ImportKlientow({ klienci, onSuccess }: { klienci: Klient[]; onSuccess: 
                     <p className="text-xs text-gray-500">{[d.wiersz.kod, d.wiersz.miasto].filter(Boolean).join(' ')}</p>
                     <p className="text-xs text-gray-500">{d.wiersz.adres}</p>
                     <p className="text-xs text-gray-500">{d.wiersz.telefon}</p>
-                    {d.wiersz.pojemnosc && <p className="text-xs text-blue-600">Zbiornik: {d.wiersz.pojemnosc} l</p>}
                   </div>
                   <div className="bg-gray-50 rounded-lg p-2">
                     <p className="text-xs text-gray-500 font-medium mb-0.5">📋 W bazie</p>
@@ -480,7 +467,6 @@ function ImportKlientow({ klienci, onSuccess }: { klienci: Klient[]; onSuccess: 
                     <p className="text-xs text-gray-500">{[d.istniejacy.kod_pocztowy, d.istniejacy.miasto].filter(Boolean).join(' ')}</p>
                     <p className="text-xs text-gray-500">{d.istniejacy.adres}</p>
                     <p className="text-xs text-gray-500">{d.istniejacy.telefon}</p>
-                    {d.istniejacy.pojemnosc_zbiornika && <p className="text-xs text-gray-600">Zbiornik: {d.istniejacy.pojemnosc_zbiornika} l</p>}
                   </div>
                 </div>
                 <div className="flex gap-2">
@@ -620,7 +606,6 @@ export default function KlienciPage() {
       adres: form.adres.trim() || null, miasto: form.miasto.trim() || null,
       kod_pocztowy: form.kod_pocztowy.trim() || null, telefon: form.telefon.trim() || null,
       email: form.email.trim() || null, uwagi: form.uwagi.trim() || null,
-      pojemnosc_zbiornika: form.pojemnosc_zbiornika ? parseInt(form.pojemnosc_zbiornika) : null,
       dokumenty: formDocs.length > 0 ? formDocs : null,
     })
     if (error) { setError('Błąd: ' + error.message); setSaving(false); return }
@@ -636,7 +621,6 @@ export default function KlienciPage() {
       adres: k.adres ?? '', miasto: k.miasto ?? '',
       kod_pocztowy: k.kod_pocztowy ?? '', telefon: k.telefon ?? '',
       email: k.email ?? '', uwagi: k.uwagi ?? '',
-      pojemnosc_zbiornika: k.pojemnosc_zbiornika ? String(k.pojemnosc_zbiornika) : '',
     })
   }
 
@@ -649,7 +633,6 @@ export default function KlienciPage() {
       adres: editForm.adres.trim() || null, miasto: editForm.miasto.trim() || null,
       kod_pocztowy: editForm.kod_pocztowy.trim() || null, telefon: editForm.telefon.trim() || null,
       email: editForm.email.trim() || null, uwagi: editForm.uwagi.trim() || null,
-      pojemnosc_zbiornika: editForm.pojemnosc_zbiornika ? parseInt(editForm.pojemnosc_zbiornika) : null,
       dokumenty: editDocs.length > 0 ? editDocs : null,
     }).eq('id', editId)
     setEditId(null); fetchAll(); setEditSaving(false)
@@ -751,7 +734,6 @@ export default function KlienciPage() {
                         <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-3 px-4">Nazwa</th>
                         <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-3 px-4">Miasto</th>
                         <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-3 px-4">Telefon</th>
-                        <th className="text-right text-xs font-medium text-gray-400 uppercase tracking-wide py-3 px-4">Zbiornik</th>
                         <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-3 px-4">Ostatni zakup</th>
                         <th className="text-center text-xs font-medium text-gray-400 uppercase tracking-wide py-3 px-4">Status</th>
                         <th className="text-center text-xs font-medium text-gray-400 uppercase tracking-wide py-3 px-4">Akcje</th>
@@ -773,12 +755,6 @@ export default function KlienciPage() {
                             {k.kod_pocztowy && <div className="text-xs text-gray-400">{k.kod_pocztowy}</div>}
                           </td>
                           <td className="py-3 px-4 text-gray-600">{k.telefon || <span className="text-gray-300">—</span>}</td>
-                          <td className="py-3 px-4 text-right">
-                            {k.pojemnosc_zbiornika
-                              ? <span className="text-xs font-medium bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">{k.pojemnosc_zbiornika} l</span>
-                              : <span className="text-gray-300">—</span>
-                            }
-                          </td>
                           <td className="py-3 px-4"><OstatniKupilBadge data={ostatnie[k.id] ?? null} /></td>
                           <td className="py-3 px-4 text-center">
                             <button onClick={() => handleToggleAktywny(k)}
@@ -844,12 +820,6 @@ export default function KlienciPage() {
               {(detail.kod_pocztowy || detail.miasto) && <div className="flex justify-between"><span className="text-gray-500">Miasto</span><span>{[detail.kod_pocztowy, detail.miasto].filter(Boolean).join(' ')}</span></div>}
               {detail.telefon && <div className="flex justify-between"><span className="text-gray-500">Telefon</span><a href={`tel:${detail.telefon}`} className="text-blue-700">{detail.telefon}</a></div>}
               {detail.email && <div className="flex justify-between"><span className="text-gray-500">Email</span><a href={`mailto:${detail.email}`} className="text-blue-700">{detail.email}</a></div>}
-              {detail.pojemnosc_zbiornika && (
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Pojemność zbiornika</span>
-                  <span className="font-medium text-blue-700">{detail.pojemnosc_zbiornika} litrów</span>
-                </div>
-              )}
               {detail.uwagi && (
                 <div className="pt-2 border-t border-gray-100">
                   <p className="text-gray-500 mb-1 text-xs font-medium uppercase tracking-wide">Uwagi</p>

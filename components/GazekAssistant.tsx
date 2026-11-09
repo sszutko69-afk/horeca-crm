@@ -731,7 +731,7 @@ export default function GazekAssistant() {
 
   // ─── Minimized ──────────────────────────────────────────────────────────────
   if(minimized) return (
-    <div style={{position:'fixed',left:curPos.x,top:curPos.y,zIndex:1000,cursor:'pointer'}} onMouseDown={startDrag} onTouchStart={startDrag} onClick={handleClick}>
+    <div suppressHydrationWarning style={{position:'fixed',left:curPos.x,top:curPos.y,zIndex:1000,cursor:'pointer'}} onMouseDown={startDrag} onTouchStart={startDrag} onClick={handleClick}>
       <div style={{width:50,height:50,borderRadius:'50%',background:'linear-gradient(135deg,#1565C0,#42A5F5)',boxShadow:'0 4px 18px rgba(21,101,192,.45)',display:'flex',alignItems:'center',justifyContent:'center',transition:'transform .2s'}}
            onMouseEnter={e=>(e.currentTarget.style.transform='scale(1.12)')} onMouseLeave={e=>(e.currentTarget.style.transform='scale(1)')}>
         <svg viewBox="0 0 24 24" width="26" height="26" fill="none">
@@ -744,7 +744,7 @@ export default function GazekAssistant() {
   )
 
   return (
-    <div style={{position:'fixed',left:curPos.x,top:curPos.y,zIndex:1000,userSelect:'none'}}>
+    <div suppressHydrationWarning style={{position:'fixed',left:curPos.x,top:curPos.y,zIndex:1000,userSelect:'none'}}>
       <div style={{position:'relative'}}>
 
         {/* ── PANEL ────────────────────────────────────────────────────────────── */}

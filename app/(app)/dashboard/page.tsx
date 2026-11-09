@@ -1,156 +1,65 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 
 // ================================================================
 // TAŁA PULPITU — 10 motywów
 // ================================================================
 const TLA = [
-  {
-    id: 'biale',
-    nazwa: 'Klasyczna biel',
-    opis: 'Czysty, profesjonalny styl',
-    preview: 'bg-gray-50',
-    style: { background: '#f9fafb' },
-    cardStyle: 'bg-white border-gray-200',
-    textStyle: 'text-gray-900',
-    subStyle: 'text-gray-500',
-  },
-  {
-    id: 'nocne_niebo',
-    nazwa: 'Nocne niebo',
-    opis: 'Granatowy gradient jak rozgwieżdżone niebo',
-    preview: 'bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950',
-    style: { background: 'linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #1e1b4b 100%)' },
-    cardStyle: 'bg-white/10 border-white/20 text-white backdrop-blur-sm',
-    textStyle: 'text-white',
-    subStyle: 'text-blue-200',
-  },
-  {
-    id: 'las',
-    nazwa: 'Leśna głębia',
-    opis: 'Zielony spokój natury',
-    preview: 'bg-gradient-to-br from-emerald-950 via-green-900 to-teal-900',
-    style: { background: 'linear-gradient(135deg, #064e3b 0%, #14532d 50%, #134e4a 100%)' },
-    cardStyle: 'bg-white/10 border-white/20 backdrop-blur-sm',
-    textStyle: 'text-white',
-    subStyle: 'text-emerald-200',
-  },
-  {
-    id: 'zachod',
-    nazwa: 'Zachód słońca',
-    opis: 'Ciepłe barwy wieczoru',
-    preview: 'bg-gradient-to-br from-orange-950 via-rose-900 to-pink-950',
-    style: { background: 'linear-gradient(135deg, #431407 0%, #881337 50%, #4a044e 100%)' },
-    cardStyle: 'bg-white/10 border-white/20 backdrop-blur-sm',
-    textStyle: 'text-white',
-    subStyle: 'text-orange-200',
-  },
-  {
-    id: 'arktyk',
-    nazwa: 'Arktyczny błękit',
-    opis: 'Lodowata klarowność',
-    preview: 'bg-gradient-to-br from-sky-100 via-blue-200 to-indigo-200',
-    style: { background: 'linear-gradient(135deg, #e0f2fe 0%, #bfdbfe 50%, #c7d2fe 100%)' },
-    cardStyle: 'bg-white/60 border-blue-200 backdrop-blur-sm',
-    textStyle: 'text-slate-900',
-    subStyle: 'text-blue-700',
-  },
-  {
-    id: 'industria',
-    nazwa: 'Industrialny grafit',
-    opis: 'Ciemny, skupiony, profesjonalny',
-    preview: 'bg-gradient-to-br from-gray-900 via-zinc-800 to-stone-900',
-    style: { background: 'linear-gradient(135deg, #111827 0%, #27272a 50%, #1c1917 100%)' },
-    cardStyle: 'bg-white/8 border-white/15 backdrop-blur-sm',
-    textStyle: 'text-white',
-    subStyle: 'text-zinc-400',
-  },
-  {
-    id: 'fiolet',
-    nazwa: 'Królewska purpura',
-    opis: 'Elegancja i władza',
-    preview: 'bg-gradient-to-br from-violet-950 via-purple-900 to-fuchsia-950',
-    style: { background: 'linear-gradient(135deg, #2e1065 0%, #4a1d96 50%, #4a044e 100%)' },
-    cardStyle: 'bg-white/10 border-white/20 backdrop-blur-sm',
-    textStyle: 'text-white',
-    subStyle: 'text-violet-200',
-  },
-  {
-    id: 'zloto',
-    nazwa: 'Złota jesień',
-    opis: 'Ciepłe złoto i brąz',
-    preview: 'bg-gradient-to-br from-amber-100 via-yellow-200 to-orange-200',
-    style: { background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 50%, #fed7aa 100%)' },
-    cardStyle: 'bg-white/60 border-amber-300 backdrop-blur-sm',
-    textStyle: 'text-amber-950',
-    subStyle: 'text-amber-700',
-  },
-  {
-    id: 'morze',
-    nazwa: 'Głębiny oceanu',
-    opis: 'Spokojne fale i ciszę',
-    preview: 'bg-gradient-to-br from-cyan-950 via-teal-900 to-sky-950',
-    style: { background: 'linear-gradient(135deg, #083344 0%, #134e4a 50%, #082f49 100%)' },
-    cardStyle: 'bg-white/10 border-white/20 backdrop-blur-sm',
-    textStyle: 'text-white',
-    subStyle: 'text-cyan-200',
-  },
-  {
-    id: 'zielen_miejska',
-    nazwa: 'Miejska zieleń',
-    opis: 'Świeżość w centrum miasta',
-    preview: 'bg-gradient-to-br from-lime-100 via-green-200 to-emerald-200',
-    style: { background: 'linear-gradient(135deg, #ecfccb 0%, #bbf7d0 50%, #a7f3d0 100%)' },
-    cardStyle: 'bg-white/60 border-green-300 backdrop-blur-sm',
-    textStyle: 'text-green-950',
-    subStyle: 'text-green-700',
-  },
+  { id: 'biale',       nazwa: 'Klasyczna biel',    opis: 'Czysty, profesjonalny styl',         preview: 'bg-gray-50', style: { background: '#f9fafb' } },
+  { id: 'nocne_niebo', nazwa: 'Nocne niebo',        opis: 'Granatowy gradient',                  preview: 'bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950', style: { background: 'linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #1e1b4b 100%)' } },
+  { id: 'las',         nazwa: 'Leśna głębia',       opis: 'Zielony spokój natury',               preview: 'bg-gradient-to-br from-emerald-950 via-green-900 to-teal-900', style: { background: 'linear-gradient(135deg, #064e3b 0%, #14532d 50%, #134e4a 100%)' } },
+  { id: 'zachod',      nazwa: 'Zachód słońca',      opis: 'Ciepłe barwy wieczoru',               preview: 'bg-gradient-to-br from-orange-950 via-rose-900 to-pink-950', style: { background: 'linear-gradient(135deg, #431407 0%, #881337 50%, #4a044e 100%)' } },
+  { id: 'arktyk',      nazwa: 'Arktyczny błękit',   opis: 'Lodowata klarowność',                 preview: 'bg-gradient-to-br from-sky-100 via-blue-200 to-indigo-200', style: { background: 'linear-gradient(135deg, #e0f2fe 0%, #bfdbfe 50%, #c7d2fe 100%)' } },
+  { id: 'industria',   nazwa: 'Industrialny grafit', opis: 'Ciemny, skupiony, profesjonalny',    preview: 'bg-gradient-to-br from-gray-900 via-zinc-800 to-stone-900', style: { background: 'linear-gradient(135deg, #111827 0%, #27272a 50%, #1c1917 100%)' } },
+  { id: 'fiolet',      nazwa: 'Królewska purpura',  opis: 'Elegancja i władza',                  preview: 'bg-gradient-to-br from-violet-950 via-purple-900 to-fuchsia-950', style: { background: 'linear-gradient(135deg, #2e1065 0%, #4a1d96 50%, #4a044e 100%)' } },
+  { id: 'zloto',       nazwa: 'Złota jesień',       opis: 'Ciepłe złoto i brąz',                 preview: 'bg-gradient-to-br from-amber-100 via-yellow-200 to-orange-200', style: { background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 50%, #fed7aa 100%)' } },
+  { id: 'morze',       nazwa: 'Głębiny oceanu',     opis: 'Spokojne fale i cisza',               preview: 'bg-gradient-to-br from-cyan-950 via-teal-900 to-sky-950', style: { background: 'linear-gradient(135deg, #083344 0%, #134e4a 50%, #082f49 100%)' } },
+  { id: 'zielen_miejska', nazwa: 'Miejska zieleń',  opis: 'Świeżość w centrum miasta',           preview: 'bg-gradient-to-br from-lime-100 via-green-200 to-emerald-200', style: { background: 'linear-gradient(135deg, #ecfccb 0%, #bbf7d0 50%, #a7f3d0 100%)' } },
 ]
 
 // ================================================================
-// MODUŁY
+// MODUŁY HORECA
 // ================================================================
 const WSZYSTKIE_MODULY = [
-  { nazwa: 'Klienci',        href: '/klienci',    ikona: '👥', emoji: '👥', role: ['admin','pracownik_admin'], opis: 'Baza klientów' },
-  { nazwa: 'Zakupy gazu',    href: '/zakupy',     ikona: '📦', emoji: '📦', role: ['admin','pracownik_admin'], opis: 'Zakupy LPG' },
-  { nazwa: 'Sprzedaż',       href: '/sprzedaz',   ikona: '💰', emoji: '💰', role: ['admin','pracownik_admin'], opis: 'Faktury i sprzedaż' },
-  { nazwa: 'Raporty',        href: '/raporty',    ikona: '📊', emoji: '📊', role: ['admin','pracownik_admin'], opis: 'Analityka' },
-  { nazwa: 'AI — Finanse',   href: '/ai',         ikona: '🤖', emoji: '🤖', role: ['admin','pracownik_admin'], opis: 'Analiza AI' },
-  { nazwa: 'Cysterna & GPS', href: '/cysterna',   ikona: '🚛', emoji: '🚛', role: ['admin','kierowca'],        opis: 'Trasy i GPS' },
-  { nazwa: 'Inwestycje',     href: '/inwestycje', ikona: '🏗️', emoji: '🏗️', role: ['admin','pracownik_inwestycji'], opis: 'Projekty budowlane' },
-  { nazwa: 'Plan pracy',     href: '/planpracy',  ikona: '📅', emoji: '📅', role: ['admin','pracownik_inwestycji','pracownik_admin'], opis: 'Miesięczny plan pracowników' },
-  { nazwa: 'Czas pracy',     href: '/czasPracy',  ikona: '⏱', emoji: '⏱', role: ['admin','pracownik_admin','pracownik_inwestycji'], opis: 'Ewidencja i lista obecności' },
-  { nazwa: 'CRM',           href: '/crm',        ikona: '👥', emoji: '👥', role: ['admin','pracownik_admin'], opis: 'Relacje z klientami' },
-  { nazwa: 'Budżet',         href: '/budzet',     ikona: '💰', emoji: '💰', role: ['admin'], opis: 'Plan i realizacja budżetu' },
-  { nazwa: 'Mapa klientów',  href: '/mapa',       ikona: '🗺️', emoji: '🗺️', role: ['admin','pracownik_admin'], opis: 'Mapa geograficzna' },
-  { nazwa: 'EMCS PL 2',      href: '/emcs',       ikona: '📋', emoji: '📋', role: ['admin'],                    opis: 'Komunikaty akcyzowe' },
-  { nazwa: 'Przetargi',      href: '/przetargi',  ikona: '🏆', emoji: '🏆', role: ['admin','pracownik_admin'], opis: 'BZP i przetargi' },
-  { nazwa: 'inFakt',         href: '/infakt',     ikona: '🧾', emoji: '🧾', role: ['admin'],                    opis: 'Faktury inFakt' },
-  { nazwa: 'Import danych',  href: '/import',     ikona: '📥', emoji: '📥', role: ['admin','pracownik_admin'], opis: 'Import Excel/CSV' },
-  { nazwa: 'Archiwizacja',   href: '/backup',     ikona: '💾', emoji: '💾', role: ['admin'],                    opis: 'Backup danych' },
-  { nazwa: 'Google Workspace', href: '/google',   ikona: '📧', emoji: '📧', role: ['admin','pracownik_admin'], opis: 'Gmail, Drive' },
-  { nazwa: 'Użytkownicy',    href: '/uzytkownicy',ikona: '🔐', emoji: '🔐', role: ['admin'],                    opis: 'Zarządzanie dostępem' },
-  { nazwa: 'Dane firmy',     href: '/ustawienia', ikona: '⚙️', emoji: '⚙️', role: ['admin'],                   opis: 'Ustawienia firmy' },
-  { nazwa: 'EDD / EMCS',     href: '/edd',         ikona: '📜', emoji: '📜', role: ['admin'],                    opis: 'Dokumenty akcyzowe EDD' },
-  { nazwa: 'Plan pracy PDF', href: '/planpracy',   ikona: '🖨', emoji: '🖨', role: ['admin','pracownik_inwestycji'], opis: 'PDF planu tygodniowego' },
+  { nazwa: 'Klienci',         href: '/klienci',     ikona: '👥', role: ['admin','menedzer'],                       opis: 'Baza klientów i firm' },
+  { nazwa: 'Rezerwacje',      href: '/rezerwacje',  ikona: '📅', role: ['admin','menedzer','kelner'],              opis: 'Zarządzanie stolikami' },
+  { nazwa: 'Stoły',           href: '/stoly',       ikona: '🪑', role: ['admin','menedzer','kelner'],              opis: 'Plan sali i statusy' },
+  { nazwa: 'Menu',            href: '/menu',        ikona: '🍽️', role: ['admin','menedzer','kucharz'],             opis: 'Karta dań i napojów' },
+  { nazwa: 'Sprzedaż',        href: '/sprzedaz',    ikona: '💰', role: ['admin','menedzer'],                       opis: 'Faktury i sprzedaż' },
+  { nazwa: 'Zakupy',          href: '/zakupy',      ikona: '📦', role: ['admin','menedzer'],                       opis: 'Zakupy i dostawy' },
+  { nazwa: 'POS',             href: '/pos',         ikona: '🖥️', role: ['admin','menedzer'],                       opis: 'System kasowy POS' },
+  { nazwa: 'eService',        href: '/eservice',    ikona: '💳', role: ['admin','menedzer'],                       opis: 'Terminale płatnicze' },
+  { nazwa: 'Bank',            href: '/bank',        ikona: '🏦', role: ['admin'],                                  opis: 'Wyciągi bankowe' },
+  { nazwa: 'Raporty',         href: '/raporty',     ikona: '📊', role: ['admin','menedzer'],                       opis: 'Analityka i raporty' },
+  { nazwa: 'CRM',             href: '/crm',         ikona: '🤝', role: ['admin','menedzer'],                       opis: 'Relacje z klientami' },
+  { nazwa: 'Budżet',          href: '/budzet',      ikona: '📈', role: ['admin'],                                  opis: 'Plan i realizacja' },
+  { nazwa: 'AI — Finanse',    href: '/ai',          ikona: '🤖', role: ['admin','menedzer'],                       opis: 'Analiza AI' },
+  { nazwa: 'Kadry',           href: '/kadry',       ikona: '👷', role: ['admin','menedzer'],                       opis: 'Zarządzanie personelem' },
+  { nazwa: 'Czas pracy',      href: '/czasPracy',   ikona: '⏱️', role: ['admin','menedzer'],                       opis: 'Ewidencja czasu' },
+  { nazwa: 'Plan pracy',      href: '/planpracy',   ikona: '📋', role: ['admin','menedzer'],                       opis: 'Grafik pracowników' },
+  { nazwa: 'Płace',           href: '/place',       ikona: '💵', role: ['admin'],                                  opis: 'Lista płac' },
+  { nazwa: 'Użytkownicy',     href: '/uzytkownicy', ikona: '🔐', role: ['admin'],                                  opis: 'Zarządzanie dostępem' },
+  { nazwa: 'Dane firmy',      href: '/ustawienia',  ikona: '⚙️', role: ['admin'],                                  opis: 'Ustawienia firmy' },
+  { nazwa: 'Google Workspace',href: '/google',      ikona: '📧', role: ['admin','menedzer'],                       opis: 'Gmail, Drive, Calendar' },
+  { nazwa: 'inFakt',          href: '/infakt',      ikona: '🧾', role: ['admin'],                                  opis: 'Faktury inFakt' },
+  { nazwa: 'Import danych',   href: '/import',      ikona: '📥', role: ['admin'],                                  opis: 'Import Excel/CSV' },
 ]
 
-const DOMYSLNE = ['Klienci','Zakupy gazu','Sprzedaż','Raporty','Cysterna & GPS','Inwestycje']
+const DOMYSLNE = ['Rezerwacje', 'Stoły', 'Menu', 'POS', 'eService', 'Bank']
 
 const SZYBKIE_AKCJE_WSZYSTKIE = [
-  { label: '📅 Plan pracy',    href: '/planpracy',  role: ['admin','pracownik_admin','pracownik_inwestycji'] },
-  { label: '+ Nowy klient',   href: '/klienci',    role: ['admin','pracownik_admin'] },
-  { label: '+ Zakup gazu',    href: '/zakupy',     role: ['admin','pracownik_admin'] },
-  { label: '+ Sprzedaż',      href: '/sprzedaz',   role: ['admin','pracownik_admin'] },
-  { label: 'Raport dobowy',   href: '/raporty',    role: ['admin','pracownik_admin'] },
-  { label: 'Import Excel',    href: '/import',     role: ['admin','pracownik_admin'] },
-  { label: 'Nowa trasa',      href: '/cysterna',   role: ['admin','kierowca'] },
-  { label: 'Nowa inwestycja', href: '/inwestycje', role: ['admin','pracownik_inwestycji'] },
-  { label: 'DD815B e-DD',     href: '/emcs',       role: ['admin'] },
-  { label: 'Szukaj przetargu',href: '/przetargi',  role: ['admin','pracownik_admin'] },
-  { label: 'inFakt faktury',  href: '/infakt',     role: ['admin'] },
+  { label: '+ Nowa rezerwacja',  href: '/rezerwacje',  role: ['admin','menedzer','kelner'] },
+  { label: '📋 Plan pracy',      href: '/planpracy',   role: ['admin','menedzer'] },
+  { label: '+ Nowy klient',      href: '/klienci',     role: ['admin','menedzer'] },
+  { label: '+ Nowa faktura',     href: '/sprzedaz',    role: ['admin','menedzer'] },
+  { label: '+ Nowy zakup',       href: '/zakupy',      role: ['admin','menedzer'] },
+  { label: 'Raport dzienny',     href: '/raporty',     role: ['admin','menedzer'] },
+  { label: 'Terminale',          href: '/eservice',    role: ['admin','menedzer'] },
+  { label: 'Wyciąg bankowy',     href: '/bank',        role: ['admin'] },
+  { label: 'Import Excel',       href: '/import',      role: ['admin'] },
+  { label: 'inFakt faktury',     href: '/infakt',      role: ['admin'] },
 ]
 
 function fmt(n: number) {
@@ -164,7 +73,6 @@ export default function DashboardPage() {
   const [imie, setImie] = useState('')
   const [loading, setLoading] = useState(true)
 
-  // Personalizacja
   const [edycja, setEdycja] = useState(false)
   const [edycjaTla, setEdycjaTla] = useState(false)
   const [widoczne, setWidoczne] = useState<string[]>(DOMYSLNE)
@@ -172,8 +80,7 @@ export default function DashboardPage() {
   const [tloId, setTloId] = useState('biale')
 
   const [stats, setStats] = useState({
-    klienci: 0, zakupy: 0, sprzedaz: 0, inwestycje: 0, trasy: 0,
-    sprzedaz_brutto: 0, zakupy_brutto: 0, marza: 0,
+    klienci: 0, sprzedaz: 0, sprzedaz_brutto: 0, zakupy: 0, zakupy_brutto: 0, marza: 0,
   })
 
   const tlo = TLA.find(t => t.id === tloId) ?? TLA[0]
@@ -181,11 +88,11 @@ export default function DashboardPage() {
 
   useEffect(() => {
     try {
-      const zapisane = localStorage.getItem('dashboard_widoczne')
+      const zapisane = localStorage.getItem('horekacrm_dashboard_widoczne')
       if (zapisane) setWidoczne(JSON.parse(zapisane))
-      const zapisaneSA = localStorage.getItem('dashboard_szybkie')
+      const zapisaneSA = localStorage.getItem('horekacrm_dashboard_szybkie')
       if (zapisaneSA) setSzybkieAkcje(JSON.parse(zapisaneSA))
-      const zapisaneTlo = localStorage.getItem('dashboard_tlo')
+      const zapisaneTlo = localStorage.getItem('horekacrm_dashboard_tlo')
       if (zapisaneTlo) setTloId(zapisaneTlo)
     } catch {}
     load()
@@ -200,73 +107,60 @@ export default function DashboardPage() {
       .eq('id', user?.id ?? '')
       .single()
     if (profile) {
-      setRola(profile.rola ?? 'admin')
+      setRola(profile.rola ?? 'kelner')
       setImie(profile.imie_nazwisko ?? '')
     }
 
     const [
-      { count: kl }, { count: zk }, { count: sp }, { count: inv }, { count: tr },
+      { count: kl }, { count: sp }, { count: zk },
       { data: sprzedazData }, { data: zakupyData },
     ] = await Promise.all([
       supabase.from('klienci').select('*', { count: 'exact', head: true }).eq('aktywny', true),
-      supabase.from('zakupy').select('*', { count: 'exact', head: true }),
       supabase.from('sprzedaz').select('*', { count: 'exact', head: true }),
-      supabase.from('inwestycje').select('*', { count: 'exact', head: true }).eq('stan_akceptacji','zaakceptowany'),
-      supabase.from('trasy').select('*', { count: 'exact', head: true }),
-      supabase.from('sprzedaz').select('ilosc_litry, cena_sprzedazy'),
-      supabase.from('zakupy').select('ilosc_kg, cena_jednostkowa'),
+      supabase.from('zakupy').select('*', { count: 'exact', head: true }),
+      supabase.from('sprzedaz').select('kwota_brutto').limit(1000),
+      supabase.from('zakupy').select('wartosc_brutto').limit(1000),
     ])
 
-    const sprzBrutto = (sprzedazData ?? []).reduce((a: number, s: any) => a + s.ilosc_litry * s.cena_sprzedazy, 0)
-    const zakBrutto = (zakupyData ?? []).reduce((a: number, z: any) => a + z.ilosc_kg * z.cena_jednostkowa * 1.23, 0)
+    const sprzBrutto = (sprzedazData ?? []).reduce((a: number, s: any) => a + (s.kwota_brutto ?? 0), 0)
+    const zakBrutto  = (zakupyData  ?? []).reduce((a: number, z: any) => a + (z.wartosc_brutto ?? 0), 0)
 
     setStats({
-      klienci: kl ?? 0, zakupy: zk ?? 0, sprzedaz: sp ?? 0,
-      inwestycje: inv ?? 0, trasy: tr ?? 0,
-      sprzedaz_brutto: sprzBrutto, zakupy_brutto: zakBrutto,
-      marza: sprzBrutto - zakBrutto,
+      klienci: kl ?? 0, sprzedaz: sp ?? 0, zakupy: zk ?? 0,
+      sprzedaz_brutto: sprzBrutto, zakupy_brutto: zakBrutto, marza: sprzBrutto - zakBrutto,
     })
     setLoading(false)
   }
 
   function statVal(nazwa: string) {
-    if (nazwa === 'Klienci') return { v: stats.klienci + ' aktywnych', s: undefined }
-    if (nazwa === 'Zakupy gazu') return { v: stats.zakupy + ' dostaw', s: undefined }
-    if (nazwa === 'Sprzedaż') return { v: fmt(stats.sprzedaz_brutto), s: stats.sprzedaz + ' transakcji' }
-    if (nazwa === 'Inwestycje') return { v: stats.inwestycje + ' projektów', s: undefined }
-    if (nazwa === 'Cysterna & GPS') return { v: stats.trasy + ' tras', s: undefined }
+    if (nazwa === 'Klienci')  return { v: stats.klienci + ' aktywnych', s: undefined }
+    if (nazwa === 'Sprzedaż') return { v: fmt(stats.sprzedaz_brutto),   s: stats.sprzedaz + ' faktur' }
+    if (nazwa === 'Zakupy')   return { v: stats.zakupy + ' dostaw',      s: undefined }
     return null
   }
 
   function zapiszKonfig(nowe: string[]) {
     setWidoczne(nowe)
-    localStorage.setItem('dashboard_widoczne', JSON.stringify(nowe))
+    localStorage.setItem('horekacrm_dashboard_widoczne', JSON.stringify(nowe))
   }
   function toggleModul(nazwa: string) {
-    zapiszKonfig(widoczne.includes(nazwa)
-      ? widoczne.filter(w => w !== nazwa)
-      : [...widoczne, nazwa]
-    )
+    zapiszKonfig(widoczne.includes(nazwa) ? widoczne.filter(w => w !== nazwa) : [...widoczne, nazwa])
   }
   function toggleSzybka(label: string) {
-    const nowe = szybkieAkcje.includes(label)
-      ? szybkieAkcje.filter(s => s !== label)
-      : [...szybkieAkcje, label]
+    const nowe = szybkieAkcje.includes(label) ? szybkieAkcje.filter(s => s !== label) : [...szybkieAkcje, label]
     setSzybkieAkcje(nowe)
-    localStorage.setItem('dashboard_szybkie', JSON.stringify(nowe))
+    localStorage.setItem('horekacrm_dashboard_szybkie', JSON.stringify(nowe))
   }
   function zmienTlo(id: string) {
     setTloId(id)
-    localStorage.setItem('dashboard_tlo', id)
-    // Powiadom AppShell o zmianie tła (storage event tylko między tabami)
-    window.dispatchEvent(new StorageEvent('storage', { key: 'dashboard_tlo', newValue: id }))
-    // Zastosuj też bezpośrednio
+    localStorage.setItem('horekacrm_dashboard_tlo', id)
+    window.dispatchEvent(new StorageEvent('storage', { key: 'horekacrm_dashboard_tlo', newValue: id }))
     const TLA_BG: Record<string, string> = {
-      biale:'#f9fafb', nocne_niebo:'linear-gradient(135deg, #0f172a, #1e3a5f, #1e1b4b)',
-      las:'linear-gradient(135deg, #064e3b, #14532d, #134e4a)', zachod:'linear-gradient(135deg, #431407, #881337, #4a044e)',
-      arktyk:'linear-gradient(135deg, #e0f2fe, #bfdbfe, #c7d2fe)', industria:'linear-gradient(135deg, #111827, #27272a, #1c1917)',
-      fiolet:'linear-gradient(135deg, #2e1065, #4a1d96, #4a044e)', zloto:'linear-gradient(135deg, #fef3c7, #fde68a, #fed7aa)',
-      morze:'linear-gradient(135deg, #083344, #134e4a, #082f49)', zielen_miejska:'linear-gradient(135deg, #ecfccb, #bbf7d0, #a7f3d0)',
+      biale:'#f9fafb', nocne_niebo:'linear-gradient(135deg,#0f172a,#1e3a5f,#1e1b4b)',
+      las:'linear-gradient(135deg,#064e3b,#14532d,#134e4a)', zachod:'linear-gradient(135deg,#431407,#881337,#4a044e)',
+      arktyk:'linear-gradient(135deg,#e0f2fe,#bfdbfe,#c7d2fe)', industria:'linear-gradient(135deg,#111827,#27272a,#1c1917)',
+      fiolet:'linear-gradient(135deg,#2e1065,#4a1d96,#4a044e)', zloto:'linear-gradient(135deg,#fef3c7,#fde68a,#fed7aa)',
+      morze:'linear-gradient(135deg,#083344,#134e4a,#082f49)', zielen_miejska:'linear-gradient(135deg,#ecfccb,#bbf7d0,#a7f3d0)',
     }
     document.body.style.background = TLA_BG[id] || '#f9fafb'
     document.body.style.backgroundAttachment = 'fixed'
@@ -277,41 +171,30 @@ export default function DashboardPage() {
   const dostepneSA = SZYBKIE_AKCJE_WSZYSTKIE.filter(a => !rola || a.role.includes(rola))
   const szybkieNaDashboard = szybkieAkcje.length > 0
     ? dostepneSA.filter(a => szybkieAkcje.includes(a.label))
-    : dostepneSA // domyślnie wszystkie dostępne
+    : dostepneSA
 
   const poraDoby = () => {
     const h = new Date().getHours()
-    if (h < 6) return 'Dobranoc'
+    if (h < 6)  return 'Dobranoc'
     if (h < 12) return 'Dzień dobry'
     if (h < 18) return 'Dobre popołudnie'
     return 'Dobry wieczór'
   }
+
   const roleNazwa: Record<string, string> = {
-    admin: 'Administrator', pracownik_admin: 'Prac. administracyjny',
-    pracownik_inwestycji: 'Prac. inwestycji', kierowca: 'Kierowca',
+    admin: 'Administrator', menedzer: 'Menedżer', kelner: 'Kelner', kucharz: 'Kucharz',
   }
 
-  // Style warunkowe
-  const cardCls = isDark
-    ? 'bg-white/10 border border-white/20 backdrop-blur-sm text-white'
-    : 'bg-white border border-gray-200'
-  const cardHover = isDark ? 'hover:bg-white/20' : 'hover:border-gray-300 hover:shadow-sm'
+  const cardCls     = isDark ? 'bg-white/10 border border-white/20 backdrop-blur-sm text-white' : 'bg-white border border-gray-200'
+  const cardHover   = isDark ? 'hover:bg-white/20' : 'hover:border-gray-300 hover:shadow-sm'
   const textPrimary = isDark ? 'text-white' : 'text-gray-900'
   const textSecondary = isDark ? 'text-white/60' : 'text-gray-500'
-  const textMuted = isDark ? 'text-white/40' : 'text-gray-400'
-  const btnCls = isDark
-    ? 'bg-white/10 border border-white/20 text-white hover:bg-white/20'
-    : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
-  const panelCls = isDark
-    ? 'bg-white/10 border border-white/20 backdrop-blur-sm'
-    : 'bg-white border border-gray-200'
-  const labelCls = isDark ? 'text-white/70' : 'text-gray-500'
+  const textMuted   = isDark ? 'text-white/40' : 'text-gray-400'
+  const btnCls      = isDark ? 'bg-white/10 border border-white/20 text-white hover:bg-white/20' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+  const panelCls    = isDark ? 'bg-white/10 border border-white/20 backdrop-blur-sm' : 'bg-white border border-gray-200'
 
   return (
-    <div
-      className="min-h-screen transition-all duration-500"
-      style={tlo.style}
-    >
+    <div className="min-h-screen transition-all duration-500" style={tlo.style}>
       <div className="p-6 max-w-5xl mx-auto">
 
         {/* ── Nagłówek ── */}
@@ -361,16 +244,12 @@ export default function DashboardPage() {
             </p>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
               {TLA.map(t => (
-                <button
-                  key={t.id}
-                  onClick={() => zmienTlo(t.id)}
+                <button key={t.id} onClick={() => zmienTlo(t.id)}
                   className={`relative rounded-xl overflow-hidden border-2 transition-all group ${
                     tloId === t.id
                       ? 'border-blue-500 shadow-lg scale-105'
                       : isDark ? 'border-white/20 hover:border-white/50' : 'border-gray-200 hover:border-gray-400'
-                  }`}
-                >
-                  {/* Podgląd koloru */}
+                  }`}>
                   <div className={`h-12 ${t.preview}`} />
                   <div className={`p-2 ${isDark ? 'bg-white/10' : 'bg-white'}`}>
                     <p className={`text-xs font-medium truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{t.nazwa}</p>
@@ -387,11 +266,10 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* ── Panel personalizacji kafelków ── */}
+        {/* ── Panel personalizacji ── */}
         {edycja && (
           <div className={`rounded-2xl p-5 mb-6 ${isDark ? 'bg-white/10 border border-white/20 backdrop-blur-sm' : 'bg-blue-50 border border-blue-200'}`}>
             <div className="space-y-4">
-              {/* Kafelki */}
               <div>
                 <p className={`text-xs font-semibold uppercase tracking-wide mb-2 ${isDark ? 'text-white/70' : 'text-blue-800'}`}>
                   📦 Kafelki na dashboardzie
@@ -415,11 +293,9 @@ export default function DashboardPage() {
                   ↺ Przywróć domyślne kafelki
                 </button>
               </div>
-
-              {/* Szybkie akcje */}
               <div className={`border-t pt-4 ${isDark ? 'border-white/20' : 'border-blue-200'}`}>
                 <p className={`text-xs font-semibold uppercase tracking-wide mb-2 ${isDark ? 'text-white/70' : 'text-blue-800'}`}>
-                  ⚡ Szybkie akcje (wybierz swoje ulubione)
+                  ⚡ Szybkie akcje
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {dostepneSA.map(a => (
@@ -433,26 +309,18 @@ export default function DashboardPage() {
                     </button>
                   ))}
                 </div>
-                {szybkieAkcje.length > 0 && (
-                  <button
-                    onClick={() => { setSzybkieAkcje([]); localStorage.setItem('dashboard_szybkie', '[]') }}
-                    className={`text-xs mt-2 ${isDark ? 'text-white/50 hover:text-white' : 'text-blue-600 hover:text-blue-800'}`}
-                  >
-                    ↺ Pokaż wszystkie akcje
-                  </button>
-                )}
               </div>
             </div>
           </div>
         )}
 
-        {/* ── KPI Banner ── */}
+        {/* ── KPI Banner — tylko gdy są dane ── */}
         {!loading && stats.sprzedaz_brutto > 0 && (
           <div className="grid grid-cols-3 gap-3 mb-6">
             {[
-              { l: 'Przychód brutto', v: fmt(stats.sprzedaz_brutto), bg: 'bg-blue-600', sub: 'text-blue-200' },
-              { l: 'Koszty zakupów', v: fmt(stats.zakupy_brutto), bg: isDark ? 'bg-white/20' : 'bg-gray-800', sub: isDark ? 'text-white/60' : 'text-gray-400' },
-              { l: 'Marża brutto', v: fmt(stats.marza), bg: stats.marza >= 0 ? 'bg-green-600' : 'bg-red-600', sub: stats.marza >= 0 ? 'text-green-200' : 'text-red-200' },
+              { l: 'Przychód brutto', v: fmt(stats.sprzedaz_brutto), bg: 'bg-blue-600',  sub: 'text-blue-200' },
+              { l: 'Koszty zakupów',  v: fmt(stats.zakupy_brutto),  bg: isDark ? 'bg-white/20' : 'bg-gray-800', sub: isDark ? 'text-white/60' : 'text-gray-400' },
+              { l: 'Marża brutto',    v: fmt(stats.marza), bg: stats.marza >= 0 ? 'bg-green-600' : 'bg-red-600', sub: stats.marza >= 0 ? 'text-green-200' : 'text-red-200' },
             ].map(k => (
               <div key={k.l} className={`rounded-xl p-4 text-white ${k.bg}`}>
                 <p className={`text-xs font-medium uppercase tracking-wide mb-1 ${k.sub}`}>{k.l}</p>
@@ -494,14 +362,13 @@ export default function DashboardPage() {
         ) : (
           <div className={`rounded-xl p-8 text-center mb-6 ${panelCls}`}>
             <p className={`text-sm ${textSecondary}`}>
-              Brak kafelków — kliknij <strong>⚙ Personalizuj</strong> aby wybrać moduły do wyświetlenia
+              Brak kafelków — kliknij <strong>⚙ Personalizuj</strong> aby wybrać moduły
             </p>
           </div>
         )}
 
         {/* ── Dolna sekcja ── */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {/* Szybkie akcje */}
           <div className={`rounded-xl p-5 ${panelCls}`}>
             <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 ${textPrimary}`}>
               ⚡ Szybkie akcje
@@ -520,22 +387,22 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Status systemu */}
           <div className={`rounded-xl p-5 ${isDark ? 'bg-white/10 border border-white/20' : 'bg-blue-50 border border-blue-100'}`}>
             <h2 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-blue-900'}`}>
               🟢 Status systemu
             </h2>
             <div className="space-y-1.5">
               {[
-                { label: 'Baza danych Supabase', ok: true },
-                { label: 'Zakupy i sprzedaż', ok: true },
-                { label: 'Raporty i analityka', ok: true },
-                { label: 'Import Excel / CSV', ok: true },
-                { label: 'AI — analiza finansowa', ok: true },
-                { label: 'Moduł inwestycji', ok: true },
+                { label: 'Baza danych Supabase',  ok: true },
+                { label: 'Rezerwacje i stoły',     ok: true },
+                { label: 'Sprzedaż i zakupy',      ok: true },
+                { label: 'POS — synchronizacja',   ok: true },
+                { label: 'eService — terminale',   ok: true },
+                { label: 'Bank API',               ok: true },
+                { label: 'Raporty i analityka',    ok: true },
                 ...(rola === 'admin' ? [
-                  { label: 'EMCS PL 2 / e-DD', ok: true },
-                  { label: 'Integracja inFakt', ok: true },
+                  { label: 'Integracja inFakt',    ok: true },
+                  { label: 'Google Workspace',     ok: true },
                 ] : []),
               ].map(s => (
                 <div key={s.label} className="flex items-center gap-2 text-xs">
@@ -548,7 +415,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Aktywny motyw — stopka */}
         <div className={`mt-4 text-center text-xs ${textMuted}`}>
           Motyw: <span className={`font-medium ${textSecondary}`}>{tlo.nazwa}</span>
           {' · '}
