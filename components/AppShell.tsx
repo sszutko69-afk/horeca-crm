@@ -6,6 +6,9 @@ import { createClient } from '@/lib/supabase'
 import GazekAssistant from './GazekAssistant'
 import MalaAssistant  from './MalaAssistant'
 
+// Maskotki (Chef / Mala) wyłączone w demo — ustaw true, aby włączyć dla klienta
+const MASCOTS_ENABLED = false
+
 // ================================================================
 // NAWIGACJA — HoReCa CRM
 // ================================================================
@@ -412,7 +415,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           )}
 
           {/* Wybór maskotki */}
-          <div style={{
+          {MASCOTS_ENABLED && <div style={{
             padding: isMini && !isMobile ? '6px 0' : '6px 16px',
             display:'flex', gap:8, justifyContent: isMini && !isMobile ? 'center' : 'flex-start', alignItems:'center',
             borderTop: `1px solid rgba(255,255,255,0.08)`,
@@ -441,7 +444,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 ))}
               </>
             )}
-          </div>
+          </div>}
 
           {/* Użytkownik */}
           <div style={{
@@ -623,10 +626,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 ))}
               </div>
 
-              <div className="mt-4 p-3 bg-amber-50 border border-amber-100 rounded-xl text-xs text-amber-800">
+              {MASCOTS_ENABLED && <div className="mt-4 p-3 bg-amber-50 border border-amber-100 rounded-xl text-xs text-amber-800">
                 <strong>🤖 Asystent AI</strong> — asystent w prawym dolnym rogu — wita, informuje o terminach, rezerwacjach i pilnych sprawach.
                 Można go przeciągać, zwijać i pytać o pomoc klikając przycisk <em>Pomoc</em> w dymku.
-              </div>
+              </div>}
               <div className="mt-2 p-3 bg-blue-50 border border-blue-100 rounded-xl text-xs text-blue-800">
                 <strong>🔒 WERSJA DEMO</strong> — dane prezentowane w systemie są przykładowe i nie zawierają rzeczywistych danych klientów.
                 System działa w trybie demonstracyjnym. Dane są chronione zgodnie z RODO.
@@ -644,7 +647,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       )}
 
       {/* ════════════════ MASKOTKA ════════════════ */}
-      {mascot === 'gazek' ? <GazekAssistant /> : <MalaAssistant />}
+      {MASCOTS_ENABLED && (mascot === 'gazek' ? <GazekAssistant /> : <MalaAssistant />)}
     </div>
   )
 }
