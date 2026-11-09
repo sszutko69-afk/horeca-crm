@@ -6,13 +6,13 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'GazCRM',
-  description: 'System zarządzania firmą gazową',
+  title: 'HoReCa CRM',
+  description: 'System zarządzania restauracją, hotelem i cateringiem',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'GazCRM',
+    title: 'HoReCa CRM',
   },
 }
 

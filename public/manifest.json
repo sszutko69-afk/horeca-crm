@@ -1,7 +1,7 @@
 {
-  "name": "GazCRM",
-  "short_name": "GazCRM",
-  "description": "System zarządzania firmą ON Gaz – sprzedaż LPG, przetargi, kadry, budżet",
+  "name": "HoReCa CRM",
+  "short_name": "HoReCa CRM",
+  "description": "System zarządzania restauracją, hotelem i cateringiem – rezerwacje, menu, sprzedaż, kadry",
   "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#f9fafb",
