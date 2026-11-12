@@ -4,6 +4,9 @@ import { liczDostep, dniTekst, type FirmaPlan } from '@/lib/plany'
 
 const KONTAKT = 'skrojocrm@gmail.com'
 
+// Styl inline: globalna reguła `a { color }` w globals.css nadpisuje klasy Tailwind (biały tekst był niewidoczny)
+const PRZYCISK: React.CSSProperties = { background: '#2FB36D', color: '#FFFFFF', textDecoration: 'none' }
+
 // Pasek informacji o planie nad treścią aplikacji.
 export default function PlanBanner({ firma }: { firma: FirmaPlan | null }) {
   if (!firma) return null
@@ -21,7 +24,7 @@ export default function PlanBanner({ firma }: { firma: FirmaPlan | null }) {
           <b>Korzystasz z pełnej wersji systemu.</b> Za {dniTekst(d.dniDoKonca ?? 1)} system przejdzie do wersji podstawowej.
           Wykup subskrypcję lub {kontakt} w celu dopasowania systemu do Twoich potrzeb.
         </span>
-        <a href="/subskrypcja" className="ml-auto bg-green-700 text-white px-3 py-1 rounded-md text-xs font-semibold whitespace-nowrap">Wykup subskrypcję</a>
+        <a href="/subskrypcja" style={PRZYCISK} className="ml-auto px-3 py-1 rounded-md text-xs font-semibold whitespace-nowrap">Wykup subskrypcję</a>
       </div>
     )
   }
@@ -32,7 +35,7 @@ export default function PlanBanner({ firma }: { firma: FirmaPlan | null }) {
         <b>{d.powod === 'zaleglosc' ? 'Płatność nie powiodła się.' : 'Korzystasz z wersji podstawowej.'}</b>{' '}
         Moduły rozszerzone są wyłączone. Wykup subskrypcję lub {kontakt} w celu dopasowania systemu do Twoich potrzeb.
       </span>
-      <a href="/subskrypcja" className="ml-auto bg-amber-700 text-white px-3 py-1 rounded-md text-xs font-semibold whitespace-nowrap">Wykup subskrypcję</a>
+      <a href="/subskrypcja" style={PRZYCISK} className="ml-auto px-3 py-1 rounded-md text-xs font-semibold whitespace-nowrap">Wykup subskrypcję</a>
     </div>
   )
 }

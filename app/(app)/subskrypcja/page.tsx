@@ -80,7 +80,7 @@ export default function SubskrypcjaPage() {
 
         <div className="mt-4 flex flex-wrap gap-3">
           {admin && !platna && d.powod !== 'demo' && (
-            <button onClick={wykup} disabled={busy} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-60">
+            <button onClick={wykup} disabled={busy} style={{ background: '#2FB36D', color: '#FFFFFF' }} className="px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-60">
               Wykup subskrypcję od {CENA_OD} / mies.
             </button>
           )}
