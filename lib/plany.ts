@@ -1,13 +1,8 @@
 // Plany Skrojo: okres próbny (pełna wersja 7 dni) -> wersja podstawowa (0 zł) albo subskrypcja (od 29 zł / mies.)
+import { MODULY_SYSTEMOWE, SCIEZKA_MODUL, modulyDarmowe } from './branze'
 
 export const TRIAL_DNI = 7
 export const CENA_OD = '29 zł'
-
-// Moduły wersji podstawowej (darmowej na zawsze). Pozostałe wymagają okresu próbnego lub subskrypcji.
-export const MODULY_PODSTAWOWE = ['Dashboard', 'CRM', 'Leady', 'Klienci', 'Użytkownicy', 'Dane firmy']
-
-// Ścieżki zablokowane w wersji podstawowej (to, co nie jest w MODULY_PODSTAWOWE).
-export const SCIEZKI_PODSTAWOWE = ['/dashboard', '/crm', '/leady', '/klienci', '/uzytkownicy', '/ustawienia', '/subskrypcja']
 
 export type FirmaPlan = {
   id: string
@@ -18,6 +13,9 @@ export type FirmaPlan = {
   stripe_status: string | null
   subskrypcja_do: string | null
   stripe_customer_id?: string | null
+  branza?: string | null
+  moduly?: string[] | null            // moduły wybrane przez firmę (sufit dostępu)
+  onboarding_zakonczony?: boolean
 }
 
 export type Dostep = {
@@ -40,8 +38,28 @@ export function liczDostep(f: FirmaPlan | null | undefined, teraz = new Date()):
   return { wersja: 'podstawowa', powod: 'podstawowa', dniDoKonca: null }
 }
 
-export function czySciezkaPodstawowa(path: string) {
-  return SCIEZKI_PODSTAWOWE.some(p => path === p || path.startsWith(p + '/'))
+// Moduły dostępne dla firmy: wybrane przez nią (pełna wersja) albo tylko darmowe z wybranych (wersja podstawowa).
+// Firma bez ukończonego wyboru (moduly = null) ma tylko moduły systemowe. Firma DEMO widzi wszystko.
+export function modulyFirmy(f: FirmaPlan | null | undefined, teraz = new Date()): string[] {
+  if (!f) return [...MODULY_SYSTEMOWE]
+  if (f.demo) return f.moduly && f.moduly.length ? f.moduly : Object.values(SCIEZKA_MODUL)
+  const d = liczDostep(f, teraz)
+  const wybrane = f.moduly ?? []
+  const baza = d.wersja === 'pelna' ? wybrane : wybrane.filter(m => modulyDarmowe(f.branza).includes(m))
+  return Array.from(new Set([...MODULY_SYSTEMOWE, ...baza]))
+}
+
+const NIEDOSTEPNE = /^\/(mapa|cysterna|przetargi|kosztorysowanie|inwestycje|emcs|edd|gps)(\/|$)/
+
+// Czy ścieżka jest dozwolona: null = tak, albo powód blokady
+//  'plan' = moduł wybrany, ale wymaga pełnej wersji; 'wybor' = moduł spoza wyboru firmy; 'niedostepny' = pozostałość innych wersji systemu.
+export function blokadaSciezki(path: string, f: FirmaPlan | null | undefined): 'wybor' | 'plan' | 'niedostepny' | null {
+  if (path === '/start' || path === '/subskrypcja' || path.startsWith('/subskrypcja/')) return null
+  const klucz = Object.keys(SCIEZKA_MODUL).find(k => path === k || path.startsWith(k + '/'))
+  if (!klucz) return NIEDOSTEPNE.test(path) && !f?.demo ? 'niedostepny' : null
+  const modul = SCIEZKA_MODUL[klucz]
+  if (modulyFirmy(f).includes(modul)) return null
+  return (f?.moduly ?? []).includes(modul) ? 'plan' : 'wybor'
 }
 
 export function dniTekst(n: number) {

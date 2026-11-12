@@ -1,6 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-import { liczDostep, czySciezkaPodstawowa, type FirmaPlan } from '@/lib/plany'
+import { blokadaSciezki, type FirmaPlan } from '@/lib/plany'
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request })
@@ -32,16 +32,19 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Wersja podstawowa (po okresie próbnym bez subskrypcji): moduły rozszerzone są zablokowane
+  // Dostęp do modułów: wybór branży i modułów (/start), potem pełna wersja (okres próbny/subskrypcja) albo tylko darmowe moduły
   if (user && !isPublic && !path.startsWith('/api')) {
     const { data: firma } = await supabase
       .from('firmy')
-      .select('id,nazwa,demo,status,trial_do,stripe_status,subskrypcja_do')
+      .select('id,nazwa,demo,status,trial_do,stripe_status,subskrypcja_do,branza,moduly,onboarding_zakonczony')
       .maybeSingle()
-    const dostep = liczDostep(firma as FirmaPlan | null)
-    if (dostep.wersja === 'podstawowa' && !czySciezkaPodstawowa(path)) {
-      return NextResponse.redirect(new URL('/subskrypcja?zablokowane=1', request.url))
+    const f = firma as FirmaPlan | null
+    if (f && !f.demo && !f.onboarding_zakonczony && path !== '/start' && !path.startsWith('/subskrypcja')) {
+      return NextResponse.redirect(new URL('/start', request.url))
     }
+    const blokada = blokadaSciezki(path, f)
+    if (blokada === 'plan') return NextResponse.redirect(new URL('/subskrypcja?zablokowane=1', request.url))
+    if (blokada === 'wybor' || blokada === 'niedostepny') return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
   return response

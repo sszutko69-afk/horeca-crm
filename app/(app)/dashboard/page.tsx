@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
+import { modulyFirmy, type FirmaPlan } from '@/lib/plany'
+import { SCIEZKA_MODUL } from '@/lib/branze'
 
 // ================================================================
 // TAŁA PULPITU — 10 motywów
@@ -47,7 +49,7 @@ const WSZYSTKIE_MODULY = [
   { nazwa: 'Import danych',   href: '/import',      ikona: '📥', role: ['admin'],                                  opis: 'Import Excel/CSV' },
 ]
 
-const DOMYSLNE = ['Rezerwacje', 'Stoły', 'Menu', 'POS', 'eService', 'Bank']
+const DOMYSLNE = ['Rezerwacje', 'Stoły', 'Menu', 'POS', 'eService', 'Bank', 'Klienci', 'CRM', 'Sprzedaż', 'Zakupy', 'Zamówienia', 'Raporty']
 
 const SZYBKIE_AKCJE_WSZYSTKIE = [
   { label: '+ Nowa rezerwacja',  href: '/rezerwacje',  role: ['admin','menedzer','kelner'] },
@@ -70,6 +72,7 @@ export default function DashboardPage() {
   const supabase = createClient()
   const [email, setEmail] = useState('')
   const [rola, setRola] = useState<string | null>(null)
+  const [dozwolone, setDozwolone] = useState<string[] | null>(null)
   const [imie, setImie] = useState('')
   const [loading, setLoading] = useState(true)
 
@@ -110,6 +113,10 @@ export default function DashboardPage() {
       setRola(profile.rola ?? 'kelner')
       setImie(profile.imie_nazwisko ?? '')
     }
+
+    const { data: firmaDane } = await supabase.from('firmy')
+      .select('id,nazwa,demo,status,trial_do,stripe_status,subskrypcja_do,branza,moduly,onboarding_zakonczony').maybeSingle()
+    setDozwolone(modulyFirmy(firmaDane as FirmaPlan | null))
 
     const [
       { count: kl }, { count: sp }, { count: zk },
@@ -166,9 +173,11 @@ export default function DashboardPage() {
     document.body.style.backgroundAttachment = 'fixed'
   }
 
-  const dostepne = rola ? WSZYSTKIE_MODULY.filter(m => m.role.includes(rola)) : WSZYSTKIE_MODULY
+  const dostepne = (rola ? WSZYSTKIE_MODULY.filter(m => m.role.includes(rola)) : WSZYSTKIE_MODULY)
+    .filter(m => !dozwolone || dozwolone.includes(m.nazwa === 'inFakt' ? 'inFakt' : m.nazwa))
   const modulyNaDashboard = dostepne.filter(m => widoczne.includes(m.nazwa))
   const dostepneSA = SZYBKIE_AKCJE_WSZYSTKIE.filter(a => !rola || a.role.includes(rola))
+    .filter(a => !dozwolone || dozwolone.includes(SCIEZKA_MODUL[a.href] ?? 'Dashboard'))
   const szybkieNaDashboard = szybkieAkcje.length > 0
     ? dostepneSA.filter(a => szybkieAkcje.includes(a.label))
     : dostepneSA

@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase'
 import GazekAssistant from './GazekAssistant'
 import MalaAssistant  from './MalaAssistant'
 import PlanBanner from './PlanBanner'
-import { liczDostep, MODULY_PODSTAWOWE, type FirmaPlan } from '@/lib/plany'
+import { modulyFirmy, type FirmaPlan } from '@/lib/plany'
 
 // Maskotki (Chef / Mala) wyłączone w demo — ustaw true, aby włączyć dla klienta
 const MASCOTS_ENABLED = false
@@ -219,10 +219,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         }
         const ml: string[] = profile.moduly ?? domyslne[profile.rola] ?? ['Dashboard']
         const { data: f } = await supabase.from('firmy')
-          .select('id,nazwa,demo,status,trial_do,stripe_status,subskrypcja_do').maybeSingle()
+          .select('id,nazwa,demo,status,trial_do,stripe_status,subskrypcja_do,branza,moduly,onboarding_zakonczony').maybeSingle()
         setFirma(f as FirmaPlan | null)
-        // wersja podstawowa: tylko moduły podstawowe (reszta wymaga okresu próbnego lub subskrypcji)
-        setModuly(liczDostep(f as FirmaPlan | null).wersja === 'podstawowa' ? ml.filter(m => MODULY_PODSTAWOWE.includes(m)) : ml)
+        // dostęp = moduły użytkownika ∩ moduły firmy (wybór branży) z uwzględnieniem planu (pełna / podstawowa)
+        const dozwolone = modulyFirmy(f as FirmaPlan | null)
+        setModuly(ml.filter(m => dozwolone.includes(m)))
       }
     })
   }, [])
@@ -250,7 +251,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     items: g.items.filter(i => i.modul === 'Subskrypcja' || !moduly || moduly.includes(i.modul)),
   })).filter(g => g.items.length > 0)
 
-  const currentLabel = navFiltered.flatMap(g => g.items).find(i => isActive(i.href))?.label ?? 'HoReCa CRM'
+  const currentLabel = navFiltered.flatMap(g => g.items).find(i => isActive(i.href))?.label ?? 'Skrojo'
 
   // ── Szerokości i widoczność paska bocznego ─────────────────
   // mobile: wysuwany overlay (224px)
@@ -315,7 +316,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
           {(!isMini || isMobile) && (
             <span style={{ color: '#FFFFFF', fontWeight: 700, fontSize: 15, letterSpacing: '-0.01em', whiteSpace: 'nowrap' }}>
-              HoReCa CRM
+              Skrojo
             </span>
           )}
         </div>
@@ -533,7 +534,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
           {/* Breadcrumb */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}>
-            <span style={{ color: '#9CA3AF', fontSize: 12, whiteSpace: 'nowrap' }}>HoReCa CRM</span>
+            <span style={{ color: '#9CA3AF', fontSize: 12, whiteSpace: 'nowrap' }}>Skrojo</span>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
             <span style={{ color: sideColor.bg, fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {currentLabel}
@@ -607,7 +608,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             {/* Header */}
             <div className="p-5 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
               <div>
-                <h2 className="text-base font-semibold text-gray-900">❓ Pomoc — HoReCa CRM</h2>
+                <h2 className="text-base font-semibold text-gray-900">❓ Pomoc — Skrojo</h2>
                 <p className="text-xs text-gray-500 mt-0.5">Opis funkcjonalności wszystkich modułów systemu</p>
               </div>
               <button onClick={() => setShowHelp(false)} className="text-gray-400 hover:text-gray-700 text-xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100">✕</button>
@@ -616,8 +617,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             {/* Intro */}
             <div className="px-5 pt-4 pb-2 flex-shrink-0">
               <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-800">
-                <strong>HoReCa CRM</strong> to kompleksowy system do zarządzania obiektem gastronomicznym lub hotelowym — od rezerwacji i obsługi stolików,
-                przez zarządzanie zakupami i sprzedażą, aż po integrację z POS, eService, bankiem i obsługę kadr.
+                <strong>Skrojo</strong> to system CRM dopasowany do Twojej branży. Poniżej opis modułów; w menu widzisz tylko te, które wybrała Twoja firma
+                (zmienisz je w Subskrypcja → Zmień branżę i moduły).
                 Menu boczne można zwinąć (strzałka), zmienić kolor (⚙️ Kolor menu) i dostosować do roli użytkownika.
               </div>
             </div>
@@ -625,7 +626,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             {/* Lista modułów */}
             <div className="flex-1 overflow-y-auto px-5 pb-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3">
-                {HELP_MODULES.map(m => (
+                {HELP_MODULES.filter(m => !moduly || moduly.includes(m.name === 'Księgowość' ? 'inFakt' : m.name)).map(m => (
                   <div key={m.name} className="flex gap-3 p-3 rounded-xl border border-gray-100 hover:border-gray-200 hover:bg-gray-50 transition-colors">
                     <span className="text-xl flex-shrink-0 mt-0.5">{m.icon}</span>
                     <div className="min-w-0">

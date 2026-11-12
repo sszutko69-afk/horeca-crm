@@ -1,14 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
+import { BRANZE_ONB } from '@/lib/branze'
 
 const REGULAMIN_WERSJA = '2026-11'
 
 export default function RejestracjaPage() {
   const supabase = createClient()
   const [firma, setFirma] = useState('')
+  const [branza, setBranza] = useState('')
   const [imie, setImie] = useState('')
   const [email, setEmail] = useState('')
   const [haslo, setHaslo] = useState('')
@@ -19,11 +21,17 @@ export default function RejestracjaPage() {
   const [error, setError] = useState('')
   const [wyslano, setWyslano] = useState(false)
 
+  useEffect(() => {
+    const b = new URLSearchParams(window.location.search).get('branza')
+    if (b && BRANZE_ONB.some(x => x.slug === b)) setBranza(b)
+  }, [])
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     if (haslo.length < 10) return setError('Hasło musi mieć co najmniej 10 znaków.')
     if (haslo !== haslo2) return setError('Hasła nie są takie same.')
+    if (!branza) return setError('Wybierz branżę, żebyśmy dopasowali system do Twojej firmy.')
     if (!regulamin) return setError('Zaakceptuj regulamin i politykę prywatności, aby założyć konto.')
     setLoading(true)
     const { error } = await supabase.auth.signUp({
@@ -33,6 +41,7 @@ export default function RejestracjaPage() {
         emailRedirectTo: `${window.location.origin}/auth/potwierdz?next=/dashboard`,
         data: {
           nazwa_firmy: firma.trim(),
+          branza,
           imie_nazwisko: imie.trim(),
           zgoda_marketing: marketing,
           regulamin_wersja: REGULAMIN_WERSJA,
@@ -78,6 +87,13 @@ export default function RejestracjaPage() {
             <div>
               <label className={lab}>Nazwa firmy</label>
               <input className={inp} value={firma} onChange={e => setFirma(e.target.value)} required maxLength={120} autoComplete="organization" />
+            </div>
+            <div>
+              <label className={lab}>Branża (dopasujemy do niej moduły)</label>
+              <select className={inp} value={branza} onChange={e => setBranza(e.target.value)} required>
+                <option value="">Wybierz branżę…</option>
+                {BRANZE_ONB.map(b => <option key={b.slug} value={b.slug}>{b.ikona} {b.nazwa}</option>)}
+              </select>
             </div>
             <div>
               <label className={lab}>Imię i nazwisko</label>

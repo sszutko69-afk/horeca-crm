@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
-import { liczDostep, dniTekst, CENA_OD, MODULY_PODSTAWOWE, type FirmaPlan } from '@/lib/plany'
-import { WSZYSTKIE_MODULY } from '@/lib/moduly'
+import { liczDostep, dniTekst, CENA_OD, type FirmaPlan } from '@/lib/plany'
+import { modulyDarmowe, MODULY_SYSTEMOWE, BRANZE_ONB } from '@/lib/branze'
 
 const KONTAKT = 'skrojocrm@gmail.com'
 
@@ -28,7 +28,7 @@ export default function SubskrypcjaPage() {
         const { data: p } = await supabase.from('profiles').select('rola').eq('id', user.id).single()
         setRola(p?.rola ?? '')
       }
-      const { data } = await supabase.from('firmy').select('id,nazwa,demo,status,trial_do,stripe_status,subskrypcja_do,stripe_customer_id').maybeSingle()
+      const { data } = await supabase.from('firmy').select('id,nazwa,demo,status,trial_do,stripe_status,subskrypcja_do,stripe_customer_id,branza,moduly,onboarding_zakonczony').maybeSingle()
       setFirma(data as FirmaPlan | null)
     })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -97,21 +97,38 @@ export default function SubskrypcjaPage() {
         <p className="text-xs text-gray-400 mt-3">Płatność obsługuje Stripe (karta, BLIK). Skrojo nie widzi ani nie przechowuje danych Twojej karty.</p>
       </div>
 
-      <div className="mt-5 grid sm:grid-cols-2 gap-4">
-        <div className="bg-white border border-gray-200 rounded-xl p-5">
-          <p className="font-medium text-gray-900">Wersja podstawowa · 0 zł</p>
-          <p className="text-xs text-gray-500 mt-1">Na zawsze, bez limitu czasu</p>
-          <ul className="mt-3 text-sm text-gray-700 space-y-1 list-disc pl-5">{MODULY_PODSTAWOWE.map(m => <li key={m}>{m}</li>)}</ul>
-        </div>
-        <div className={`bg-white border rounded-xl p-5 ${pelna ? 'border-green-300' : 'border-gray-200'}`}>
-          <p className="font-medium text-gray-900">Wersja pełna · od {CENA_OD} / mies.</p>
-          <p className="text-xs text-gray-500 mt-1">Wszystkie moduły i integracje</p>
-          <ul className="mt-3 text-sm text-gray-700 space-y-1 list-disc pl-5">
-            {WSZYSTKIE_MODULY.filter(m => !MODULY_PODSTAWOWE.includes(m)).slice(0, 12).map(m => <li key={m}>{m}</li>)}
-            <li>i więcej…</li>
-          </ul>
-        </div>
-      </div>
+      {(() => {
+        const wybrane = (firma?.moduly ?? []).filter(m => !MODULY_SYSTEMOWE.includes(m))
+        const free = modulyDarmowe(firma?.branza)
+        const wFree = wybrane.filter(m => free.includes(m))
+        const wPlatne = wybrane.filter(m => !free.includes(m))
+        const branzaNazwa = BRANZE_ONB.find(b => b.slug === firma?.branza)?.nazwa
+        return (
+          <div className="mt-5 bg-white border border-gray-200 rounded-xl p-5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="font-medium text-gray-900">Twoje moduły{branzaNazwa ? `: ${branzaNazwa}` : ''}</p>
+                <p className="text-xs text-gray-500 mt-0.5">Zestaw dobrany do Twojej branży. Możesz go zmienić w każdej chwili.</p>
+              </div>
+              {admin && d.powod !== 'demo' && <a href="/start" className="border border-gray-300 px-3 py-1.5 rounded-lg text-sm hover:bg-gray-50">Zmień branżę i moduły</a>}
+            </div>
+            <div className="mt-4 grid sm:grid-cols-2 gap-4">
+              <div className="rounded-lg border border-green-200 bg-green-50/40 p-4">
+                <p className="text-sm font-medium text-gray-900">Wersja podstawowa · 0 zł na zawsze</p>
+                <ul className="mt-2 text-sm text-gray-700 space-y-1 list-disc pl-5">
+                  {[...MODULY_SYSTEMOWE, ...wFree].map(m => <li key={m}>{m}</li>)}
+                </ul>
+              </div>
+              <div className={`rounded-lg border p-4 ${pelna ? 'border-blue-300 bg-blue-50/40' : 'border-gray-200'}`}>
+                <p className="text-sm font-medium text-gray-900">Pełna wersja · od {CENA_OD} / mies.</p>
+                <ul className="mt-2 text-sm text-gray-700 space-y-1 list-disc pl-5">
+                  {wPlatne.length ? wPlatne.map(m => <li key={m}>{m}</li>) : <li>Wszystkie wybrane moduły są w wersji podstawowej</li>}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
       {admin && d.powod !== 'demo' && (
         <div className="mt-8 bg-white border border-gray-200 rounded-xl p-5">

@@ -5,7 +5,8 @@ Kod jest gotowy. Poniżej rzeczy, które musisz ustawić w panelach (wymagają T
 ## 0. Co już jest zrobione
 - Baza (Supabase `rxxnljywguqdprgqkmnc`): tabela `firmy`, `firma_id` we wszystkich tabelach, izolacja firm (RLS), trigger rejestracji.
   Migracja: `supabase/migrations/20261112_multitenant_rejestracja_subskrypcje.sql` (**zastosowana**).
-- **Do zastosowania:** `supabase/migrations/20261112b_login_unikalny_per_firma.sql` (login unikalny per firma). Wklej w Supabase, SQL Editor.
+- Zastosowana: `20261112b_login_unikalny_per_firma.sql`.
+- **Do zastosowania przed wdrożeniem kodu z wyborem branży:** `supabase/migrations/20261112c_branza_i_moduly_firmy.sql` (kolumny `branza`, `moduly`, `onboarding_zakonczony` + trigger rejestracji). Wklej w Supabase SQL Editor i uruchom. Bez niej nowy kod nie zadziała, więc nie wdrażaj go wcześniej.
 - Aplikacja: `/rejestracja`, `/login`, `/reset-hasla`, `/nowe-haslo`, `/auth/potwierdz` (link z maila), `/subskrypcja`, `/regulamin`, `/polityka-prywatnosci`, API Stripe, eksport i usunięcie danych (RODO).
 - Strona marketingowa: przyciski „Zarejestruj się" i „Zaloguj się" (`config.appUrl`).
 
@@ -48,3 +49,10 @@ W `marketing-site/config.mjs` ustaw `domain` (np. `https://twojadomena.pl`) i `a
 - Wersja podstawowa = moduły z `lib/plany.ts` (`MODULY_PODSTAWOWE`: Dashboard, CRM, Leady, Klienci, Użytkownicy, Dane firmy). Zakres łatwo zmienić w jednym miejscu.
 - Wyłączono wysyłkę zbiorczą (raport tygodniowy i powiadomienia mailowe): działały na kluczu service role i mieszałyby dane firm. Wymagają przepisania na wysyłkę per firma.
 - Moduły przetargowe i GPS to pozostałość po GazCRM (tabel w bazie już nie ma); nie są częścią oferty.
+
+## 8. Wybór branży i modułów
+- Rejestracja pyta o branżę (8 branż ze strony + „Inna"). Po aktywacji konta nowa firma trafia na `/start`, gdzie wybiera moduły (zestaw polecany dla branży jest zaznaczony).
+- Dostęp = moduły wybrane przez firmę. Moduły HoReCa (Rezerwacje, Stoły, Menu, POS, eService) są dostępne tylko dla branży HoReCa i serwer odrzuca ich wybór w innych branżach.
+- 7 dni: wszystkie wybrane moduły. Potem: tylko darmowe (CRM, Leady, Klienci + dla HoReCa Rezerwacje i Stoły) i moduły systemowe. Reszta po subskrypcji. Konfiguracja: `lib/branze.ts`.
+- Branże bez gotowych modułów branżowych (budowlana, gazowa, transport, kancelarie) dostają zestaw ogólny i komunikat „dopasujemy na zamówienie".
+- Zmiana wyboru w każdej chwili: Subskrypcja → „Zmień branżę i moduły" (`/start`).
