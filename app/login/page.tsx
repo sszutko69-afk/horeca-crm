@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 
 export default function LoginPage() {
@@ -12,6 +12,11 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [step, setStep] = useState<'login' | 'success'>('login')
 
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('blad') === 'link')
+      setError('Link jest nieprawidłowy lub wygasł. Zaloguj się lub poproś o nowy (Nie pamiętam hasła).')
+  }, [])
+
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
@@ -20,7 +25,9 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
 
     if (error) {
-      setError('Nieprawidłowy email lub hasło')
+      setError(/not confirmed/i.test(error.message)
+        ? 'Konto nie jest jeszcze aktywne. Kliknij link aktywacyjny z wiadomości e-mail.'
+        : 'Nieprawidłowy email lub hasło')
       setLoading(false)
       return
     }
@@ -42,7 +49,7 @@ export default function LoginPage() {
               <polyline points="9 22 9 12 15 12 15 22"/>
             </svg>
           </div>
-          <h1 className="text-xl font-medium text-gray-900">GazCRM</h1>
+          <h1 className="text-xl font-medium text-gray-900">Skrojo</h1>
           <p className="text-sm text-gray-500 mt-1">Zaloguj się do systemu</p>
         </div>
 
@@ -97,6 +104,10 @@ export default function LoginPage() {
             >
               {loading ? 'Logowanie...' : 'Zaloguj się'}
             </button>
+            <div className="flex items-center justify-between text-sm pt-1">
+              <a href="/reset-hasla" className="text-gray-500 hover:underline">Nie pamiętam hasła</a>
+              <a href="/rejestracja" className="text-blue-600 hover:underline font-medium">Zarejestruj się</a>
+            </div>
           </form>
         )}
       </div>

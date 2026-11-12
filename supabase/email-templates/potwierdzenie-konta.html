@@ -1,0 +1,12 @@
+<!-- Supabase -> Authentication -> Email Templates -> "Confirm signup"
+     Temat: Aktywuj konto w Skrojo -->
+<div style="font-family:Arial,Helvetica,sans-serif;max-width:520px;margin:0 auto;color:#1c1c1c">
+  <h2 style="margin:0 0 12px">Witaj w Skrojo!</h2>
+  <p>Dziękujemy za rejestrację. Kliknij przycisk, aby aktywować konto. Zaraz po aktywacji możesz korzystać z <b>pełnej wersji systemu przez 7 dni</b>.</p>
+  <p style="margin:24px 0">
+    <a href="{{ .SiteURL }}/auth/potwierdz?token_hash={{ .TokenHash }}&type=signup&next=/dashboard"
+       style="background:#0a6bdc;color:#fff;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:bold;display:inline-block">Aktywuj konto</a>
+  </p>
+  <p style="font-size:13px;color:#666">Jeśli to nie Ty zakładałeś(-aś) konto, zignoruj tę wiadomość. Po 7 dniach system przejdzie do wersji podstawowej (0 zł), chyba że wykupisz subskrypcję.</p>
+  <p style="font-size:13px;color:#666">Zespół SKROJO · skrojocrm@gmail.com</p>
+</div>

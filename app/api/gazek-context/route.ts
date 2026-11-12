@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
     const { data: { user } } = await userClient.auth.getUser()
     if (!user) return NextResponse.json({ userName: '', items: [] })
 
-    const supabase = getSupabase()
+    const supabase = userClient // RLS: tylko dane firmy zalogowanego użytkownika
 
     // Fetch user name
     const { data: profile } = await supabase

@@ -21,6 +21,10 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Nie można usunąć własnego konta.' }, { status: 400 })
     }
 
+    // Izolacja firm: klient użytkownika widzi (RLS) tylko profile własnej firmy, więc obce konto da tu brak wyniku
+    const { data: cel } = await supabase.from('profiles').select('id').eq('id', user_id).maybeSingle()
+    if (!cel) return NextResponse.json({ error: 'Nie znaleziono użytkownika w Twojej firmie.' }, { status: 404 })
+
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
     if (!serviceKey) return NextResponse.json({ error: 'Brak SUPABASE_SERVICE_ROLE_KEY.' }, { status: 500 })
 

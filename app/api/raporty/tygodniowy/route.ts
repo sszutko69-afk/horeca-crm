@@ -17,6 +17,9 @@ function fmt(n: number) { return n.toLocaleString('pl-PL', { minimumFractionDigi
 function fmtDate(d: string) { return new Date(d).toLocaleDateString('pl-PL') }
 
 export async function POST(req: NextRequest) {
+  // Wyłączone do czasu wdrożenia wysyłki per firma: zadanie na kluczu service role obejmowałoby dane wszystkich firm.
+  if (process.env.WYSYLKA_ZBIORCZA !== 'wlaczona') return NextResponse.json({ error: 'Funkcja chwilowo wyłączona' }, { status: 503 })
+
   const secret = req.headers.get('x-notif-secret') || req.nextUrl.searchParams.get('secret')
   const isManual = req.nextUrl.searchParams.get('manual') === '1'
   if (!isManual && secret !== RAPORT_SECRET) {
@@ -218,7 +221,7 @@ export async function POST(req: NextRequest) {
   </div>` : ''}
 
   <div style="text-align:center;margin:16px 0">
-    <a href="${process.env.NEXT_PUBLIC_APP_URL ?? 'https://horeca-crm.vercel.app'}/dashboard" class="btn">Otwórz HoReCa CRM →</a>
+    <a href="${process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.skrojo.pl'}/dashboard" class="btn">Otwórz HoReCa CRM →</a>
   </div>
 
   <div class="footer">

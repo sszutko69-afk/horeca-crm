@@ -1,134 +1,119 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Polityka prywatności — GazCRM',
-  description: 'Jak aplikacja GazCRM przetwarza dane, w tym dane z konta Google.',
+  title: 'Polityka prywatności — Skrojo',
+  description: 'Jak Skrojo przetwarza dane osobowe i dane płatnicze.',
 }
 
-const AKTUALIZACJA = '18 października 2026'
+const AKTUALIZACJA = '12 listopada 2026'
+const KONTAKT = 'skrojocrm@gmail.com'
+
+function Sekcja({ n, t, children }: { n: number; t: string; children: React.ReactNode }) {
+  return (
+    <section className="mt-8 space-y-3 text-gray-700 text-[15px] leading-relaxed">
+      <h2 className="text-lg font-medium text-gray-900">{n}. {t}</h2>
+      {children}
+    </section>
+  )
+}
 
 export default function PolitykaPrywatnosci() {
   return (
     <main className="min-h-screen bg-gray-50 py-12 px-4">
       <article className="max-w-3xl mx-auto bg-white border border-gray-200 rounded-2xl p-8 md:p-12">
-        <h1 className="text-2xl font-semibold text-gray-900">Polityka prywatności aplikacji GazCRM</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">Polityka prywatności Skrojo</h1>
         <p className="text-sm text-gray-500 mt-2">Ostatnia aktualizacja: {AKTUALIZACJA}</p>
 
-        <section className="mt-8 space-y-3 text-gray-700 text-[15px] leading-relaxed">
-          <h2 className="text-lg font-medium text-gray-900">1. Administrator danych</h2>
+        <Sekcja n={1} t="Administrator danych">
           <p>
-            Administratorem danych przetwarzanych w aplikacji GazCRM jest <strong>ON GAZ Sp. z o.o.</strong> z siedzibą
-            w Warszawie, NIP 5213917162. Kontakt w sprawach dotyczących danych:{' '}
-            <a href="mailto:sszutko69@gmail.com" className="text-blue-600 hover:underline">sszutko69@gmail.com</a>.
+            Administratorem danych osobowych osób zakładających konto i korzystających z serwisu Skrojo jest{' '}
+            <strong>ON Gaz Sp. z o.o.</strong>, 02-577 Warszawa, Al. Niepodległości 118A lok. 19, NIP 5213917162.
+            Kontakt w sprawach danych osobowych: <a href={`mailto:${KONTAKT}`} className="text-blue-600 hover:underline">{KONTAKT}</a>.
           </p>
-        </section>
+          <p>
+            Dane, które klient wprowadza do systemu (np. własnych kontrahentów, pracowników, rezerwacje), przetwarzamy
+            wyłącznie w jego imieniu i na jego polecenie, jako podmiot przetwarzający. Na życzenie zawieramy umowę
+            powierzenia przetwarzania danych (art. 28 RODO).
+          </p>
+        </Sekcja>
 
-        <section className="mt-8 space-y-3 text-gray-700 text-[15px] leading-relaxed">
-          <h2 className="text-lg font-medium text-gray-900">2. Czym jest GazCRM</h2>
-          <p>
-            GazCRM to wewnętrzny system zarządzania firmą gazową: ewidencja klientów, zakupów i sprzedaży LPG,
-            rozliczenia dokumentów akcyzowych, obsługa inwestycji budowlanych oraz monitoring ogłoszeń
-            przetargowych. Z aplikacji korzystają wyłącznie upoważnieni pracownicy ON GAZ Sp. z o.o.
-            Aplikacja nie jest udostępniana publicznie ani oferowana osobom trzecim.
-          </p>
-        </section>
-
-        <section className="mt-8 space-y-3 text-gray-700 text-[15px] leading-relaxed">
-          <h2 className="text-lg font-medium text-gray-900">3. Dane z konta Google</h2>
-          <p>
-            Po wyrażeniu zgody przez użytkownika aplikacja łączy się z jego kontem Google i korzysta
-            z następujących uprawnień wyłącznie w zakresie opisanym poniżej:
-          </p>
+        <Sekcja n={2} t="Jakie dane i po co">
           <ul className="list-disc pl-6 space-y-2">
-            <li>
-              <strong>Gmail</strong> — odczyt wiadomości oznaczonych etykietą „Przetargi" w celu rozpoznania
-              w nich ogłoszeń przetargowych i zapisania ich w bazie aplikacji. Zapisywane są wyłącznie dane
-              dotyczące postępowania: tytuł, numer, zamawiający, termin składania, wartość i odnośnik do
-              ogłoszenia, wraz z fragmentem treści wiadomości jako uzasadnienie wpisu. Aplikacja umożliwia
-              również wysyłanie wiadomości na wyraźne polecenie użytkownika.
-            </li>
-            <li>
-              <strong>Kalendarz Google</strong> — odczyt i zapis wydarzeń powiązanych z terminami przetargów
-              i realizacją zleceń.
-            </li>
-            <li>
-              <strong>Zadania Google</strong> — odczyt i zapis zadań synchronizowanych z modułem zadań aplikacji.
-            </li>
+            <li><strong>Konto:</strong> adres e-mail (login), imię i nazwisko, nazwa firmy, zaszyfrowane hasło. Podstawa: umowa o świadczenie usługi (art. 6 ust. 1 lit. b RODO).</li>
+            <li><strong>Aktywacja i powiadomienia systemowe:</strong> wysyłamy wiadomość z linkiem aktywacyjnym, wiadomości o zmianie hasła, końcu okresu próbnego i płatnościach. Podstawa: umowa.</li>
+            <li><strong>Rozliczenia:</strong> dane do faktury i informacje o subskrypcji. Podstawa: obowiązek prawny (przepisy podatkowe i o rachunkowości), art. 6 ust. 1 lit. c RODO.</li>
+            <li><strong>Marketing:</strong> informacje o nowościach i ofertach, tylko po wyrażeniu odrębnej, dobrowolnej zgody (art. 6 ust. 1 lit. a RODO). Zgodę można cofnąć w każdej chwili, pisząc na adres kontaktowy.</li>
+            <li><strong>Bezpieczeństwo:</strong> dzienniki logowania i adresy IP w celu ochrony systemu (uzasadniony interes, art. 6 ust. 1 lit. f RODO).</li>
           </ul>
-          <p>
-            Aplikacja nie odczytuje wiadomości spoza wskazanej etykiety, nie pobiera załączników w celu innym
-            niż dołączenie ich do konkretnego postępowania i nie modyfikuje treści wiadomości użytkownika.
-          </p>
-        </section>
+        </Sekcja>
 
-        <section className="mt-8 space-y-3 text-gray-700 text-[15px] leading-relaxed">
-          <h2 className="text-lg font-medium text-gray-900">4. Ograniczone wykorzystanie danych Google</h2>
+        <Sekcja n={3} t="Dane płatnicze">
           <p>
-            Wykorzystanie przez GazCRM informacji otrzymanych z interfejsów API Google odbywa się zgodnie
-            z <a href="https://developers.google.com/terms/api-services-user-data-policy"
-              className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">
-              Zasadami dotyczącymi danych użytkownika usług API Google</a>, w tym z wymaganiami
-            ograniczonego wykorzystania (Limited Use).
+            Płatności za subskrypcję obsługuje operator <strong>Stripe Payments Europe, Ltd.</strong> Numer karty i inne
+            dane płatnicze wpisujesz wyłącznie na zabezpieczonej stronie Stripe. <strong>Skrojo nie widzi, nie przetwarza
+            i nie przechowuje danych kart płatniczych.</strong> Otrzymujemy tylko informację o statusie płatności i subskrypcji
+            oraz identyfikatory techniczne klienta w Stripe.
           </p>
-          <p className="text-sm text-gray-500 italic border-l-2 border-gray-200 pl-4">
-            GazCRM&apos;s use of information received from Google APIs will adhere to the{' '}
-            <a href="https://developers.google.com/terms/api-services-user-data-policy"
-              className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">
-              Google API Services User Data Policy</a>, including the Limited Use requirements.
-          </p>
-          <p>W szczególności dane uzyskane z konta Google:</p>
+        </Sekcja>
+
+        <Sekcja n={4} t="Odbiorcy danych">
+          <p>Dane powierzamy wyłącznie dostawcom niezbędnym do działania usługi, na podstawie umów powierzenia:</p>
           <ul className="list-disc pl-6 space-y-1">
-            <li>nie są sprzedawane ani przekazywane podmiotom trzecim,</li>
-            <li>nie są wykorzystywane do wyświetlania reklam ani profilowania reklamowego,</li>
-            <li>nie są wykorzystywane do trenowania modeli sztucznej inteligencji,</li>
-            <li>nie są odczytywane przez ludzi, poza przypadkami wyraźnej zgody użytkownika, potrzeb
-              bezpieczeństwa, wymogów prawa lub zagregowanej i zanonimizowanej analizy działania aplikacji.</li>
+            <li>Supabase (baza danych i uwierzytelnianie, region UE),</li>
+            <li>Vercel (hosting aplikacji),</li>
+            <li>Resend (wysyłka wiadomości e-mail),</li>
+            <li>Stripe (płatności).</li>
           </ul>
-        </section>
+          <p>Dane nie są sprzedawane ani wykorzystywane do reklam. Jeśli dostawca przetwarza dane poza EOG, odbywa się to na podstawie standardowych klauzul umownych.</p>
+        </Sekcja>
 
-        <section className="mt-8 space-y-3 text-gray-700 text-[15px] leading-relaxed">
-          <h2 className="text-lg font-medium text-gray-900">5. Przechowywanie i bezpieczeństwo</h2>
+        <Sekcja n={5} t="Izolacja i bezpieczeństwo danych">
           <p>
-            Dane aplikacji przechowywane są w bazie Supabase (PostgreSQL) z dostępem ograniczonym przez
-            mechanizm Row Level Security. Połączenia szyfrowane są protokołem TLS. Tokeny dostępu do konta
-            Google przechowywane są wyłącznie na serwerze i nie są udostępniane w przeglądarce ani stronom
-            trzecim. Dane dotyczące postępowań przetargowych przechowywane są przez okres przydatności
-            biznesowej; dane księgowe i rozliczeniowe — przez okres wymagany przepisami prawa.
+            Każda firma ma oddzielną przestrzeń danych. Dostęp jest egzekwowany na poziomie bazy danych (Row Level Security):
+            użytkownik widzi wyłącznie dane własnej firmy. Połączenia są szyfrowane (TLS), hasła są przechowywane w postaci
+            zaszyfrowanej (hash), a uprawnienia użytkowników nadaje administrator firmy.
           </p>
-        </section>
+        </Sekcja>
 
-        <section className="mt-8 space-y-3 text-gray-700 text-[15px] leading-relaxed">
-          <h2 className="text-lg font-medium text-gray-900">6. Cofnięcie zgody</h2>
+        <Sekcja n={6} t="Okres przechowywania">
           <p>
-            Zgodę na dostęp aplikacji do konta Google można wycofać w dowolnym momencie na stronie{' '}
-            <a href="https://myaccount.google.com/permissions" className="text-blue-600 hover:underline"
-              target="_blank" rel="noopener noreferrer">myaccount.google.com/permissions</a>.
-            Po cofnięciu zgody aplikacja traci dostęp do danych konta Google. Usunięcie danych już zapisanych
-            w bazie aplikacji następuje na żądanie przesłane na adres kontaktowy podany w punkcie 1.
+            Dane konta przechowujemy do czasu usunięcia konta. Dane rozliczeniowe — przez okres wymagany przepisami (do 5 lat
+            od końca roku podatkowego). Po zakończeniu okresu próbnego firma zachowuje dostęp do wersji podstawowej wraz
+            z danymi. Administrator może w każdej chwili pobrać swoje dane (eksport) lub usunąć konto i wszystkie dane
+            firmy w ustawieniach subskrypcji.
           </p>
-        </section>
+        </Sekcja>
 
-        <section className="mt-8 space-y-3 text-gray-700 text-[15px] leading-relaxed">
-          <h2 className="text-lg font-medium text-gray-900">7. Prawa użytkownika</h2>
+        <Sekcja n={7} t="Dane z konta Google (opcjonalna integracja)">
           <p>
-            Zgodnie z RODO użytkownikom przysługuje prawo dostępu do swoich danych, ich sprostowania,
-            usunięcia, ograniczenia przetwarzania, przenoszenia oraz wniesienia sprzeciwu, a także prawo
-            wniesienia skargi do Prezesa Urzędu Ochrony Danych Osobowych. Realizację tych praw obsługuje
-            adres kontaktowy wskazany w punkcie 1.
+            Jeśli użytkownik sam połączy konto Google (Gmail, Kalendarz, Zadania), aplikacja korzysta z uprawnień wyłącznie
+            w zakresie wybranej funkcji i na wyraźne polecenie użytkownika. Wykorzystanie informacji z interfejsów API Google
+            jest zgodne z{' '}
+            <a href="https://developers.google.com/terms/api-services-user-data-policy" className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">
+              Zasadami dotyczącymi danych użytkownika usług API Google</a>, w tym z wymaganiami ograniczonego wykorzystania (Limited Use).
+            Dane te nie są sprzedawane, nie służą reklamie ani trenowaniu modeli AI. Zgodę można cofnąć na{' '}
+            <a href="https://myaccount.google.com/permissions" className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">myaccount.google.com/permissions</a>.
           </p>
-        </section>
+        </Sekcja>
 
-        <section className="mt-8 space-y-3 text-gray-700 text-[15px] leading-relaxed">
-          <h2 className="text-lg font-medium text-gray-900">8. Zmiany polityki</h2>
+        <Sekcja n={8} t="Twoje prawa">
           <p>
-            O istotnych zmianach sposobu wykorzystania danych pochodzących z konta Google użytkownicy
-            informowani są poprzez aktualizację tej strony wraz z datą ostatniej zmiany podaną na górze
-            dokumentu.
+            Masz prawo dostępu do danych, sprostowania, usunięcia, ograniczenia przetwarzania, przenoszenia danych, sprzeciwu
+            wobec przetwarzania opartego na uzasadnionym interesie oraz cofnięcia zgody (bez wpływu na zgodność z prawem
+            przetwarzania sprzed cofnięcia). Możesz też złożyć skargę do Prezesa Urzędu Ochrony Danych Osobowych.
+            Wnioski: <a href={`mailto:${KONTAKT}`} className="text-blue-600 hover:underline">{KONTAKT}</a>.
           </p>
-        </section>
+        </Sekcja>
+
+        <Sekcja n={9} t="Pliki cookies">
+          <p>
+            Serwis używa wyłącznie niezbędnych plików cookies do utrzymania sesji po zalogowaniu. Nie stosujemy cookies
+            reklamowych w aplikacji.
+          </p>
+        </Sekcja>
 
         <p className="mt-10 pt-6 border-t border-gray-100 text-sm text-gray-400">
-          <a href="/o-aplikacji" className="text-blue-600 hover:underline">← GazCRM</a>
+          <a href="/regulamin" className="text-blue-600 hover:underline">Regulamin</a> · <a href="/login" className="text-blue-600 hover:underline">Logowanie</a>
         </p>
       </article>
     </main>

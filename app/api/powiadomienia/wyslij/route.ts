@@ -16,7 +16,7 @@ export const maxDuration = 60
 
 const SECRET      = process.env.PRZETARGI_MAIL_SECRET ?? 'horeca2026'
 const OPOZNIENIE  = Number(process.env.POWIADOMIENIA_OPOZNIENIE_MIN ?? 10)
-const APP_URL     = process.env.NEXT_PUBLIC_APP_URL ?? 'https://horeca-crm.vercel.app'
+const APP_URL     = process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.skrojo.pl'
 
 function escapeHtml(s: string) {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
@@ -47,6 +47,9 @@ async function wyslijMail(token: string, to: string, subject: string, html: stri
 }
 
 export async function POST(req: NextRequest) {
+  // Wyłączone do czasu wdrożenia wysyłki per firma: zadanie na kluczu service role obejmowałoby dane wszystkich firm.
+  if (process.env.WYSYLKA_ZBIORCZA !== 'wlaczona') return NextResponse.json({ error: 'Funkcja chwilowo wyłączona' }, { status: 503 })
+
   const supabase = serviceClient()
 
   let body: any = {}

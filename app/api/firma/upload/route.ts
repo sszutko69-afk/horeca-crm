@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { createServerSupabaseClient } from '@/lib/supabase-server'
 
 export const maxDuration = 60
 
@@ -17,6 +18,14 @@ function sanitize(name: string): string {
 
 export async function POST(req: NextRequest) {
   try {
+    // tylko zalogowany użytkownik; plik trafia do folderu własnej firmy
+    const sesja = await createServerSupabaseClient()
+    const { data: { user } } = await sesja.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Brak autoryzacji' }, { status: 401 })
+    const { data: pr } = await sesja.from('profiles').select('firma_id').eq('id', user.id).single()
+    if (!pr?.firma_id) return NextResponse.json({ error: 'Brak firmy' }, { status: 403 })
+    const firmaId: string = pr.firma_id
+
     const formData = await req.formData()
     const file = formData.get('file') as File | null
     const nazwa = formData.get('nazwa') as string || ''
@@ -26,7 +35,7 @@ export async function POST(req: NextRequest) {
     if (!file) return NextResponse.json({ error: 'Brak pliku' }, { status: 400 })
 
     const safeName = sanitize(file.name)
-    const path = `dokumenty/${Date.now()}_${safeName}`
+    const path = `${firmaId}/dokumenty/${Date.now()}_${safeName}`
     const bytes = await file.arrayBuffer()
 
     const { error: upErr } = await supabase.storage
@@ -40,6 +49,7 @@ export async function POST(req: NextRequest) {
     const { data: { publicUrl } } = supabase.storage.from('firma').getPublicUrl(path)
 
     const { data, error } = await supabase.from('firma_dokumenty').insert({
+      firma_id: firmaId,
       nazwa: nazwa || file.name,
       kategoria,
       opis,

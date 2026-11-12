@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Brak autoryzacji — zaloguj się.' }, { status: 401 })
 
-    const { data: profile } = await supabase.from('profiles').select('rola').eq('id', user.id).single()
+    const { data: profile } = await supabase.from('profiles').select('rola,firma_id').eq('id', user.id).single()
     if (profile?.rola !== 'admin') {
       return NextResponse.json({ error: 'Tylko administrator może tworzyć konta.' }, { status: 403 })
     }
@@ -25,8 +25,8 @@ export async function POST(request: NextRequest) {
     if (!email?.trim() || !haslo?.trim() || !imie_nazwisko?.trim() || !login?.trim()) {
       return NextResponse.json({ error: 'Wymagane pola: email, hasło, imię i nazwisko, login.' }, { status: 400 })
     }
-    if (haslo.length < 6) {
-      return NextResponse.json({ error: 'Hasło musi mieć co najmniej 6 znaków.' }, { status: 400 })
+    if (haslo.length < 10) {
+      return NextResponse.json({ error: 'Hasło musi mieć co najmniej 10 znaków.' }, { status: 400 })
     }
 
     // Klient z service role — omija RLS
@@ -36,11 +36,19 @@ export async function POST(request: NextRequest) {
       { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
-    // 1. Utwórz konto w Supabase Auth
+    const rolaVal = rola ?? 'kelner'
+    if (!(ROLE as string[]).includes(rolaVal)) {
+      return NextResponse.json({ error: 'Nieprawidłowa rola.' }, { status: 400 })
+    }
+
+    // 1. Utwórz konto w Supabase Auth. firma_id w app_metadata (tylko service role może je ustawić) wskazuje triggerowi
+    //    handle_new_user firmę administratora; profil tworzy trigger.
     const { data: newUser, error: authError } = await adminClient.auth.admin.createUser({
-      email: email.trim(),
+      email: email.trim().toLowerCase(),
       password: haslo,
       email_confirm: true,
+      app_metadata: { firma_id: profile.firma_id, rola: rolaVal, moduly: ROLE_DOMYSLNE[rolaVal] },
+      user_metadata: { imie_nazwisko: imie_nazwisko.trim(), login: login.trim(), telefon: telefon?.trim() || '' },
     })
 
     if (authError || !newUser?.user) {
@@ -52,28 +60,6 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = newUser.user.id
-    const rolaVal = rola ?? 'kelner'
-    if (!(ROLE as string[]).includes(rolaVal)) {
-      await adminClient.auth.admin.deleteUser(userId)
-      return NextResponse.json({ error: 'Nieprawidłowa rola.' }, { status: 400 })
-    }
-
-    // 2. Utwórz profil (service role — omija RLS)
-    const { error: profileError } = await adminClient.from('profiles').insert({
-      id: userId,
-      imie_nazwisko: imie_nazwisko.trim(),
-      login: login.trim(),
-      telefon: telefon?.trim() || null,
-      rola: rolaVal,
-      aktywny: true,
-      moduly: ROLE_DOMYSLNE[rolaVal],
-    })
-
-    if (profileError) {
-      // Cofnij — usuń konto auth żeby nie było sieroty
-      await adminClient.auth.admin.deleteUser(userId)
-      return NextResponse.json({ error: 'Błąd zapisu profilu: ' + profileError.message }, { status: 500 })
-    }
 
     return NextResponse.json({ ok: true, user_id: userId })
 

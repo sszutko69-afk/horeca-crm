@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { createClient } from '@supabase/supabase-js'
 
 function serviceClient() {
@@ -80,8 +81,11 @@ export async function GET(req: NextRequest) {
       // Usuń stary token (jeśli istnieje) i wstaw nowy — unika konfliktów upsert
       const supabase = serviceClient()
       await supabase.from('user_google_tokens').delete().eq('user_id', saveUserId)
+      // service role nie ma auth.uid(), więc firma_id podajemy jawnie (z profilu użytkownika)
+      const { data: pf } = await supabase.from('profiles').select('firma_id').eq('id', saveUserId).single()
       const { error } = await supabase.from('user_google_tokens').insert({
         user_id: saveUserId,
+        firma_id: pf?.firma_id,
         access_token: tokens.access_token,
         refresh_token: tokens.refresh_token ?? null,
         expires_at: new Date(Date.now() + (tokens.expires_in ?? 3600) * 1000).toISOString(),
@@ -127,15 +131,13 @@ export async function POST(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   if (searchParams.get('action') !== 'disconnect') return NextResponse.json({ ok: false }, { status: 400 })
 
-  let userId: string | null = null
-  try { userId = (await req.json()).userId ?? null } catch { /* brak body */ }
+  // odłączać można wyłącznie własne konto Google (użytkownik z sesji, nie z treści żądania)
+  const sesja = await createServerSupabaseClient()
+  const { data: { user } } = await sesja.auth.getUser()
+  if (!user) return NextResponse.json({ ok: false, error: 'Brak autoryzacji' }, { status: 401 })
 
   const supabase = serviceClient()
-  if (userId) {
-    await supabase.from('user_google_tokens').delete().eq('user_id', userId)
-  } else {
-    await supabase.from('user_google_tokens').delete().neq('user_id', '00000000-0000-0000-0000-000000000000')
-  }
+  await supabase.from('user_google_tokens').delete().eq('user_id', user.id)
 
   return NextResponse.json({ ok: true })
 }
