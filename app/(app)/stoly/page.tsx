@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase'
 
 type StolStatus = 'wolny' | 'zajety' | 'zarezerwowany' | 'nieaktywny'
 type Ksztalt = 'kwadrat' | 'okragly'
@@ -24,22 +25,6 @@ const STATUS_CFG: Record<StolStatus, { color: string; bg: string; border: string
   nieaktywny:    { color: '#9CA3AF', bg: '#F3F4F6', border: '#D1D5DB', label: 'Nieaktywny' },
 }
 
-const INIT_STOŁY: Stol[] = [
-  { id: 1,  numer: 1,  miejsca: 2, status: 'wolny',         x: 5,  y: 8,  ksztalt: 'okragly', kelner: '',         opis: 'Przy oknie' },
-  { id: 2,  numer: 2,  miejsca: 2, status: 'zajety',        x: 20, y: 8,  ksztalt: 'okragly', kelner: 'Marta K.', opis: '' },
-  { id: 3,  numer: 3,  miejsca: 4, status: 'zarezerwowany', x: 36, y: 8,  ksztalt: 'kwadrat', kelner: '',         opis: '' },
-  { id: 4,  numer: 4,  miejsca: 4, status: 'wolny',         x: 55, y: 8,  ksztalt: 'kwadrat', kelner: '',         opis: 'VIP' },
-  { id: 5,  numer: 5,  miejsca: 4, status: 'zajety',        x: 72, y: 8,  ksztalt: 'kwadrat', kelner: 'Tomek W.', opis: '' },
-  { id: 6,  numer: 6,  miejsca: 6, status: 'wolny',         x: 5,  y: 38, ksztalt: 'kwadrat', kelner: '',         opis: '' },
-  { id: 7,  numer: 7,  miejsca: 6, status: 'zarezerwowany', x: 26, y: 38, ksztalt: 'kwadrat', kelner: '',         opis: '' },
-  { id: 8,  numer: 8,  miejsca: 2, status: 'zajety',        x: 50, y: 38, ksztalt: 'okragly', kelner: 'Ania S.',  opis: '' },
-  { id: 9,  numer: 9,  miejsca: 2, status: 'wolny',         x: 65, y: 38, ksztalt: 'okragly', kelner: '',         opis: '' },
-  { id: 10, numer: 10, miejsca: 8, status: 'zajety',        x: 5,  y: 65, ksztalt: 'kwadrat', kelner: 'Tomek W.', opis: 'Sala bankietowa' },
-  { id: 11, numer: 11, miejsca: 4, status: 'wolny',         x: 42, y: 65, ksztalt: 'kwadrat', kelner: '',         opis: '' },
-  { id: 12, numer: 12, miejsca: 6, status: 'zarezerwowany', x: 65, y: 65, ksztalt: 'kwadrat', kelner: '',         opis: '' },
-  { id: 13, numer: 13, miejsca: 2, status: 'nieaktywny',    x: 85, y: 38, ksztalt: 'okragly', kelner: '',         opis: 'Remont' },
-]
-
 const ROZMIAR = (m: number) => m <= 2 ? 50 : m <= 4 ? 64 : m <= 6 ? 72 : 90
 
 type RezForm = { godzina: string; imie: string; liczbaOsob: string; telefon: string; uwagi: string }
@@ -49,7 +34,9 @@ type StolForm = { numer: string; miejsca: string; ksztalt: Ksztalt; status: Stol
 const emptyStol: StolForm = { numer: '', miejsca: '4', ksztalt: 'kwadrat', status: 'wolny', kelner: '', opis: '', x: '10', y: '10' }
 
 export default function StolyPage() {
-  const [stoły, setStoły] = useState<Stol[]>(INIT_STOŁY)
+  const supabase = createClient()
+  const [stoły, setStoły] = useState<Stol[]>([])
+  const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<Stol | null>(null)
   const [mode, setMode] = useState<'view' | 'config'>('view')
   const [showRezModal, setShowRezModal] = useState(false)
@@ -66,7 +53,28 @@ export default function StolyPage() {
     setTimeout(() => setToast(''), 3000)
   }
 
-  function changeStatus(id: number, status: StolStatus) {
+  const dzisIso = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` })()
+
+  async function load() {
+    const [{ data: st, error: e1 }, { data: rz }] = await Promise.all([
+      supabase.from('stoly').select('id,numer,miejsca,status,x,y,ksztalt,kelner,opis').order('numer'),
+      supabase.from('rezerwacje').select('imie,godzina,stol,status').eq('data', dzisIso).neq('status', 'anulowana').gt('stol', 0),
+    ])
+    if (e1) { showToast('Błąd wczytywania: ' + e1.message); setLoading(false); return }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const lista: Stol[] = (st ?? []).map((r: any) => ({ id: r.id, numer: r.numer, miejsca: r.miejsca, status: r.status, x: Number(r.x), y: Number(r.y), ksztalt: r.ksztalt, kelner: r.kelner ?? '', opis: r.opis ?? '' }))
+    setStoły(lista)
+    // rezerwacje na dziś przypięte do stołu (po numerze stołu)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    setRezerwacje((rz ?? []).flatMap((r: any) => { const t = lista.find(x => x.numer === r.stol); return t ? [{ stolId: t.id, imie: r.imie, godzina: r.godzina }] : [] }))
+    setSelected(p => p ? (lista.find(x => x.id === p.id) ?? null) : null)
+    setLoading(false)
+  }
+  useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function changeStatus(id: number, status: StolStatus) {
+    const { error } = await supabase.from('stoly').update({ status }).eq('id', id)
+    if (error) { showToast('Nie udało się zmienić statusu: ' + error.message); return }
     setStoły(p => p.map(s => s.id === id ? { ...s, status } : s))
     setSelected(p => p?.id === id ? { ...p, status } : p)
     showToast(`Status zmieniony: ${STATUS_CFG[status].label}`)
@@ -77,11 +85,16 @@ export default function StolyPage() {
     setShowRezModal(true)
   }
 
-  function handleRezSave(e: React.FormEvent) {
+  async function handleRezSave(e: React.FormEvent) {
     e.preventDefault()
     if (!selected) return
+    const { error } = await supabase.from('rezerwacje').insert({
+      data: dzisIso, godzina: rezForm.godzina, imie: rezForm.imie.trim(), liczba_osob: parseInt(rezForm.liczbaOsob) || 1,
+      stol: selected.numer, telefon: rezForm.telefon, uwagi: rezForm.uwagi, status: 'potwierdzona',
+    })
+    if (error) { showToast('Nie udało się zapisać rezerwacji: ' + error.message); return }
     setRezerwacje(p => [...p, { stolId: selected.id, imie: rezForm.imie, godzina: rezForm.godzina }])
-    changeStatus(selected.id, 'zarezerwowany')
+    await changeStatus(selected.id, 'zarezerwowany')
     setShowRezModal(false)
     showToast(`Rezerwacja ${rezForm.imie} na ${rezForm.godzina} — Stół ${selected.numer}`)
     setRezForm(emptyRez)
@@ -100,10 +113,9 @@ export default function StolyPage() {
     setShowStolModal(true)
   }
 
-  function handleStolSave(e: React.FormEvent) {
+  async function handleStolSave(e: React.FormEvent) {
     e.preventDefault()
-    const payload: Stol = {
-      id: editStolId ?? Date.now(),
+    const payload = {
       numer: parseInt(stolForm.numer) || stoły.length + 1,
       miejsca: parseInt(stolForm.miejsca) || 4,
       status: stolForm.status,
@@ -113,22 +125,25 @@ export default function StolyPage() {
       kelner: stolForm.kelner,
       opis: stolForm.opis,
     }
-    if (editStolId) {
-      setStoły(p => p.map(s => s.id === editStolId ? payload : s))
-      setSelected(payload)
-      showToast('Stół zaktualizowany')
-    } else {
-      setStoły(p => [...p, payload])
-      showToast(`Stół ${payload.numer} dodany`)
+    const { error } = editStolId
+      ? await supabase.from('stoly').update(payload).eq('id', editStolId)
+      : await supabase.from('stoly').insert(payload)
+    if (error) {
+      showToast(error.code === '23505' ? `Stół o numerze ${payload.numer} już istnieje` : 'Nie udało się zapisać stołu: ' + error.message)
+      return
     }
+    showToast(editStolId ? 'Stół zaktualizowany' : `Stół ${payload.numer} dodany`)
     setShowStolModal(false)
+    await load()
   }
 
-  function handleDeleteStol(id: number) {
-    setStoły(p => p.filter(s => s.id !== id))
-    setSelected(null)
+  async function handleDeleteStol(id: number) {
+    const { error } = await supabase.from('stoly').delete().eq('id', id)
     setConfirmDeleteStol(null)
+    if (error) { showToast('Nie udało się usunąć stołu: ' + error.message); return }
+    setSelected(null)
     showToast('Stół usunięty')
+    await load()
   }
 
   const summary = {
@@ -207,6 +222,11 @@ export default function StolyPage() {
             <div style={{ position: 'absolute', bottom: 10, left: '45%', background: '#374151', color: '#fff', fontSize: 10, padding: '3px 10px', borderRadius: 4 }}>WEJŚCIE</div>
             <div style={{ position: 'absolute', top: 10, right: 10, background: '#7C3AED', color: '#fff', fontSize: 10, padding: '4px 10px', borderRadius: 6, fontWeight: 600 }}>BAR</div>
             <div style={{ position: 'absolute', top: 10, left: 10, background: '#0891b2', color: '#fff', fontSize: 10, padding: '4px 10px', borderRadius: 6, fontWeight: 600 }}>KUCHNIA →</div>
+            {!loading && stoły.length === 0 && (
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6B7280', fontSize: 13, textAlign: 'center', padding: 24 }}>
+                Plan sali jest pusty. Kliknij „Konfiguruj stoły”, a potem „+ Dodaj stół”, aby ułożyć salę.
+              </div>
+            )}
 
             {stoły.map(stol => {
               const cfg = STATUS_CFG[stol.status]

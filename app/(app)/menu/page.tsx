@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase'
 
 type Danie = {
   id: number
@@ -12,21 +13,6 @@ type Danie = {
   kcal: number
   opis: string
 }
-
-const INIT_MENU: Danie[] = [
-  { id: 1,  nazwa: 'Żurek staropolski',           kategoria: 'Zupy',         cena: 22, dostepne: true,  alergeny: ['gluten', 'jajka', 'mleko'], kcal: 310, opis: 'Podawany w chlebie, z jajkiem i białą kiełbasą' },
-  { id: 2,  nazwa: 'Zupa pomidorowa z ryżem',     kategoria: 'Zupy',         cena: 18, dostepne: true,  alergeny: ['gluten'],                   kcal: 220, opis: '' },
-  { id: 3,  nazwa: 'Sałatka grecka',              kategoria: 'Sałatki',      cena: 28, dostepne: true,  alergeny: ['mleko'],                    kcal: 280, opis: 'Feta, oliwki, ogórek, pomidor' },
-  { id: 4,  nazwa: 'Carpaccio z wołowiny',        kategoria: 'Przystawki',   cena: 42, dostepne: true,  alergeny: ['jajka', 'mleko'],           kcal: 180, opis: 'Z parmezanem i rukolą' },
-  { id: 5,  nazwa: 'Pierogi ruskie',              kategoria: 'Dania główne', cena: 32, dostepne: true,  alergeny: ['gluten', 'mleko'],          kcal: 480, opis: '8 sztuk, z cebulą i śmietaną' },
-  { id: 6,  nazwa: 'Kotlet schabowy z buraczkami',kategoria: 'Dania główne', cena: 48, dostepne: true,  alergeny: ['gluten', 'jajka'],          kcal: 650, opis: 'Z ziemniakami i surówką' },
-  { id: 7,  nazwa: 'Łosoś grillowany',            kategoria: 'Dania główne', cena: 68, dostepne: true,  alergeny: ['ryby'],                     kcal: 420, opis: 'Z warzywami i sosem cytrynowym' },
-  { id: 8,  nazwa: 'Risotto z grzybami',          kategoria: 'Dania główne', cena: 52, dostepne: false, alergeny: ['mleko'],                    kcal: 540, opis: 'Z truflową śmietaną i parmezanem' },
-  { id: 9,  nazwa: 'Tiramisu',                    kategoria: 'Desery',       cena: 24, dostepne: true,  alergeny: ['gluten', 'jajka', 'mleko'], kcal: 390, opis: 'Klasyczny włoski deser' },
-  { id: 10, nazwa: 'Sernik nowojorski',            kategoria: 'Desery',       cena: 22, dostepne: true,  alergeny: ['gluten', 'jajka', 'mleko'], kcal: 420, opis: 'Z sosem truskawkowym' },
-  { id: 11, nazwa: 'Kawa espresso',               kategoria: 'Napoje',       cena: 10, dostepne: true,  alergeny: [],                           kcal: 5,   opis: '' },
-  { id: 12, nazwa: 'Lemonade własna',             kategoria: 'Napoje',       cena: 14, dostepne: true,  alergeny: [],                           kcal: 90,  opis: 'Mięta, cytryna, miód' },
-]
 
 const WSZYSTKIE_KAT = ['Zupy', 'Sałatki', 'Przystawki', 'Dania główne', 'Desery', 'Napoje']
 
@@ -47,7 +33,9 @@ const emptyForm: DanieForm = {
 }
 
 export default function MenuPage() {
-  const [menu, setMenu] = useState<Danie[]>(INIT_MENU)
+  const supabase = createClient()
+  const [menu, setMenu] = useState<Danie[]>([])
+  const [loading, setLoading] = useState(true)
   const [kat, setKat] = useState('Wszystkie')
   const [showUnavail, setShowUnavail] = useState(true)
   const [search, setSearch] = useState('')
@@ -71,36 +59,50 @@ export default function MenuPage() {
     setShowModal(true)
   }
 
-  function handleSave(e: React.FormEvent) {
+  async function load() {
+    const { data, error } = await supabase.from('menu_pozycje')
+      .select('id,nazwa,kategoria,cena,dostepne,alergeny,kcal,opis').order('kategoria').order('nazwa')
+    if (error) { showToast('Błąd wczytywania: ' + error.message); setLoading(false); return }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    setMenu((data ?? []).map((r: any) => ({ id: r.id, nazwa: r.nazwa, kategoria: r.kategoria, cena: Number(r.cena), dostepne: r.dostepne, alergeny: r.alergeny ?? [], kcal: r.kcal ?? 0, opis: r.opis ?? '' })))
+    setLoading(false)
+  }
+  useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault()
-    const payload: Danie = {
-      id: editId ?? Date.now(),
-      nazwa: form.nazwa,
+    const payload = {
+      nazwa: form.nazwa.trim(),
       kategoria: form.kategoria,
       cena: parseFloat(form.cena) || 0,
-      kcal: parseInt(form.kcal) || 0,
+      kcal: parseInt(form.kcal) || null,
       opis: form.opis,
       dostepne: form.dostepne,
       alergeny: form.alergeny,
     }
-    if (editId) {
-      setMenu(p => p.map(d => d.id === editId ? payload : d))
-      showToast('Danie zaktualizowane')
-    } else {
-      setMenu(p => [...p, payload])
-      showToast(`Dodano: ${payload.nazwa}`)
-    }
+    const { error } = editId
+      ? await supabase.from('menu_pozycje').update(payload).eq('id', editId)
+      : await supabase.from('menu_pozycje').insert(payload)
+    if (error) { showToast('Nie udało się zapisać: ' + error.message); return }
+    showToast(editId ? 'Danie zaktualizowane' : `Dodano: ${payload.nazwa}`)
     setShowModal(false)
+    await load()
   }
 
-  function toggleDostepne(id: number) {
-    setMenu(p => p.map(d => d.id === id ? { ...d, dostepne: !d.dostepne } : d))
+  async function toggleDostepne(id: number) {
+    const d = menu.find(x => x.id === id)
+    if (!d) return
+    const { error } = await supabase.from('menu_pozycje').update({ dostepne: !d.dostepne }).eq('id', id)
+    if (error) { showToast('Nie udało się zmienić dostępności: ' + error.message); return }
+    setMenu(p => p.map(x => x.id === id ? { ...x, dostepne: !x.dostepne } : x))
   }
 
-  function handleDelete(id: number) {
-    setMenu(p => p.filter(d => d.id !== id))
+  async function handleDelete(id: number) {
+    const { error } = await supabase.from('menu_pozycje').delete().eq('id', id)
     setConfirmDelete(null)
+    if (error) { showToast('Nie udało się usunąć: ' + error.message); return }
     showToast('Danie usunięte')
+    await load()
   }
 
   function toggleAlergen(a: string) {
@@ -198,7 +200,7 @@ export default function MenuPage() {
           </div>
         ))}
         {filtered.length === 0 && (
-          <div style={{ gridColumn: '1 / -1', padding: 40, textAlign: 'center', color: '#9CA3AF' }}>Brak dań dla wybranego filtra.</div>
+          <div style={{ gridColumn: '1 / -1', padding: 40, textAlign: 'center', color: '#9CA3AF' }}>{loading ? 'Wczytywanie…' : menu.length === 0 ? 'Menu jest puste. Dodaj pierwsze danie przyciskiem „+ Dodaj danie”.' : 'Brak dań dla wybranego filtra.'}</div>
         )}
       </div>
 

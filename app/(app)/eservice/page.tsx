@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { useSlownik } from '@/components/SlownikContext'
+import IntegracjaPlaceholder from '@/components/IntegracjaPlaceholder'
 
 const TRANSAKCJE = [
   { id: 'ES-44231', data: '2026-11-08', godzina: '14:32', kwota: 186.50, typ: 'sprzedaż', terminal: 'T1', status: 'zatwierdzona' },
@@ -20,6 +22,7 @@ const TERMINALE = [
 ]
 
 export default function EServicePage() {
+  const S = useSlownik()
   const [tab, setTab] = useState<'dashboard' | 'connect'>('dashboard')
   const [step, setStep] = useState<1 | 2 | 3>(1)
   const [creds, setCreds] = useState({ merchantId: '', terminalId: '', apiKey: '', env: 'production' })
@@ -36,6 +39,9 @@ export default function EServicePage() {
     setTestResult('ok'); setTesting(false)
   }
 
+
+  // dane przykładowe tylko na koncie demo; pozostałe firmy widzą informację o podłączeniu integracji
+  if (!S.demo) return <IntegracjaPlaceholder nazwa="eService (terminale płatnicze)" opis="Połączenie z terminalami pozwala automatycznie pobierać rozliczenia kartowe. Skonfigurujemy je razem z Tobą." />
   return (
     <div style={{ padding: '24px', maxWidth: 1100, margin: '0 auto' }}>
       <div style={{ marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>

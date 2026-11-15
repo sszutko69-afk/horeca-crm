@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSlownik } from '@/components/SlownikContext'
+import { createClient } from '@/lib/supabase'
 
 type Faktura = {
   id: string; nr: string; data: string; klient: string; opis: string
@@ -9,15 +10,9 @@ type Faktura = {
   forma: string; platnosc: string; status: 'opłacona' | 'oczekuje' | 'zaległa'
 }
 
-const DEMO: Faktura[] = [
-  { id: '1',  nr: 'FV/2026/11/042', data: '2026-11-08', klient: 'Hotel Marriott Warszawa',    opis: 'Catering — bankiet firmowy 80 os.', kwota_netto: 12_000, kwota_brutto: 14_760, forma: 'faktura_vat', platnosc: 'przelew',  status: 'opłacona' },
-  { id: '2',  nr: 'FV/2026/11/041', data: '2026-11-07', klient: 'Restauracja "Pod Lipą"',     opis: 'Dostawa: produkty garmażeryjne',   kwota_netto:  2_400, kwota_brutto:  2_952, forma: 'faktura_vat', platnosc: 'przelew',  status: 'oczekuje' },
-  { id: '3',  nr: 'FV/2026/11/040', data: '2026-11-06', klient: 'Catering Mazowsze Sp. z o.o.',opis: 'Usługa cateringowa — konferencja',  kwota_netto:  8_500, kwota_brutto: 10_455, forma: 'faktura_vat', platnosc: 'przelew',  status: 'opłacona' },
-  { id: '4',  nr: 'FV/2026/11/039', data: '2026-11-05', klient: 'Hotel Bristol Kraków',       opis: 'Dostawa: alkohole i wina premium',  kwota_netto:  5_200, kwota_brutto:  6_396, forma: 'faktura_vat', platnosc: 'karta',    status: 'opłacona' },
-  { id: '5',  nr: 'FV/2026/11/038', data: '2026-11-04', klient: 'Pensjonat "Pod Brzozą"',     opis: 'Śniadania grupowe — 3 dni, 40 os.',kwota_netto:  3_600, kwota_brutto:  4_428, forma: 'faktura_vat', platnosc: 'przelew',  status: 'zaległa'  },
-  { id: '6',  nr: 'FV/2026/11/037', data: '2026-11-03', klient: 'Eventim Events Sp. z o.o.',  opis: 'Catering — event plenerowy 150 os.',kwota_netto: 18_000, kwota_brutto: 22_140, forma: 'faktura_vat', platnosc: 'przelew',  status: 'opłacona' },
-  { id: '7',  nr: 'FV/2026/11/036', data: '2026-11-01', klient: 'Hotel Ibis Centrum',         opis: 'Obsługa baru — weekend 1-2.11',    kwota_netto:  4_100, kwota_brutto:  5_043, forma: 'faktura_vat', platnosc: 'przelew',  status: 'oczekuje' },
-]
+// w bazie statusy są zapisane bez polskich znaków
+const STATUS_Z_BAZY: Record<string, Faktura['status']> = { oplacona: 'opłacona', oczekuje: 'oczekuje', zalegla: 'zaległa' }
+const STATUS_DO_BAZY: Record<Faktura['status'], string> = { 'opłacona': 'oplacona', oczekuje: 'oczekuje', 'zaległa': 'zalegla' }
 
 const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
   opłacona: { bg: '#f0fdf4', color: '#16a34a' },
@@ -29,14 +24,38 @@ function fmt(n: number) { return n.toLocaleString('pl-PL', { minimumFractionDigi
 
 export default function SprzedazPage() {
   const S = useSlownik()
+  const supabase = createClient()
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ klient: '', opis: '', kwota_netto: '', forma: 'faktura_vat', platnosc: 'przelew' })
-  // dane przykładowe tylko dla konta demo; nowe firmy zaczynają od pustej listy
   const [faktury, setFaktury] = useState<Faktura[]>([])
-  useEffect(() => { if (S.demo) setFaktury(DEMO) }, [S.demo])
+  const [klienci, setKlienci] = useState<{ id: string; nazwa: string }[]>([])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState('')
+  const [error, setError] = useState('')
+
+  async function load() {
+    const [{ data, error: err }, { data: kl }] = await Promise.all([
+      supabase.from('sprzedaz')
+        .select('id,nr_faktury,data_sprzedazy,opis,kwota_netto,kwota_brutto,forma_sprzedazy,forma_platnosci,status,klient_nazwa,klienci(nazwa)')
+        .order('data_sprzedazy', { ascending: false }).order('created_at', { ascending: false }).limit(2000),
+      supabase.from('klienci').select('id,nazwa').eq('aktywny', true).order('nazwa').limit(2000),
+    ])
+    if (err) { setError('Nie udało się wczytać sprzedaży: ' + err.message); setLoading(false); return }
+    setKlienci(kl ?? [])
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    setFaktury((data ?? []).map((r: any) => ({
+      id: r.id, nr: r.nr_faktury ?? '', data: r.data_sprzedazy ?? '',
+      klient: r.klienci?.nazwa ?? r.klient_nazwa ?? '', opis: r.opis ?? '',
+      kwota_netto: Number(r.kwota_netto ?? 0), kwota_brutto: Number(r.kwota_brutto ?? 0),
+      forma: r.forma_sprzedazy ?? 'faktura_vat', platnosc: r.forma_platnosci === 'gotowka' ? 'gotówka' : (r.forma_platnosci ?? ''),
+      status: STATUS_Z_BAZY[r.status] ?? 'oczekuje',
+    })))
+    setLoading(false)
+  }
+  useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const filtered = faktury.filter(f =>
     (f.klient.toLowerCase().includes(search.toLowerCase()) || f.nr.includes(search) || f.opis.toLowerCase().includes(search.toLowerCase())) &&
@@ -47,21 +66,43 @@ export default function SprzedazPage() {
   const oplacone = faktury.filter(f => f.status === 'opłacona').reduce((s, f) => s + f.kwota_brutto, 0)
   const zalega = faktury.filter(f => f.status === 'zaległa').reduce((s, f) => s + f.kwota_brutto, 0)
 
-  function handleAdd(e: React.FormEvent) {
+  function nastepnyNumer() {
+    const d = new Date()
+    const prefix = `FV/${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/`
+    const maks = faktury.filter(f => f.nr.startsWith(prefix)).map(f => parseInt(f.nr.slice(prefix.length), 10) || 0).reduce((a, b) => Math.max(a, b), 0)
+    return prefix + String(maks + 1).padStart(3, '0')
+  }
+
+  async function handleAdd(e: React.FormEvent) {
     e.preventDefault()
+    setSaving(true); setError('')
     const netto = parseFloat(form.kwota_netto) || 0
-    const nowy: Faktura = {
-      id: Date.now().toString(),
-      nr: `FV/2026/11/${(faktury.length + 43).toString().padStart(3, '0')}`,
-      data: new Date().toISOString().split('T')[0],
-      klient: form.klient, opis: form.opis,
+    const nazwa = form.klient.trim()
+    const znany = klienci.find(k => k.nazwa.trim().toLowerCase() === nazwa.toLowerCase())
+    const { error: err } = await supabase.from('sprzedaz').insert({
+      data_sprzedazy: new Date().toISOString().split('T')[0],
+      nr_faktury: nastepnyNumer(),
+      klient_id: znany?.id ?? null,
+      klient_nazwa: znany ? null : nazwa,
+      opis: form.opis,
       kwota_netto: netto, kwota_brutto: parseFloat((netto * 1.23).toFixed(2)),
-      forma: form.forma, platnosc: form.platnosc, status: 'oczekuje',
-    }
-    setFaktury(p => [nowy, ...p])
+      forma_sprzedazy: form.forma,
+      forma_platnosci: form.platnosc === 'gotówka' ? 'gotowka' : form.platnosc,
+      status: 'oczekuje',
+    })
+    setSaving(false)
+    if (err) { setError('Nie udało się zapisać faktury: ' + err.message); return }
     setForm({ klient: '', opis: '', kwota_netto: '', forma: 'faktura_vat', platnosc: 'przelew' })
     setShowForm(false)
     setSaved('Faktura zapisana!'); setTimeout(() => setSaved(''), 3000)
+    await load()
+  }
+
+  async function ustawStatus(id: string, status: Faktura['status']) {
+    const poprzednie = faktury
+    setFaktury(p => p.map(x => x.id === id ? { ...x, status } : x))
+    const { error: err } = await supabase.from('sprzedaz').update({ status: STATUS_DO_BAZY[status] }).eq('id', id)
+    if (err) { setFaktury(poprzednie); setError('Nie udało się zmienić statusu: ' + err.message) }
   }
 
   const inp = "px-3 py-2 border border-gray-200 rounded-lg text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -82,6 +123,7 @@ export default function SprzedazPage() {
           </button>
         </div>
 
+        {error && <p className="text-xs text-red-700 bg-red-50 border border-red-200 px-3 py-2 rounded-lg mb-4">{error}</p>}
         {saved && <p className="text-xs text-green-700 bg-green-50 border border-green-200 px-3 py-2 rounded-lg mb-4">{saved}</p>}
 
         {/* KPI */}
@@ -141,19 +183,21 @@ export default function SprzedazPage() {
                       </span>
                     </td>
                     <td className="py-3 px-4">
-                      {f.status === 'oczekuje' && (
-                        <button onClick={() => setFaktury(p => p.map(x => x.id === f.id ? { ...x, status: 'opłacona' } : x))}
-                          className="text-xs text-blue-600 hover:underline whitespace-nowrap">Oznacz opłaconą</button>
+                      {f.status !== 'opłacona' && (
+                        <button onClick={() => ustawStatus(f.id, 'opłacona')}
+                          className="text-xs text-blue-600 hover:underline whitespace-nowrap mr-3">Oznacz opłaconą</button>
                       )}
-                      {f.status === 'zaległa' && (
-                        <button onClick={() => setFaktury(p => p.map(x => x.id === f.id ? { ...x, status: 'oczekuje' } : x))}
-                          className="text-xs text-orange-600 hover:underline whitespace-nowrap">Wyślij przypomnienie</button>
+                      {f.status === 'oczekuje' && (
+                        <button onClick={() => ustawStatus(f.id, 'zaległa')}
+                          className="text-xs text-orange-600 hover:underline whitespace-nowrap">Oznacz zaległą</button>
                       )}
                     </td>
                   </tr>
                 ))}
                 {filtered.length === 0 && (
-                  <tr><td colSpan={9} className="py-10 text-center text-sm text-gray-400">Brak wyników</td></tr>
+                  <tr><td colSpan={9} className="py-10 text-center text-sm text-gray-400">
+                    {loading ? 'Wczytywanie…' : faktury.length === 0 ? 'Brak faktur. Dodaj pierwszą przyciskiem „+ Nowa faktura”.' : 'Brak wyników'}
+                  </td></tr>
                 )}
               </tbody>
             </table>
@@ -171,7 +215,8 @@ export default function SprzedazPage() {
                 <div className="flex flex-col gap-1.5">
                   <label className={lbl}>Klient</label>
                   <input value={form.klient} onChange={e => setForm(p => ({ ...p, klient: e.target.value }))}
-                    required placeholder="Nazwa firmy lub osoby" className={inp} />
+                    required placeholder="Nazwa firmy lub osoby" list="klienci-lista" className={inp} />
+                  <datalist id="klienci-lista">{klienci.map(k => <option key={k.id} value={k.nazwa} />)}</datalist>
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className={lbl}>Opis usługi / towaru</label>
@@ -209,8 +254,8 @@ export default function SprzedazPage() {
               <div className="flex gap-2 justify-end pt-2 border-t border-gray-100">
                 <button type="button" onClick={() => setShowForm(false)}
                   className="px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50">Anuluj</button>
-                <button type="submit"
-                  className="px-4 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-700">Zapisz</button>
+                <button type="submit" disabled={saving}
+                  className="px-4 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50">{saving ? 'Zapisywanie…' : 'Zapisz'}</button>
               </div>
             </form>
           </div>

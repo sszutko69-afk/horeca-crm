@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase'
 
 type Status = 'potwierdzona' | 'oczekuje' | 'anulowana'
 
@@ -16,17 +17,8 @@ type Rezerwacja = {
   data: string
 }
 
-const STOŁY_OPCJE = [0,1,2,3,4,5,6,7,8,9,10,11,12,13]
-
-const initData: Rezerwacja[] = [
-  { id: 1, data: '2026-11-09', godzina: '12:00', imie: 'Jan Kowalski',         liczbaOsob: 4,  stol: 5,  status: 'potwierdzona', telefon: '600 100 200', uwagi: 'urodziny' },
-  { id: 2, data: '2026-11-09', godzina: '13:30', imie: 'Anna Nowak',           liczbaOsob: 2,  stol: 2,  status: 'potwierdzona', telefon: '601 200 300', uwagi: '' },
-  { id: 3, data: '2026-11-09', godzina: '14:00', imie: 'Firma ABC Sp. z o.o.', liczbaOsob: 8,  stol: 10, status: 'oczekuje',     telefon: '602 300 400', uwagi: 'lunch biznesowy' },
-  { id: 4, data: '2026-11-09', godzina: '15:30', imie: 'Maria Wiśniewska',    liczbaOsob: 3,  stol: 7,  status: 'potwierdzona', telefon: '603 400 500', uwagi: '' },
-  { id: 5, data: '2026-11-09', godzina: '18:00', imie: 'Piotr Zając',          liczbaOsob: 6,  stol: 12, status: 'oczekuje',     telefon: '604 500 600', uwagi: 'rocznica' },
-  { id: 6, data: '2026-11-09', godzina: '19:30', imie: 'Hotel Złoty Lew',      liczbaOsob: 20, stol: 0,  status: 'potwierdzona', telefon: '605 600 700', uwagi: 'impreza — cała sala prywatna' },
-  { id: 7, data: '2026-11-09', godzina: '20:00', imie: 'Katarzyna Dąbrowska', liczbaOsob: 2,  stol: 3,  status: 'anulowana',    telefon: '606 700 800', uwagi: '' },
-]
+const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+function poniedzialek(d: Date) { const x = new Date(d); const dow = (x.getDay() + 6) % 7; x.setDate(x.getDate() - dow); x.setHours(0, 0, 0, 0); return x }
 
 const SCFG: Record<Status, { color: string; bg: string; label: string }> = {
   potwierdzona: { color: '#16a34a', bg: '#f0fdf4', label: 'Potwierdzona' },
@@ -34,17 +26,22 @@ const SCFG: Record<Status, { color: string; bg: string; label: string }> = {
   anulowana:    { color: '#dc2626', bg: '#fef2f2', label: 'Anulowana' },
 }
 
-const emptyForm = { data: '2026-11-09', godzina: '12:00', imie: '', liczbaOsob: '2', stol: '0', telefon: '', uwagi: '', status: 'oczekuje' as Status }
+const emptyForm = () => ({ data: iso(new Date()), godzina: '12:00', imie: '', liczbaOsob: '2', stol: '0', telefon: '', uwagi: '', status: 'oczekuje' as Status })
 
 const DAYS = ['Pon','Wt','Śr','Czw','Pt','Sob','Nie']
 
 export default function RezerwacjePage() {
-  const [rez, setRez] = useState<Rezerwacja[]>(initData)
+  const supabase = createClient()
+  const dzis = iso(new Date())
+  const [rez, setRez] = useState<Rezerwacja[]>([])
+  const [stolyNumery, setStolyNumery] = useState<number[]>([])
+  const [tydzien, setTydzien] = useState(poniedzialek(new Date()))
+  const [selectedDate, setSelectedDate] = useState(dzis)
   const [filter, setFilter] = useState<'wszystkie' | Status>('wszystkie')
-  const [selectedDay, setSelectedDay] = useState(9)
+  const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editId, setEditId] = useState<number | null>(null)
-  const [form, setForm] = useState(emptyForm)
+  const [form, setForm] = useState(emptyForm())
   const [toast, setToast] = useState('')
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null)
 
@@ -53,9 +50,30 @@ export default function RezerwacjePage() {
     setTimeout(() => setToast(''), 3000)
   }
 
+  const dniTygodnia = Array.from({ length: 7 }, (_, i) => { const d = new Date(tydzien); d.setDate(d.getDate() + i); return d })
+
+  async function load() {
+    const od = iso(dniTygodnia[0]); const do_ = iso(dniTygodnia[6])
+    const { data, error } = await supabase.from('rezerwacje')
+      .select('id,data,godzina,imie,liczba_osob,stol,status,telefon,uwagi').gte('data', od).lte('data', do_).order('godzina')
+    if (error) { showToast('Błąd wczytywania: ' + error.message); setLoading(false); return }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    setRez((data ?? []).map((r: any) => ({ id: r.id, data: r.data, godzina: r.godzina, imie: r.imie, liczbaOsob: r.liczba_osob, stol: r.stol, status: r.status, telefon: r.telefon ?? '', uwagi: r.uwagi ?? '' })))
+    setLoading(false)
+  }
+  useEffect(() => { load() }, [tydzien]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    supabase.from('stoly').select('numer').order('numer').then(({ data }) => setStolyNumery((data ?? []).map((x: { numer: number }) => x.numer)))
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function zmienTydzien(delta: number) {
+    const d = new Date(tydzien); d.setDate(d.getDate() + delta * 7)
+    setTydzien(d); setSelectedDate(iso(d))
+  }
+
   function openNew() {
     setEditId(null)
-    setForm(emptyForm)
+    setForm({ ...emptyForm(), data: selectedDate })
     setShowModal(true)
   }
 
@@ -65,41 +83,39 @@ export default function RezerwacjePage() {
     setShowModal(true)
   }
 
-  function handleSave(e: React.FormEvent) {
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault()
-    const payload: Rezerwacja = {
-      id: editId ?? Date.now(),
-      data: form.data,
-      godzina: form.godzina,
-      imie: form.imie,
-      liczbaOsob: parseInt(form.liczbaOsob) || 1,
-      stol: parseInt(form.stol),
-      telefon: form.telefon,
-      uwagi: form.uwagi,
-      status: form.status,
+    const payload = {
+      data: form.data, godzina: form.godzina, imie: form.imie.trim(),
+      liczba_osob: parseInt(form.liczbaOsob) || 1, stol: parseInt(form.stol) || 0,
+      telefon: form.telefon, uwagi: form.uwagi, status: form.status,
     }
-    if (editId) {
-      setRez(p => p.map(r => r.id === editId ? payload : r))
-      showToast('Rezerwacja zaktualizowana')
-    } else {
-      setRez(p => [payload, ...p])
-      showToast('Rezerwacja dodana')
-    }
+    const { error } = editId
+      ? await supabase.from('rezerwacje').update(payload).eq('id', editId)
+      : await supabase.from('rezerwacje').insert(payload)
+    if (error) { showToast('Nie udało się zapisać: ' + error.message); return }
+    showToast(editId ? 'Rezerwacja zaktualizowana' : 'Rezerwacja dodana')
     setShowModal(false)
+    await load()
   }
 
-  function handleDelete(id: number) {
-    setRez(p => p.filter(r => r.id !== id))
+  async function handleDelete(id: number) {
+    const { error } = await supabase.from('rezerwacje').delete().eq('id', id)
     setConfirmDelete(null)
+    if (error) { showToast('Nie udało się usunąć: ' + error.message); return }
     showToast('Rezerwacja usunięta')
+    await load()
   }
 
-  function changeStatus(id: number, status: Status) {
+  async function changeStatus(id: number, status: Status) {
+    const { error } = await supabase.from('rezerwacje').update({ status }).eq('id', id)
+    if (error) { showToast('Nie udało się zmienić statusu: ' + error.message); return }
     setRez(p => p.map(r => r.id === id ? { ...r, status } : r))
     showToast(`Status zmieniony na: ${SCFG[status].label}`)
   }
 
-  const filtered = rez.filter(r =>
+  const rezDnia = rez.filter(r => r.data === selectedDate)
+  const filtered = rezDnia.filter(r =>
     filter === 'wszystkie' ? true : r.status === filter
   ).sort((a, b) => a.godzina.localeCompare(b.godzina))
 
@@ -117,7 +133,7 @@ export default function RezerwacjePage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontSize: 20, fontWeight: 700, color: '#111827', margin: 0 }}>Rezerwacje stolików</h1>
-          <p style={{ fontSize: 13, color: '#6B7280', margin: '4px 0 0' }}>Zarządzanie rezerwacjami — {new Date().toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+          <p style={{ fontSize: 13, color: '#6B7280', margin: '4px 0 0' }}>Zarządzanie rezerwacjami — {new Date(selectedDate + 'T12:00:00').toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
         </div>
         <button onClick={openNew} style={{ background: '#2563EB', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
           + Nowa rezerwacja
@@ -127,10 +143,10 @@ export default function RezerwacjePage() {
       {/* KPI */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 20 }}>
         {[
-          { label: 'Wszystkich', val: rez.length, color: '#2563EB' },
-          { label: 'Potwierdzonych', val: rez.filter(r => r.status === 'potwierdzona').length, color: '#16a34a' },
-          { label: 'Oczekuje', val: rez.filter(r => r.status === 'oczekuje').length, color: '#d97706' },
-          { label: 'Gości łącznie', val: rez.filter(r => r.status !== 'anulowana').reduce((s, r) => s + r.liczbaOsob, 0), color: '#7C3AED' },
+          { label: 'Wszystkich', val: rezDnia.length, color: '#2563EB' },
+          { label: 'Potwierdzonych', val: rezDnia.filter(r => r.status === 'potwierdzona').length, color: '#16a34a' },
+          { label: 'Oczekuje', val: rezDnia.filter(r => r.status === 'oczekuje').length, color: '#d97706' },
+          { label: 'Osób łącznie', val: rezDnia.filter(r => r.status !== 'anulowana').reduce((s, r) => s + r.liczbaOsob, 0), color: '#7C3AED' },
         ].map(s => (
           <div key={s.label} style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 10, padding: '14px 16px' }}>
             <p style={{ fontSize: 11, color: '#6B7280', margin: 0 }}>{s.label}</p>
@@ -139,20 +155,24 @@ export default function RezerwacjePage() {
         ))}
       </div>
 
-      {/* Kalendaryk */}
-      <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 10, padding: '12px 16px', marginBottom: 20, display: 'flex', gap: 8 }}>
-        {DAYS.map((d, i) => {
-          const day = i + 6
-          const isToday = day === 9
-          const isSel = day === selectedDay
+      {/* Kalendarz tygodnia */}
+      <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 10, padding: '12px 16px', marginBottom: 20, display: 'flex', gap: 8, alignItems: 'center' }}>
+        <button onClick={() => zmienTydzien(-1)} aria-label="Poprzedni tydzień" style={{ border: '1px solid #E5E7EB', background: '#fff', borderRadius: 8, padding: '6px 10px', cursor: 'pointer' }}>‹</button>
+        {dniTygodnia.map((d, i) => {
+          const dIso = iso(d)
+          const isToday = dIso === dzis
+          const isSel = dIso === selectedDate
+          const ile = rez.filter(r => r.data === dIso && r.status !== 'anulowana').length
           return (
-            <button key={d} onClick={() => setSelectedDay(day)} style={{ flex: 1, padding: '8px 4px', borderRadius: 8, border: 'none', cursor: 'pointer', background: isSel ? '#2563EB' : isToday ? '#EFF6FF' : 'transparent', color: isSel ? '#fff' : isToday ? '#2563EB' : '#374151', fontSize: 12, fontWeight: isSel || isToday ? 700 : 400, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-              <span style={{ fontSize: 10, opacity: 0.7 }}>{d}</span>
-              <span>{day}</span>
-              {isToday && !isSel && <span style={{ width: 4, height: 4, borderRadius: '50%', background: '#2563EB', display: 'block' }} />}
+            <button key={dIso} onClick={() => setSelectedDate(dIso)}
+              style={{ flex: 1, padding: '8px 4px', borderRadius: 8, border: 'none', cursor: 'pointer', background: isSel ? '#2563EB' : isToday ? '#EFF6FF' : '#F9FAFB', color: isSel ? '#fff' : '#111827', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, fontSize: 13, fontWeight: 600 }}>
+              <span style={{ fontSize: 10, opacity: 0.7 }}>{DAYS[i]}</span>
+              <span>{d.getDate()}</span>
+              <span style={{ fontSize: 10, opacity: isSel ? 0.9 : 0.5 }}>{ile > 0 ? `${ile} rez.` : '·'}</span>
             </button>
           )
         })}
+        <button onClick={() => zmienTydzien(1)} aria-label="Następny tydzień" style={{ border: '1px solid #E5E7EB', background: '#fff', borderRadius: 8, padding: '6px 10px', cursor: 'pointer' }}>›</button>
       </div>
 
       {/* Tabela */}
@@ -164,7 +184,7 @@ export default function RezerwacjePage() {
                 {f === 'wszystkie' ? 'Wszystkie' : SCFG[f as Status].label}
                 {f !== 'wszystkie' && (
                   <span style={{ marginLeft: 4, background: SCFG[f as Status].bg, color: SCFG[f as Status].color, borderRadius: 10, padding: '0 5px', fontSize: 10, fontWeight: 700 }}>
-                    {rez.filter(r => r.status === f).length}
+                    {rezDnia.filter(r => r.status === f).length}
                   </span>
                 )}
               </button>
@@ -177,7 +197,7 @@ export default function RezerwacjePage() {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ background: '#F9FAFB' }}>
-                {['Godzina', 'Gość / Firma', 'Osób', 'Stół', 'Telefon', 'Uwagi', 'Status', 'Akcje'].map(h => (
+                {['Godzina', 'Klient / Firma', 'Osób', 'Stół', 'Telefon', 'Uwagi', 'Status', 'Akcje'].map(h => (
                   <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 600, color: '#6B7280', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid #E5E7EB', whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
               </tr>
@@ -214,7 +234,7 @@ export default function RezerwacjePage() {
           </table>
         </div>
         {filtered.length === 0 && (
-          <div style={{ padding: 40, textAlign: 'center', color: '#9CA3AF' }}>Brak rezerwacji dla wybranego filtra.</div>
+          <div style={{ padding: 40, textAlign: 'center', color: '#9CA3AF' }}>{loading ? 'Wczytywanie…' : 'Brak rezerwacji na ten dzień.'}</div>
         )}
       </div>
 
@@ -239,7 +259,7 @@ export default function RezerwacjePage() {
                   </div>
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', marginBottom: 4 }}>Gość / Firma *</label>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', marginBottom: 4 }}>Klient / Firma *</label>
                   <input value={form.imie} onChange={e => setForm(p => ({ ...p, imie: e.target.value }))} placeholder="Imię i nazwisko lub nazwa firmy" style={inp} required />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -251,7 +271,7 @@ export default function RezerwacjePage() {
                     <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', marginBottom: 4 }}>Stół</label>
                     <select value={form.stol} onChange={e => setForm(p => ({ ...p, stol: e.target.value }))} style={inp}>
                       <option value="0">— Cała sala</option>
-                      {STOŁY_OPCJE.filter(n => n > 0).map(n => <option key={n} value={n}>Stół {n}</option>)}
+                      {stolyNumery.filter(n => n > 0).map(n => <option key={n} value={n}>Stół {n}</option>)}
                     </select>
                   </div>
                 </div>

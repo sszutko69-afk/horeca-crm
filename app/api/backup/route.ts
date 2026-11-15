@@ -7,6 +7,7 @@ const TABELE = [
   'pracownicy', 'plan_pracy', 'czas_pracy', 'place', 'wydarzenia',
   'crm_leady', 'crm_zadania', 'crm_aktywnosci', 'kontakty',
   'budzet_kategorie', 'budzet_plan', 'budzet_realizacja', 'firma_dane',
+  'rezerwacje', 'stoly', 'menu_pozycje',
 ] as const
 
 export async function GET(_request: NextRequest) {

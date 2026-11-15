@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useSlownik } from '@/components/SlownikContext'
+import RaportyFirmy from '@/components/RaportyFirmy'
 
 function fmt(n: number) { return n.toLocaleString('pl-PL', { minimumFractionDigits: 2 }) }
 
@@ -64,19 +65,8 @@ export default function RaportyPage() {
   const totalPlatnosci = METODY_PLATNOSCI.reduce((s, m) => s + m.kwota, 0)
   const maxFrekw = Math.max(...FREKWENCJA.map(f => f.stolik))
 
-  // Raporty z danymi przykładowymi (restauracja) pokazujemy tylko na koncie demo
-  if (!S.demo) {
-    return (
-      <div className="p-4 md:p-6 max-w-3xl">
-        <h1 className="text-xl font-medium text-gray-900">Raporty</h1>
-        <div className="mt-5 bg-white border border-gray-200 rounded-xl p-6 text-center">
-          <p className="text-3xl">📊</p>
-          <p className="font-medium text-gray-900 mt-2">Raporty pojawią się, gdy w systemie będą dane</p>
-          <p className="text-sm text-gray-500 mt-1">Dodaj sprzedaż, zakupy i zamówienia, a zestawienia dla Twojej firmy będą dostępne tutaj. Zakres raportów dopasujemy do Twoich potrzeb: skrojocrm@gmail.com.</p>
-        </div>
-      </div>
-    )
-  }
+  // Konto demo: raporty przykładowe (restauracja). Pozostałe firmy: raporty liczone z ich prawdziwych danych.
+  if (!S.demo) return <RaportyFirmy />
 
   const TABS: { id: Tab; label: string }[] = [
     { id: 'obroty',    label: 'Obroty' },

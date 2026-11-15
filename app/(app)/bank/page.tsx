@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSlownik } from '@/components/SlownikContext'
+import IntegracjaPlaceholder from '@/components/IntegracjaPlaceholder'
 
 const WYCIAG = [
   { id: 1, data: '2026-11-08', opis: 'eService S.A. - rozl. terminali 07.11',  kwota:  1842.00, typ: 'wpływ',  dopasowane: true  },
@@ -55,6 +56,9 @@ export default function BankPage() {
     setTestResult('ok'); setTesting(false)
   }
 
+
+  // wyciąg przykładowy tylko na koncie demo; pozostałe firmy widzą informację o podłączeniu banku
+  if (!S.demo) return <IntegracjaPlaceholder nazwa="Integracja bankowa" opis="Połączenie z bankiem pozwala automatycznie pobierać wyciągi i dopasowywać płatności do faktur. Skonfigurujemy je razem z Tobą." />
   return (
     <div style={{ padding: '24px', maxWidth: 1100, margin: '0 auto' }}>
       <div style={{ marginBottom: 20, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>

@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { useSlownik } from '@/components/SlownikContext'
+import IntegracjaPlaceholder from '@/components/IntegracjaPlaceholder'
 
 const TRANSAKCJE_DEMO = [
   { id: 'T-0892', czas: '14:32', stol: 5,  kwota: 186.50, metoda: 'karta',    status: 'rozliczone', kelner: 'Marta K.' },
@@ -27,6 +29,7 @@ const POS_SYSTEMS = [
 ]
 
 export default function PosPage() {
+  const S = useSlownik()
   const [tab, setTab] = useState<'dashboard' | 'connect'>('dashboard')
   const [step, setStep] = useState<1 | 2 | 3>(1)
   const [selectedPos, setSelectedPos] = useState('')
@@ -47,6 +50,9 @@ export default function PosPage() {
     setConnected(true); setTab('dashboard'); setStep(1)
   }
 
+
+  // dane przykładowe tylko na koncie demo; pozostałe firmy widzą informację o podłączeniu integracji
+  if (!S.demo) return <IntegracjaPlaceholder nazwa="POS" opis="Połączenie z systemem kasowym pozwala automatycznie pobierać paragony i obroty. Skonfigurujemy je razem z Tobą." />
   return (
     <div style={{ padding: '24px', maxWidth: 1100, margin: '0 auto' }}>
       {/* Header */}

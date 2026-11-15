@@ -2,22 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { useSlownik } from '@/components/SlownikContext'
+import { createClient } from '@/lib/supabase'
 
 type Zakup = {
   id: string; nr: string; data: string; dostawca: string
   kategoria: string; opis: string; kwota_netto: number; kwota_brutto: number; status: 'zatwierdzona' | 'oczekuje'
 }
 
-const DEMO: Zakup[] = [
-  { id: '1',  nr: 'FZ/2026/11/028', data: '2026-11-08', dostawca: 'Hurtownia Spożywcza "Mazur"', kategoria: 'Mięso i wędliny',   opis: 'Schab, pierś z kurczaka, wołowina — 45 kg',  kwota_netto: 1_900, kwota_brutto: 2_337, status: 'zatwierdzona' },
-  { id: '2',  nr: 'FZ/2026/11/027', data: '2026-11-07', dostawca: 'Winnica Polska Sp. z o.o.',    kategoria: 'Alkohole i wina',   opis: 'Wino białe i czerwone — 24 butelki',         kwota_netto: 1_020, kwota_brutto: 1_254, status: 'zatwierdzona' },
-  { id: '3',  nr: 'FZ/2026/11/026', data: '2026-11-07', dostawca: 'FreshVeg Dostawy',             kategoria: 'Warzywa i owoce',  opis: 'Pomidory, sałata, cebula, ziemniaki — 60 kg', kwota_netto:   540, kwota_brutto:   664, status: 'zatwierdzona' },
-  { id: '4',  nr: 'FZ/2026/11/025', data: '2026-11-06', dostawca: 'Kraft Browar Sp. z o.o.',      kategoria: 'Alkohole i wina',   opis: 'Piwo craft — 50 litrów (keg 20L x2 + 10L)',  kwota_netto:   780, kwota_brutto:   959, status: 'zatwierdzona' },
-  { id: '5',  nr: 'FZ/2026/11/024', data: '2026-11-05', dostawca: 'BioMleko PL',                  kategoria: 'Nabiał i jaja',    opis: 'Śmietana, masło, sery, jaja — tygodniowy dostaw',kwota_netto:  630, kwota_brutto:   775, status: 'oczekuje'    },
-  { id: '6',  nr: 'FZ/2026/11/023', data: '2026-11-05', dostawca: 'Kawiarnia Hurt Sp. z o.o.',    kategoria: 'Kawa i herbata',   opis: 'Kawa espresso blend 10 kg + herbaty',         kwota_netto:   890, kwota_brutto: 1_095, status: 'zatwierdzona' },
-  { id: '7',  nr: 'FZ/2026/11/022', data: '2026-11-04', dostawca: 'Piekarnia Regionalna',         kategoria: 'Pieczywo',         opis: 'Chleby, bagietki, bułki — codzienna dostawa',  kwota_netto:   310, kwota_brutto:   381, status: 'zatwierdzona' },
-  { id: '8',  nr: 'FZ/2026/11/021', data: '2026-11-03', dostawca: 'RybyŚwieże.pl',                kategoria: 'Ryby i owoce morza',opis: 'Łosoś norweski, dorsz, krewetki — 20 kg',     kwota_netto: 1_540, kwota_brutto: 1_894, status: 'zatwierdzona' },
-]
 
 
 function fmt(n: number) { return n.toLocaleString('pl-PL', { minimumFractionDigits: 2 }) }
@@ -29,10 +20,28 @@ export default function ZakupyPage() {
   const [filterKat, setFilterKat] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ dostawca: '', kategoria: '', opis: '', kwota_netto: '' })
-  // dane przykładowe tylko dla konta demo; nowe firmy zaczynają od pustej listy
+  const supabase = createClient()
   const [zakupy, setZakupy] = useState<Zakup[]>([])
-  useEffect(() => { if (S.demo) setZakupy(DEMO) }, [S.demo])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
   const [saved, setSaved] = useState('')
+
+  async function load() {
+    const { data, error: err } = await supabase.from('zakupy')
+      .select('id,nr_faktury,data_zakupu,dostawca,kategoria,opis,wartosc_netto,wartosc_brutto,status')
+      .order('data_zakupu', { ascending: false }).order('created_at', { ascending: false }).limit(2000)
+    if (err) { setError('Nie udało się wczytać zakupów: ' + err.message); setLoading(false); return }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    setZakupy((data ?? []).map((r: any) => ({
+      id: r.id, nr: r.nr_faktury ?? '', data: r.data_zakupu ?? '', dostawca: r.dostawca ?? '',
+      kategoria: r.kategoria ?? 'Inne', opis: r.opis ?? '',
+      kwota_netto: Number(r.wartosc_netto ?? 0), kwota_brutto: Number(r.wartosc_brutto ?? 0),
+      status: r.status === 'zatwierdzona' ? 'zatwierdzona' : 'oczekuje',
+    })))
+    setLoading(false)
+  }
+  useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const filtered = zakupy.filter(z =>
     (z.dostawca.toLowerCase().includes(search.toLowerCase()) || z.opis.toLowerCase().includes(search.toLowerCase()) || z.nr.includes(search)) &&
@@ -40,22 +49,39 @@ export default function ZakupyPage() {
   )
 
   const brutto = zakupy.reduce((s, z) => s + z.kwota_brutto, 0)
-  const tenDay = zakupy.filter(z => z.data >= '2026-11-05').reduce((s, z) => s + z.kwota_brutto, 0)
+  const tydzienTemu = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0]
+  const tenDay = zakupy.filter(z => z.data >= tydzienTemu).reduce((s, z) => s + z.kwota_brutto, 0)
 
-  function handleAdd(e: React.FormEvent) {
+  function nastepnyNumer() {
+    const d = new Date()
+    const prefix = `FZ/${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/`
+    const maks = zakupy.filter(z => z.nr.startsWith(prefix)).map(z => parseInt(z.nr.slice(prefix.length), 10) || 0).reduce((a, b) => Math.max(a, b), 0)
+    return prefix + String(maks + 1).padStart(3, '0')
+  }
+
+  async function handleAdd(e: React.FormEvent) {
     e.preventDefault()
+    setSaving(true); setError('')
     const netto = parseFloat(form.kwota_netto) || 0
-    const nowy: Zakup = {
-      id: Date.now().toString(),
-      nr: `FZ/2026/11/${(zakupy.length + 29).toString().padStart(3, '0')}`,
-      data: new Date().toISOString().split('T')[0],
+    const { error: err } = await supabase.from('zakupy').insert({
+      data_zakupu: new Date().toISOString().split('T')[0],
+      nr_faktury: nastepnyNumer(),
       dostawca: form.dostawca, kategoria: form.kategoria || KATEGORIE[0], opis: form.opis,
-      kwota_netto: netto, kwota_brutto: parseFloat((netto * 1.23).toFixed(2)), status: 'oczekuje',
-    }
-    setZakupy(p => [nowy, ...p])
+      wartosc_netto: netto, wartosc_brutto: parseFloat((netto * 1.23).toFixed(2)), status: 'oczekuje',
+    })
+    setSaving(false)
+    if (err) { setError('Nie udało się zapisać zakupu: ' + err.message); return }
     setForm({ dostawca: '', kategoria: '', opis: '', kwota_netto: '' })
     setShowForm(false)
     setSaved('Zakup zapisany!'); setTimeout(() => setSaved(''), 3000)
+    await load()
+  }
+
+  async function zatwierdz(id: string) {
+    const poprzednie = zakupy
+    setZakupy(p => p.map(z => z.id === id ? { ...z, status: 'zatwierdzona' } : z))
+    const { error: err } = await supabase.from('zakupy').update({ status: 'zatwierdzona' }).eq('id', id)
+    if (err) { setZakupy(poprzednie); setError('Nie udało się zatwierdzić zakupu: ' + err.message) }
   }
 
   const inp = "px-3 py-2 border border-gray-200 rounded-lg text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -81,6 +107,7 @@ export default function ZakupyPage() {
           </button>
         </div>
 
+        {error && <p className="text-xs text-red-700 bg-red-50 border border-red-200 px-3 py-2 rounded-lg mb-4">{error}</p>}
         {saved && <p className="text-xs text-green-700 bg-green-50 border border-green-200 px-3 py-2 rounded-lg mb-4">{saved}</p>}
 
         {/* KPI */}
@@ -137,11 +164,16 @@ export default function ZakupyPage() {
                           <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${z.status === 'zatwierdzona' ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'}`}>
                             {z.status}
                           </span>
+                          {z.status === 'oczekuje' && (
+                            <button onClick={() => zatwierdz(z.id)} className="ml-2 text-xs text-blue-600 hover:underline whitespace-nowrap">Zatwierdź</button>
+                          )}
                         </td>
                       </tr>
                     ))}
                     {filtered.length === 0 && (
-                      <tr><td colSpan={7} className="py-10 text-center text-sm text-gray-400">Brak wyników</td></tr>
+                      <tr><td colSpan={7} className="py-10 text-center text-sm text-gray-400">
+                        {loading ? 'Wczytywanie…' : zakupy.length === 0 ? 'Brak zakupów. Dodaj pierwszy przyciskiem „+ Nowy zakup”.' : 'Brak wyników'}
+                      </td></tr>
                     )}
                   </tbody>
                 </table>
@@ -205,8 +237,8 @@ export default function ZakupyPage() {
               <div className="flex gap-2 justify-end pt-2 border-t border-gray-100">
                 <button type="button" onClick={() => setShowForm(false)}
                   className="px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50">Anuluj</button>
-                <button type="submit"
-                  className="px-4 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-700">Zapisz</button>
+                <button type="submit" disabled={saving}
+                  className="px-4 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50">{saving ? 'Zapisywanie…' : 'Zapisz'}</button>
               </div>
             </form>
           </div>
