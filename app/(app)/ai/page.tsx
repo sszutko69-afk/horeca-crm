@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase'
+import { useSlownik } from '@/components/SlownikContext'
 
 type Wiadomosc = { rola: 'user' | 'assistant'; tresc: string }
 
@@ -21,6 +22,7 @@ type DaneFinansowe = {
 }
 
 export default function AIPage() {
+  const S = useSlownik()
   const supabase = createClient()
   const [wiadomosci, setWiadomosci] = useState<Wiadomosc[]>([])
   const [input, setInput] = useState('')
@@ -37,7 +39,7 @@ export default function AIPage() {
     setLoadingDane(true)
     setError('')
     try {
-      // Dane z bazy HoReCa CRM
+      // Dane z bazy Skrojo
       const [{ data: sprzedaz }, { data: zakupy }, { data: klienci }] = await Promise.all([
         supabase.from('sprzedaz').select('kwota_brutto, klient_id, klienci(nazwa)'),
         supabase.from('zakupy').select('wartosc_brutto, kategoria'),
@@ -92,7 +94,7 @@ export default function AIPage() {
       }
       setDane(d)
       setWiadomosci([])
-      await zapytajAI(d, [], 'Przeanalizuj dane finansowe mojej restauracji / firmy cateringowej i podaj kluczowe obserwacje oraz 3-5 konkretnych sugestii jak poprawić rentowność.')
+      await zapytajAI(d, [], 'Przeanalizuj dane finansowe mojej firmy i podaj kluczowe obserwacje oraz 3-5 konkretnych sugestii jak poprawić rentowność.')
     } catch (e: any) {
       setError('Błąd pobierania danych: ' + e.message)
     }
@@ -101,13 +103,13 @@ export default function AIPage() {
 
   function budujKontekst(d: DaneFinansowe) {
     const marżaPct = d.sprzedaz_brutto > 0 ? (d.marza_brutto / d.sprzedaz_brutto * 100).toFixed(1) : '0'
-    let kontekst = `Jesteś doradcą finansowym dla restauracji, hotelu i firmy cateringowej (HoReCa).
+    let kontekst = `Jesteś doradcą finansowym dla ${S.kontekstAI}.
 
-DANE Z SYSTEMU HoReCa CRM:
+DANE Z SYSTEMU SKROJO:
 - Przychód ze sprzedaży (brutto): ${fmt(d.sprzedaz_brutto)} zł
-- Koszt zakupów surowców i towarów (brutto): ${fmt(d.zakupy_brutto)} zł
+- Koszt zakupów (brutto): ${fmt(d.zakupy_brutto)} zł
 - Marża brutto: ${fmt(d.marza_brutto)} zł (${marżaPct}% przychodów)
-- Food cost (zakupy / sprzedaż): ${d.food_cost_pct.toFixed(1)}%
+- Udział kosztów zakupu w przychodach (zakupy / sprzedaż): ${d.food_cost_pct.toFixed(1)}%
 - Liczba transakcji sprzedaży: ${d.liczba_transakcji}
 - Liczba aktywnych klientów: ${d.liczba_klientow}
 - Liczba dostaw / zakupów: ${d.liczba_zakupow}
@@ -165,12 +167,12 @@ Odpowiadaj po polsku, konkretnie i praktycznie. Używaj liczb z danych. Formatuj
   }
 
   const szybkiePytania = [
-    'Jak zwiększyć marżę na daniach i napojach?',
+    S.horeca ? 'Jak zwiększyć marżę na daniach i napojach?' : 'Jak zwiększyć marżę na naszych usługach i produktach?',
     'Który klient generuje największy zysk?',
-    'Jak obniżyć food cost i koszty zakupu surowców?',
+    S.horeca ? 'Jak obniżyć food cost i koszty zakupu surowców?' : 'Jak obniżyć koszty zakupów?',
     'Oceń rentowność firmy i podaj priorytety działań',
     'Jakie ryzyka finansowe widzisz w danych?',
-    'Jak zoptymalizować menu i grafik pracy żeby obniżyć koszty?',
+    S.horeca ? 'Jak zoptymalizować menu i grafik pracy żeby obniżyć koszty?' : 'Jak zoptymalizować grafik pracy i koszty zespołu?',
     'Porównaj przychody z inFakt z danymi sprzedaży',
   ]
 
@@ -179,7 +181,7 @@ Odpowiadaj po polsku, konkretnie i praktycznie. Używaj liczb z danych. Formatuj
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-medium text-gray-900">AI — Analiza finansowa</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Asystent analizuje dane HoReCa CRM + inFakt</p>
+          <p className="text-sm text-gray-500 mt-0.5">Asystent analizuje dane Skrojo + inFakt</p>
         </div>
         <button onClick={pobierzDane} disabled={loadingDane || loading}
           className="text-sm bg-gray-900 text-white rounded-lg px-4 py-1.5 hover:bg-gray-700 transition-colors disabled:opacity-50">
@@ -197,22 +199,22 @@ Odpowiadaj po polsku, konkretnie i praktycznie. Używaj liczb z danych. Formatuj
             </svg>
           </div>
           <p className="text-sm font-medium text-gray-900 mb-1">Asystent AI gotowy</p>
-          <p className="text-xs text-gray-500 mb-1">Pobiera dane z HoReCa CRM (sprzedaż, zakupy, marże) oraz inFakt (faktury, koszty).</p>
+          <p className="text-xs text-gray-500 mb-1">Pobiera dane ze Skrojo (sprzedaż, zakupy, marże) oraz inFakt (faktury, koszty).</p>
           <p className="text-xs text-gray-400">Wymaga ustawienia <span className="font-mono bg-gray-100 px-1 rounded">ANTHROPIC_API_KEY</span> w <span className="font-mono bg-gray-100 px-1 rounded">.env.local</span></p>
         </div>
       )}
 
       {loadingDane && (
-        <p className="text-sm text-gray-400 text-center py-8">Pobieranie danych z HoReCa CRM i inFakt...</p>
+        <p className="text-sm text-gray-400 text-center py-8">Pobieranie danych ze Skrojo i inFakt...</p>
       )}
 
       {/* KPI */}
       {dane && (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4 mb-6">
           {[
-            { l: 'Przychód (HoReCa CRM)', v: fmt(dane.sprzedaz_brutto) + ' zł' },
+            { l: 'Przychód (Skrojo)', v: fmt(dane.sprzedaz_brutto) + ' zł' },
             { l: 'Marża brutto', v: fmt(dane.marza_brutto) + ' zł', s: dane.sprzedaz_brutto > 0 ? (dane.marza_brutto / dane.sprzedaz_brutto * 100).toFixed(1) + '%' : '' },
-            { l: 'Food cost', v: dane.food_cost_pct.toFixed(1) + '%' },
+            { l: S.horeca ? 'Food cost' : 'Koszty zakupu / przychód', v: dane.food_cost_pct.toFixed(1) + '%' },
             dane.infakt_dostepne
               ? { l: 'Koszty (inFakt)', v: fmt(dane.infakt_koszty) + ' zł', s: `${dane.infakt_faktury} faktur` }
               : { l: 'Klientów', v: String(dane.liczba_klientow), s: `${dane.liczba_transakcji} transakcji` },
@@ -229,7 +231,7 @@ Odpowiadaj po polsku, konkretnie i praktycznie. Używaj liczb z danych. Formatuj
       {/* Źródła danych */}
       {dane && (
         <div className="flex gap-2 mb-4">
-          <span className="text-xs bg-green-50 text-green-700 border border-green-200 px-2 py-1 rounded-lg">✓ HoReCa CRM</span>
+          <span className="text-xs bg-green-50 text-green-700 border border-green-200 px-2 py-1 rounded-lg">✓ Skrojo</span>
           {dane.infakt_dostepne
             ? <span className="text-xs bg-green-50 text-green-700 border border-green-200 px-2 py-1 rounded-lg">✓ inFakt</span>
             : <span className="text-xs bg-gray-100 text-gray-500 border border-gray-200 px-2 py-1 rounded-lg">— inFakt (brak sync)</span>

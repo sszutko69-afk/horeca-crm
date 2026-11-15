@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
-import { MODULY_GRUPY, WSZYSTKIE_MODULY, ROLE, ROLE_LABEL, ROLE_COLOR, ROLE_DOMYSLNE } from '@/lib/moduly'
+import { MODULY_GRUPY, ROLE, ROLE_COLOR } from '@/lib/moduly'
+import { useSlownik } from '@/components/SlownikContext'
+import { rolaDomyslneModuly } from '@/lib/slownik'
+import { modulyDlaBranzy, MODULY_SYSTEMOWE } from '@/lib/branze'
 
 type Profile = {
   id: string
@@ -16,14 +19,22 @@ type Profile = {
   twofa_enabled: boolean | null
 }
 
-const roleLabel = ROLE_LABEL
 const roleColor = ROLE_COLOR
-const roleDomyslne = ROLE_DOMYSLNE
 
 const inputCls = "px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
 const labelCls = "text-xs font-medium text-gray-500 uppercase tracking-wide"
 
 export default function UzytkownicyPage() {
+  const S = useSlownik()
+  // moduły oferowane tej firmie (branża) i domyślne moduły ról zależne od branży
+  const dostepneModuly = [...MODULY_SYSTEMOWE, ...modulyDlaBranzy(S.branza ?? 'inna')]
+  const WSZYSTKIE_MODULY = dostepneModuly
+  const ROLE_LABEL = S.rola as Record<string, string>
+  const roleDomyslne: Record<string, string[]> = {
+    admin: dostepneModuly, menedzer: rolaDomyslneModuly('menedzer', S.branza),
+    kelner: rolaDomyslneModuly('kelner', S.branza), kucharz: rolaDomyslneModuly('kucharz', S.branza),
+  }
+  const roleLabel = ROLE_LABEL
   const supabase = createClient()
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [loading, setLoading] = useState(true)
@@ -367,7 +378,7 @@ export default function UzytkownicyPage() {
                   </div>
                 </div>
                 <div className="bg-gray-50 rounded-lg p-3 space-y-3">
-                  {MODULY_GRUPY.map(g => (
+                  {MODULY_GRUPY.map(g => ({ ...g, moduly: g.moduly.filter(m => dostepneModuly.includes(m)) })).filter(g => g.moduly.length > 0).map(g => (
                     <div key={g.grupa}>
                       <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1.5">{g.grupa}</p>
                       <div className="grid grid-cols-2 gap-2">

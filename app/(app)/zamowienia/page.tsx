@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, useMemo } from 'react'
 import { createClient } from '@/lib/supabase'
+import { useSlownik } from '@/components/SlownikContext'
 
 // ================================================================
 // TYPY
@@ -35,8 +36,6 @@ const ZRODLO_BADGE:Record<string,string> = {
   klient:'bg-blue-50 text-blue-700',
   manual:'bg-gray-100 text-gray-600',
 }
-const PRODUKTY_HORECA = ['Catering — lunch box','Catering — bankiet','Zestaw obiadowy','Tort / ciasta','Wypieki i pieczywo','Napoje i alkohole']
-const JEDNOSTKI = ['porcja','os.','szt','kg','l']
 const inp = 'px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full bg-white'
 const lbl = 'text-xs font-medium text-gray-500 uppercase tracking-wide mb-1 block'
 
@@ -47,6 +46,7 @@ function fmtDate(d:string|null) { return d?new Date(d).toLocaleDateString('pl-PL
 // KOMPONENT GŁÓWNY
 // ================================================================
 export default function ZamowieniaPage() {
+  const S = useSlownik()
   const supabase = createClient()
   const [zamowienia, setZamowienia] = useState<Zamowienie[]>([])
   const [klienci,    setKlienci]    = useState<any[]>([])
@@ -127,7 +127,7 @@ export default function ZamowieniaPage() {
       await supabase.from('zamowienia').update({status:'w_dostawie',updated_at:new Date().toISOString()}).eq('id',z.id)
     }
     setZamowienia(prev=>prev.map(z=>z.do_dostawy&&z.status==='do_dostawy'?{...z,status:'w_dostawie'}:z))
-    showMsg(`✓ Przekazano ${doDostawy.length} zamówień do realizacji (kuchnia i dostawa).`)
+    showMsg(`✓ Przekazano ${doDostawy.length} zamówień do realizacji (${S.zamowienia.przekazanie}).`)
   }
 
   async function deleteZam(id:string){
@@ -169,7 +169,7 @@ export default function ZamowieniaPage() {
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
           <h1 className="text-xl font-medium text-gray-900">Zamówienia</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Zamówienia klientów · Catering i dostawy · Realizacja przez kuchnię</p>
+          <p className="text-sm text-gray-500 mt-0.5">{S.zamowienia.podtytul}</p>
         </div>
         <div className="flex gap-2 flex-wrap">
           {doDostawyCount>0&&(
@@ -404,7 +404,7 @@ export default function ZamowieniaPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-900">Dostawa</p>
-                    <p className="text-xs text-gray-500">Zaznacz aby przekazać do realizacji (kuchnia + dostawa)</p>
+                    <p className="text-xs text-gray-500">Zaznacz aby przekazać do realizacji ({S.zamowienia.przekazanieOpis})</p>
                   </div>
                   <input type="checkbox"
                     checked={openZam.do_dostawy}
@@ -452,6 +452,9 @@ export default function ZamowieniaPage() {
 function ZamowienieForm({zam,klienci,saving,onSave,onClose}:{
   zam:Zamowienie|null; klienci:any[]; saving:boolean; onSave:(d:any)=>void; onClose:()=>void
 }){
+  const S = useSlownik()
+  const PRODUKTY = S.produktyZamowien
+  const JEDNOSTKI = S.jednostki
   const [zrodlo, setZrodlo] = useState(zam?.zrodlo??'manual')
   const [form, setForm] = useState({
     klient_id:              zam?.klient_id??'',
@@ -550,12 +553,11 @@ function ZamowienieForm({zam,klienci,saving,onSave,onClose}:{
               <label className={lbl}>Produkt *</label>
               <select value={form.produkt} onChange={e=>setForm(f=>({...f,produkt:e.target.value}))} className={inp} required>
                 <option value="">— Wybierz —</option>
-                <optgroup label="Catering i gastronomia">
-                  {PRODUKTY_HORECA.map(p=><option key={p} value={p}>{p}</option>)}
+                <optgroup label={S.zamowienia.grupa}>
+                  {PRODUKTY.map(p=><option key={p} value={p}>{p}</option>)}
                 </optgroup>
                 <optgroup label="Inne">
-                  <option value="Wynajem sali">Wynajem sali</option>
-                  <option value="Obsługa kelnerska">Obsługa kelnerska</option>
+                  {S.zamowienia.uslugi.map(u=><option key={u} value={u}>{u}</option>)}
                   <option value="Inne">Inne</option>
                 </optgroup>
               </select>

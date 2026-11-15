@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, useMemo } from 'react'
 import { createClient } from '@/lib/supabase'
+import { useSlownik } from '@/components/SlownikContext'
 
 type Pracownik = {
   id: string; imie: string; nazwisko: string; stanowisko: string
@@ -38,12 +39,6 @@ const UMOWY = [
   { v: 'staz', l: 'Staż / Praktyka' },
 ]
 
-const STANOWISKA = [
-  'Menedżer restauracji', 'Kierownik zmiany', 'Szef kuchni', 'Sous chef', 'Kucharz',
-  'Pomoc kuchenna', 'Cukiernik', 'Kelner', 'Barman', 'Barista', 'Sommelier',
-  'Hostessa', 'Recepcjonista', 'Pokojowa', 'Obsługa cateringu / eventów',
-  'Zmywak', 'Dostawca / kierowca', 'Magazynier', 'Księgowa / administracja', 'Inne',
-]
 
 const UMOWA_BADGE: Record<string, string> = {
   uop:  'bg-blue-100 text-blue-700',
@@ -68,7 +63,7 @@ function fmtDate(d: string | null | undefined) {
 }
 
 const emptyForm = {
-  imie: '', nazwisko: '', stanowisko: 'Kelner',
+  imie: '', nazwisko: '', stanowisko: '',
   rodzaj_umowy: 'uop', wynagrodzenie_brutto: '', stawka_godzinowa: '',
   wymiar_etatu: '1',
   data_zatrudnienia: '', data_zwolnienia: '', uprawnienia: '',
@@ -76,6 +71,8 @@ const emptyForm = {
 }
 
 export default function KadryPage() {
+  const S = useSlownik()
+  const STANOWISKA = S.stanowiska
   const supabase = createClient()
   const [pracownicy, setPracownicy] = useState<Pracownik[]>([])
   const [loading, setLoading] = useState(true)
@@ -107,7 +104,7 @@ export default function KadryPage() {
     const payload = {
       imie: form.imie.trim(),
       nazwisko: form.nazwisko.trim(),
-      stanowisko: form.stanowisko.trim(),
+      stanowisko: form.stanowisko.trim() || S.domyslneStanowisko,
       rodzaj_umowy: form.rodzaj_umowy || null,
       wynagrodzenie_brutto: form.wynagrodzenie_brutto ? parseFloat(form.wynagrodzenie_brutto) : null,
       stawka_godzinowa: form.stawka_godzinowa ? parseFloat(form.stawka_godzinowa) : null,
@@ -513,8 +510,8 @@ export default function KadryPage() {
                 </div>
                 <div className="col-span-2">
                   <label className={lbl}>Stanowisko *</label>
-                  <select value={form.stanowisko} onChange={e => setForm(f => ({ ...f, stanowisko: e.target.value }))} className={inp}>
-                    {STANOWISKA.map(s => <option key={s}>{s}</option>)}
+                  <select value={form.stanowisko || S.domyslneStanowisko} onChange={e => setForm(f => ({ ...f, stanowisko: e.target.value }))} className={inp}>
+                    {[...(form.stanowisko && !STANOWISKA.includes(form.stanowisko) ? [form.stanowisko] : []), ...STANOWISKA].map(s => <option key={s}>{s}</option>)}
                   </select>
                 </div>
                 <div>
@@ -553,7 +550,7 @@ export default function KadryPage() {
                 <div className="col-span-2">
                   <label className={lbl}>Uprawnienia / Kwalifikacje</label>
                   <input value={form.uprawnienia} onChange={e => setForm(f => ({ ...f, uprawnienia: e.target.value }))}
-                    placeholder="np. Książeczka sanepidowska, HACCP, kurs barmański, prawo jazdy kat. B..." className={inp} />
+                    placeholder={S.horeca ? "np. Książeczka sanepidowska, HACCP, kurs barmański, prawo jazdy kat. B..." : "np. badania lekarskie, szkolenie BHP, prawo jazdy kat. B..."} className={inp} />
                 </div>
                 <div>
                   <label className={lbl}>Telefon</label>
@@ -561,7 +558,7 @@ export default function KadryPage() {
                 </div>
                 <div>
                   <label className={lbl}>Email</label>
-                  <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="jan@restauracja.pl" className={inp} />
+                  <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder={S.placeholderEmail} className={inp} />
                 </div>
                 <div className="col-span-2">
                   <label className={lbl}>Adres zamieszkania</label>

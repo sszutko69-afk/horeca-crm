@@ -121,7 +121,7 @@ export async function POST(req: NextRequest) {
 <body><div class="wrap">
 
   <div class="hdr">
-    <h1>📊 Raport tygodniowy HoReCa CRM</h1>
+    <h1>📊 Raport tygodniowy Skrojo</h1>
     <p style="margin:4px 0 0;opacity:0.8;font-size:13px">${tydzienStr}</p>
   </div>
 
@@ -183,7 +183,7 @@ export async function POST(req: NextRequest) {
 
   <!-- WYDARZENIA -->
   <div class="card">
-    <h2>🎉 Wydarzenia i catering</h2>
+    <h2>🎉 Wydarzenia i projekty</h2>
     ${(wydarzeniaNowe ?? []).length > 0 ? `
     <p style="font-size:12px;color:#374151;margin:0 0 8px;font-weight:500">Nowe zapytania w tym tygodniu (${(wydarzeniaNowe ?? []).length}):</p>
     <table>
@@ -221,11 +221,11 @@ export async function POST(req: NextRequest) {
   </div>` : ''}
 
   <div style="text-align:center;margin:16px 0">
-    <a href="${process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.skrojo.pl'}/dashboard" class="btn">Otwórz HoReCa CRM →</a>
+    <a href="${process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.skrojo.pl'}/dashboard" class="btn">Otwórz Skrojo →</a>
   </div>
 
   <div class="footer">
-    <p>Raport automatyczny HoReCa CRM · ${new Date().toLocaleDateString('pl-PL')}</p>
+    <p>Raport automatyczny Skrojo · ${new Date().toLocaleDateString('pl-PL')}</p>
     <p>Aby wyłączyć: Ustawienia → Powiadomienia → Raporty tygodniowe</p>
   </div>
 </div></body></html>`
@@ -238,9 +238,9 @@ export async function POST(req: NextRequest) {
 
   const resend = new Resend(resendKey)
   const { data: emailData, error: emailError } = await resend.emails.send({
-    from: 'HoReCa CRM <onboarding@resend.dev>',
+    from: 'Skrojo <onboarding@resend.dev>',
     to: [email],
-    subject: `📊 Raport tygodniowy HoReCa CRM – ${tydzienStr}`,
+    subject: `📊 Raport tygodniowy Skrojo – ${tydzienStr}`,
     html,
   })
 

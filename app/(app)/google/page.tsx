@@ -303,7 +303,7 @@ export default function GooglePage() {
           <li>📅 Google Calendar — przeglądaj, dodawaj, usuwaj, checkboxy</li>
           <li>✅ Google Tasks — zarządzaj zadaniami, oznaczaj ukończone</li>
           <li>✉ Gmail — czytaj, wysyłaj, zamieniaj zapytania ofertowe w leady</li>
-          <li>🍽 Zapytania o rezerwacje i catering — w jednym miejscu</li>
+          <li>📩 Zapytania ofertowe i zamówienia — w jednym miejscu</li>
         </ul>
         {googleError && (
           <div className="mb-4 text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-left">

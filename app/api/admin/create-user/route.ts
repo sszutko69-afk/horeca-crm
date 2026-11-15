@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
-import { ROLE, ROLE_DOMYSLNE } from '@/lib/moduly'
+import { ROLE, WSZYSTKIE_MODULY } from '@/lib/moduly'
+import { rolaDomyslneModuly } from '@/lib/slownik'
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,6 +37,8 @@ export async function POST(request: NextRequest) {
       { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
+    const { data: firmaInfo } = await supabase.from('firmy').select('branza').single()
+    const firmaBranza: string | null = firmaInfo?.branza ?? null
     const rolaVal = rola ?? 'kelner'
     if (!(ROLE as string[]).includes(rolaVal)) {
       return NextResponse.json({ error: 'Nieprawidłowa rola.' }, { status: 400 })
@@ -47,7 +50,7 @@ export async function POST(request: NextRequest) {
       email: email.trim().toLowerCase(),
       password: haslo,
       email_confirm: true,
-      app_metadata: { firma_id: profile.firma_id, rola: rolaVal, moduly: ROLE_DOMYSLNE[rolaVal] },
+      app_metadata: { firma_id: profile.firma_id, rola: rolaVal, moduly: rolaVal === 'admin' ? WSZYSTKIE_MODULY : rolaDomyslneModuly(rolaVal, firmaBranza) },
       user_metadata: { imie_nazwisko: imie_nazwisko.trim(), login: login.trim(), telefon: telefon?.trim() || '' },
     })
 

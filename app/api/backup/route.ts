@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 
-// Tabele HoReCa objęte archiwizacją — brakujące (jeszcze nieutworzone) są pomijane
+// Tabele objęte archiwizacją — brakujące (jeszcze nieutworzone) są pomijane
 const TABELE = [
   'klienci', 'sprzedaz', 'zakupy', 'zamowienia',
   'pracownicy', 'plan_pracy', 'czas_pracy', 'place', 'wydarzenia',
@@ -33,9 +33,9 @@ export async function GET(_request: NextRequest) {
     }
 
     const timestamp = new Date().toISOString()
-    const backup = { timestamp, wersja: '1.0', aplikacja: 'HoReCa CRM', dane, statystyki }
+    const backup = { timestamp, wersja: '1.0', aplikacja: 'Skrojo', dane, statystyki }
 
-    const fileName = `horeca-crm-backup-${timestamp.split('T')[0]}.json`
+    const fileName = `skrojo-backup-${timestamp.split('T')[0]}.json`
     const body = JSON.stringify(backup, null, 2)
 
     return new NextResponse(body, {

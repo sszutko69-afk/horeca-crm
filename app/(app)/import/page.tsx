@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase'
 import * as XLSX from 'xlsx'
+import { useSlownik } from '@/components/SlownikContext'
 
 type Tab = 'klienci' | 'sprzedaz' | 'zakupy' | 'czyszczenie'
 
@@ -25,23 +26,23 @@ const SZABLONY: Record<Exclude<Tab, 'czyszczenie'>, { arkusz: string; plik: stri
     arkusz: 'Klienci', plik: 'szablon-klienci.xlsx',
     naglowki: ['Nazwa', 'Typ (firma/osoba)', 'NIP', 'Adres', 'Miasto', 'Kod pocztowy', 'Telefon', 'Email', 'Uwagi'],
     przyklad: [
-      ['Restauracja Pod Lipą', 'firma', '5260002222', 'ul. Lipowa 12', 'Kraków', '31-001', '12 421 1212', 'kontakt@podlipa.pl', 'Stały klient'],
-      ['Jan Kowalski', 'osoba', '', 'ul. Słoneczna 4', 'Warszawa', '00-100', '600 100 200', 'jan@example.com', 'Urodziny'],
+      ['Firma Przykładowa Sp. z o.o.', 'firma', '5260002222', 'ul. Lipowa 12', 'Kraków', '31-001', '12 421 1212', 'kontakt@przyklad.pl', 'Stały klient'],
+      ['Jan Kowalski', 'osoba', '', 'ul. Słoneczna 4', 'Warszawa', '00-100', '600 100 200', 'jan@example.com', 'Nowy klient'],
     ],
   },
   sprzedaz: {
     arkusz: 'Sprzedaż', plik: 'szablon-sprzedaz.xlsx',
     naglowki: ['Data', 'Klient', 'Nr faktury', 'Opis usługi', 'Kwota netto', 'Kwota brutto', 'Forma sprzedaży (Faktura VAT/Paragon)', 'Płatność (przelew/karta/gotówka)', 'Status (opłacona/oczekuje/zaległa)'],
     przyklad: [
-      ['2026-11-08', 'Hotel Marriott Warszawa', 'FV/2026/11/001', 'Catering konferencja', 7800, 9594, 'Faktura VAT', 'przelew', 'opłacona'],
-      ['2026-11-07', 'Jan Kowalski', '', 'Urodziny — 12 osób', 1479.67, 1820, 'Paragon', 'karta', 'opłacona'],
+      ['2026-11-08', 'Firma Przykładowa Sp. z o.o.', 'FV/2026/11/001', 'Usługa — realizacja zlecenia', 7800, 9594, 'Faktura VAT', 'przelew', 'opłacona'],
+      ['2026-11-07', 'Jan Kowalski', '', 'Usługa jednorazowa', 1479.67, 1820, 'Paragon', 'karta', 'opłacona'],
     ],
   },
   zakupy: {
     arkusz: 'Zakupy', plik: 'szablon-zakupy.xlsx',
     naglowki: ['Data', 'Dostawca', 'Nr faktury', 'Kategoria', 'Opis', 'Wartość netto', 'Wartość brutto'],
     przyklad: [
-      ['2026-11-08', 'Hurtownia Spożywcza "Mazur"', 'FZ/2026/11/001', 'Mięso i wędliny', 'Schab, kurczak — 45 kg', 1900, 2337],
+      ['2026-11-08', 'Dostawca Przykładowy Sp. z o.o.', 'FZ/2026/11/001', 'Materiały', 'Zakup materiałów — 45 kg', 1900, 2337],
       ['2026-11-07', 'Winnica Polska Sp. z o.o.', 'FZ/2026/11/002', 'Alkohole i wina', 'Wino — 24 butelki', 1020, 1254],
     ],
   },
@@ -92,6 +93,7 @@ function pickSheet(wb: XLSX.WorkBook, ...keys: string[]) {
 }
 
 export default function ImportPage() {
+  const S = useSlownik()
   const supabase = createClient()
   const [tab, setTab] = useState<Tab>('klienci')
   const [loading, setLoading] = useState(false)
@@ -399,7 +401,7 @@ export default function ImportPage() {
 
       <div className="flex gap-1 mb-6 border-b border-gray-200 overflow-x-auto">
         {[
-          { key: 'klienci', label: 'Klienci i goście' },
+          { key: 'klienci', label: S.klienciEtykieta },
           { key: 'sprzedaz', label: 'Faktury sprzedaży' },
           { key: 'zakupy', label: 'Zakupy od dostawców' },
           { key: 'czyszczenie', label: '🗑 Zarządzanie bazą' },

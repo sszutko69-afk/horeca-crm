@@ -64,7 +64,7 @@ export default function GooglePanel({ compact = false }: { compact?: boolean }) 
 
   async function loadGmail() {
     setLoading(true)
-    const res = await fetch(`/api/google/gmail?userId=${userId}&action=list&q=oferta+OR+zamowienie+OR+rezerwacja+OR+catering`)
+    const res = await fetch(`/api/google/gmail?userId=${userId}&action=list&q=oferta+OR+zamowienie+OR+zapytanie`)
     const json = await res.json()
     if (json.messages) setMessages(json.messages)
     setLoading(false)
@@ -203,7 +203,7 @@ export default function GooglePanel({ compact = false }: { compact?: boolean }) 
         {/* GMAIL */}
         {tab === 'gmail' && (
           <div className="p-3">
-            <p className="text-xs text-gray-500 mb-3">Maile z zapytaniami (oferta, zamówienie, rezerwacja, catering):</p>
+            <p className="text-xs text-gray-500 mb-3">Maile z zapytaniami (oferta, zamówienie, zapytanie):</p>
             {loading ? <p className="text-xs text-center text-gray-400 py-4">Ładowanie...</p> :
               messages.length === 0 ? <p className="text-xs text-center text-gray-400 py-4">Brak wiadomości</p> :
               <div className="space-y-1.5">

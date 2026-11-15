@@ -2,9 +2,9 @@ import { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'GazCRM',
-    short_name: 'GazCRM',
-    description: 'System zarządzania firmą gazową',
+    name: 'Skrojo',
+    short_name: 'Skrojo',
+    description: 'CRM szyty na miarę Twojej firmy',
     start_url: '/dashboard',
     display: 'standalone',
     background_color: '#f9fafb',

@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, useMemo, useRef } from 'react'
 import { createClient } from '@/lib/supabase'
+import { useSlownik } from '@/components/SlownikContext'
 
 // ================================================================
 // TYPY
@@ -140,9 +141,6 @@ const KAT_BADGE: Record<string,string> = {
   catering:    'bg-cyan-50 text-cyan-700',
   inne:       'bg-gray-100 text-gray-600',
 }
-const KAT_LABEL: Record<string,string> = {
-  wydarzenie:'Wydarzenie', catering:'Catering', inne:'Inne'
-}
 const WYNIK_BADGE: Record<string,string> = {
   pozytywny: 'bg-green-100 text-green-700',
   neutralny: 'bg-gray-100 text-gray-600',
@@ -159,6 +157,8 @@ function fmtDate(d:string|null) { return d ? new Date(d).toLocaleDateString('pl-
 // KOMPONENT GŁÓWNY
 // ================================================================
 export default function LeadyPage() {
+  const S = useSlownik()
+  const KAT_LABEL: Record<string,string> = { wydarzenie: S.leady.wydarzenie, catering: S.leady.catering, inne: S.leady.inne }
   const supabase = createClient()
 
   const [leady,    setLeady]    = useState<Lead[]>([])
@@ -323,10 +323,10 @@ export default function LeadyPage() {
 
   // ── Konwersja do Wydarzenia / Zamówienia ──────────────────
   async function konwertujDoWydarzenia(lead:Lead){
-    if(!confirm('Przekazać lead do modułu Wydarzenia? Zostanie utworzone nowe wydarzenie (np. bankiet, wesele).')) return
+    if(!confirm(`Przekazać lead do modułu CRM? Zostanie utworzony nowy element: ${S.projekt.jedn.toLowerCase()} (${S.projekt.przyklad}).`)) return
     const {data:inv} = await supabase.from('wydarzenia').insert({
       nazwa: lead.tytul,
-      typ: 'bankiet',
+      typ: S.horeca ? 'bankiet' : 'projekt',
       opis: `Lead: ${lead.numer} — ${lead.klient_nazwa??''}`,
       status:'zapytanie', klient_id: lead.klient_id,
     }).select().single()
@@ -334,7 +334,7 @@ export default function LeadyPage() {
       await supabase.from('crm_leady').update({wydarzenie_id:inv.id, status:'wygrany', updated_at:new Date().toISOString()}).eq('id',lead.id)
       setLeady(prev=>prev.map(l=>l.id===lead.id?{...l,wydarzenie_id:inv.id,status:'wygrany'}:l))
       if(openLead?.id===lead.id) setOpenLead(l=>l?{...l,wydarzenie_id:inv.id,status:'wygrany'}:l)
-      showMsg('Wydarzenie utworzone! Widoczne w Planie pracy i CRM.')
+      showMsg(`${S.projekt.jedn} utworzony! Widoczny w Planie pracy i CRM.`)
     }
   }
 
@@ -441,8 +441,8 @@ export default function LeadyPage() {
         </select>
         <select value={filterEtap} onChange={e=>setFilterEtap(e.target.value)} className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white">
           <option value="">Wszystkie etapy</option>
-          <optgroup label="🎉 Wydarzenia / inne">{ETAPY_DOMYSLNE.map(e=><option key={e} value={e}>{e}</option>)}</optgroup>
-          <optgroup label="🍽 Catering i dostawy">{ETAPY_CATERING.map(e=><option key={e} value={e}>{e}</option>)}</optgroup>
+          <optgroup label={`${S.leady.grupaWydarzenie} / inne`}>{ETAPY_DOMYSLNE.map(e=><option key={e} value={e}>{e}</option>)}</optgroup>
+          <optgroup label={S.leady.grupaCatering}>{ETAPY_CATERING.map(e=><option key={e} value={e}>{e}</option>)}</optgroup>
         </select>
         {(search||filterStatus||filterKat||filterEtap)&&(
           <button onClick={()=>{setSearch('');setFilterStatus('');setFilterKat('');setFilterEtap('')}}
@@ -476,7 +476,7 @@ export default function LeadyPage() {
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_BADGE[lead.status]}`}>{STATUS_LABEL[lead.status]}</span>
                         {kat&&<span className={`text-xs px-2 py-0.5 rounded-full font-medium ${KAT_BADGE[kat]}`}>{KAT_LABEL[kat]}</span>}
                         <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${ETAP_KOLOR[lead.etap]??'bg-gray-100 text-gray-600 border-gray-200'}`}>{lead.etap}</span>
-                        {lead.wydarzenie_id&&<span className="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full">→ Wydarzenie</span>}
+                        {lead.wydarzenie_id&&<span className="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full">→ {S.projekt.jedn}</span>}
                         {lead.zamowienie_id&&<span className="text-xs bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded-full">→ Zamówienie</span>}
                       </div>
                       <p className="font-semibold text-gray-900 text-sm mb-0.5">{lead.tytul}</p>
@@ -642,7 +642,7 @@ export default function LeadyPage() {
                     {openLead.produkt?.kategoria==='wydarzenie'&&(
                       <button onClick={()=>konwertujDoWydarzenia(openLead)}
                         className="text-xs px-3 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
-                        🎉 → Wydarzenie
+                        🎉 → {S.projekt.jedn}
                       </button>
                     )}
                     {openLead.produkt?.kategoria==='catering'&&(
@@ -655,7 +655,7 @@ export default function LeadyPage() {
                       <>
                         <button onClick={()=>konwertujDoWydarzenia(openLead)}
                           className="text-xs px-3 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
-                          🎉 → Wydarzenie
+                          🎉 → {S.projekt.jedn}
                         </button>
                         <button onClick={()=>konwertujDoZamowienia(openLead)}
                           className="text-xs px-3 py-1.5 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700">
@@ -668,7 +668,7 @@ export default function LeadyPage() {
               )}
               {openLead.wydarzenie_id&&(
                 <div className="mt-2 text-xs text-purple-700 bg-purple-50 px-3 py-2 rounded-lg">
-                  ✓ Przekazano do modułu <a href="/crm" className="underline font-medium">CRM (Wydarzenia)</a>
+                  ✓ Przekazano do modułu <a href="/crm" className="underline font-medium">CRM ({S.projekt.jedn})</a>
                 </div>
               )}
               {openLead.zamowienie_id&&(
@@ -859,6 +859,7 @@ function LeadForm({lead,produkty,klienci,pracownicy,saving,onSave,onClose}:{
   lead:Lead|null; produkty:Produkt[]; klienci:any[]; pracownicy:any[];
   saving:boolean; onSave:(d:any)=>void; onClose:()=>void
 }) {
+  const S = useSlownik()
   const [form, setForm] = useState({
     tytul:             lead?.tytul??'',
     klient_id:         lead?.klient_id??'',
@@ -1027,7 +1028,7 @@ function LeadForm({lead,produkty,klienci,pracownicy,saving,onSave,onClose}:{
               <select value={form.produkt_id} onChange={handleProduktChange} className={inp} required>
                 <option value="">— Wybierz —</option>
                 {['wydarzenie','catering','inne'].map(kat=>(
-                  <optgroup key={kat} label={kat==='wydarzenie'?'🎉 Wydarzenia':kat==='catering'?'🍽 Catering i dostawy':'📋 Inne'}>
+                  <optgroup key={kat} label={kat==='wydarzenie'?S.leady.grupaWydarzenie:kat==='catering'?S.leady.grupaCatering:'📋 Inne'}>
                     {produkty.filter(p=>p.kategoria===kat).map(p=><option key={p.id} value={p.id}>{p.nazwa}</option>)}
                   </optgroup>
                 ))}

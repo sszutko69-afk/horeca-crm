@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
+import { useSlownik } from '@/components/SlownikContext'
 
 type GmailMsg = {
   id: string; threadId: string; snippet?: string
@@ -46,6 +47,7 @@ const inputCls = "px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outl
 type Props = { userId: string }
 
 export default function GmailClient({ userId }: Props) {
+  const S = useSlownik()
   const [messages, setMessages] = useState<GmailMsg[]>([])
   const [loading, setLoading] = useState(false)
   const [query, setQuery] = useState('in:inbox')
@@ -77,8 +79,8 @@ export default function GmailClient({ userId }: Props) {
     {label:'📬 Nieprzeczytane', q:'in:inbox is:unread'},
     {label:'⭐ Oznaczone', q:'is:starred'},
     {label:'❗ Ważne', q:'is:important'},
-    {label:'📅 Rezerwacje', q:'rezerwacja OR rezerwacje OR stolik OR wesele OR bankiet'},
-    {label:'🚚 Dostawy', q:'dostawa OR zamówienie OR dostawca OR hurtownia'},
+    {label:'📩 Zapytania', q:S.zapytaniaMailowe},
+    {label:'🚚 Dostawy', q:'dostawa OR zamówienie OR dostawca'},
     {label:'🧾 Faktury', q:'faktura OR płatność OR przelew'},
     {label:'📤 Wysłane', q:'in:sent'},
     {label:'🗑 Kosz', q:'in:trash'},

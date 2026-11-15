@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSlownik } from '@/components/SlownikContext'
 
 type Zakup = {
   id: string; nr: string; data: string; dostawca: string
@@ -18,16 +19,19 @@ const DEMO: Zakup[] = [
   { id: '8',  nr: 'FZ/2026/11/021', data: '2026-11-03', dostawca: 'RybyŚwieże.pl',                kategoria: 'Ryby i owoce morza',opis: 'Łosoś norweski, dorsz, krewetki — 20 kg',     kwota_netto: 1_540, kwota_brutto: 1_894, status: 'zatwierdzona' },
 ]
 
-const KATEGORIE = ['Mięso i wędliny', 'Ryby i owoce morza', 'Warzywa i owoce', 'Nabiał i jaja', 'Alkohole i wina', 'Kawa i herbata', 'Pieczywo', 'Inne']
 
 function fmt(n: number) { return n.toLocaleString('pl-PL', { minimumFractionDigits: 2 }) }
 
 export default function ZakupyPage() {
+  const S = useSlownik()
+  const KATEGORIE = S.kategorieZakupow
   const [search, setSearch] = useState('')
   const [filterKat, setFilterKat] = useState('')
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ dostawca: '', kategoria: 'Mięso i wędliny', opis: '', kwota_netto: '' })
-  const [zakupy, setZakupy] = useState<Zakup[]>(DEMO)
+  const [form, setForm] = useState({ dostawca: '', kategoria: '', opis: '', kwota_netto: '' })
+  // dane przykładowe tylko dla konta demo; nowe firmy zaczynają od pustej listy
+  const [zakupy, setZakupy] = useState<Zakup[]>([])
+  useEffect(() => { if (S.demo) setZakupy(DEMO) }, [S.demo])
   const [saved, setSaved] = useState('')
 
   const filtered = zakupy.filter(z =>
@@ -45,11 +49,11 @@ export default function ZakupyPage() {
       id: Date.now().toString(),
       nr: `FZ/2026/11/${(zakupy.length + 29).toString().padStart(3, '0')}`,
       data: new Date().toISOString().split('T')[0],
-      dostawca: form.dostawca, kategoria: form.kategoria, opis: form.opis,
+      dostawca: form.dostawca, kategoria: form.kategoria || KATEGORIE[0], opis: form.opis,
       kwota_netto: netto, kwota_brutto: parseFloat((netto * 1.23).toFixed(2)), status: 'oczekuje',
     }
     setZakupy(p => [nowy, ...p])
-    setForm({ dostawca: '', kategoria: 'Mięso i wędliny', opis: '', kwota_netto: '' })
+    setForm({ dostawca: '', kategoria: '', opis: '', kwota_netto: '' })
     setShowForm(false)
     setSaved('Zakup zapisany!'); setTimeout(() => setSaved(''), 3000)
   }

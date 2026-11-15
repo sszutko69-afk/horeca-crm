@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, useMemo, useRef } from 'react'
 import { createClient } from '@/lib/supabase'
+import { useSlownik } from '@/components/SlownikContext'
 
 const MIESIACE = ['Sty','Lut','Mar','Kwi','Maj','Cze','Lip','Sie','Wrz','Paź','Lis','Gru']
 const MIESIACEP = ['Styczeń','Luty','Marzec','Kwiecień','Maj','Czerwiec','Lipiec','Sierpień','Wrzesień','Październik','Listopad','Grudzień']
@@ -9,6 +10,7 @@ const inp = "w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:
 function fmt(n:number){return n.toLocaleString('pl-PL',{minimumFractionDigits:0,maximumFractionDigits:0})+' zł'}
 
 export default function BudzetPage() {
+  const S = useSlownik()
   const supabase = createClient()
   const now = new Date()
   const [rok, setRok] = useState(now.getFullYear())
@@ -250,7 +252,7 @@ export default function BudzetPage() {
     const planPrz = kategorie.filter(k=>k.typ==='przychod').reduce((a:number,k:any)=>a+getSumPlan(k.id),0)
     const planKosz = kategorie.filter(k=>k.typ==='koszt').reduce((a:number,k:any)=>a+getSumPlan(k.id),0)
 
-    const context = `Dane budżetowe restauracji / firmy HoReCa (catering, bankiety, sala) za rok ${rok}:
+    const context = `Dane budżetowe ${S.opisFirmy} za rok ${rok}:
 Plan przychodów: ${fmt(planPrz)}, realizacja: ${fmt(przychodySuma)} (${planPrz ? Math.round(przychodySuma/planPrz*100) : 0}%)
 Plan kosztów: ${fmt(planKosz)}, realizacja: ${fmt(kosztySuma)} (${planKosz ? Math.round(kosztySuma/planKosz*100) : 0}%)
 Marża brutto: ${fmt(marza)}
@@ -263,7 +265,7 @@ Pytanie: ${aiQ}`
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514', max_tokens: 1000,
-          system: 'Jesteś ekspertem finansowym dla restauracji i firmy cateringowej Analizujesz budżet i dajesz konkretne, praktyczne wskazówki po polsku. Odpowiadaj zwięźle.',
+          system: `Jesteś ekspertem finansowym dla ${S.kontekstAI}. Analizujesz budżet i dajesz konkretne, praktyczne wskazówki po polsku. Odpowiadaj zwięźle.`,
           messages: [{ role: 'user', content: context }]
         })
       })

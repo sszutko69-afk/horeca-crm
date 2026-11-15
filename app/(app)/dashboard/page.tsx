@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { modulyFirmy, type FirmaPlan } from '@/lib/plany'
 import { SCIEZKA_MODUL } from '@/lib/branze'
+import { useSlownik } from '@/components/SlownikContext'
 
 // ================================================================
 // TAŁA PULPITU — 10 motywów
@@ -69,6 +70,7 @@ function fmt(n: number) {
 }
 
 export default function DashboardPage() {
+  const S = useSlownik()
   const supabase = createClient()
   const [email, setEmail] = useState('')
   const [rola, setRola] = useState<string | null>(null)
@@ -191,7 +193,7 @@ export default function DashboardPage() {
   }
 
   const roleNazwa: Record<string, string> = {
-    admin: 'Administrator', menedzer: 'Menedżer', kelner: 'Kelner', kucharz: 'Kucharz',
+    admin: S.rola.admin, menedzer: S.rola.menedzer, kelner: S.rola.kelner, kucharz: S.rola.kucharz,
   }
 
   const cardCls     = isDark ? 'bg-white/10 border border-white/20 backdrop-blur-sm text-white' : 'bg-white border border-gray-200'
@@ -402,16 +404,14 @@ export default function DashboardPage() {
             </h2>
             <div className="space-y-1.5">
               {[
-                { label: 'Baza danych Supabase',  ok: true },
-                { label: 'Rezerwacje i stoły',     ok: true },
-                { label: 'Sprzedaż i zakupy',      ok: true },
-                { label: 'POS — synchronizacja',   ok: true },
-                { label: 'eService — terminale',   ok: true },
-                { label: 'Bank API',               ok: true },
-                { label: 'Raporty i analityka',    ok: true },
-                ...(rola === 'admin' ? [
-                  { label: 'Integracja inFakt',    ok: true },
-                  { label: 'Google Workspace',     ok: true },
+                { label: 'Baza danych', ok: true },
+                { label: 'Logowanie i uprawnienia', ok: true },
+                ...(S.demo ? [
+                  { label: 'Rezerwacje i stoły', ok: true },
+                  { label: 'POS — synchronizacja', ok: true },
+                  { label: 'eService — terminale', ok: true },
+                  { label: 'Bank API', ok: true },
+                  { label: 'Raporty i analityka', ok: true },
                 ] : []),
               ].map(s => (
                 <div key={s.label} className="flex items-center gap-2 text-xs">

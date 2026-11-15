@@ -1,13 +1,14 @@
 'use client'
 import { useEffect, useState, useMemo } from 'react'
 import { createClient } from '@/lib/supabase'
+import { useSlownik } from '@/components/SlownikContext'
 
 const RODZAJE = {
   praca:           { l:'Praca',         bg:'bg-blue-100 text-blue-800',   short:'P' },
   urlop:           { l:'Urlop',         bg:'bg-purple-100 text-purple-800', short:'U' },
   l4:              { l:'L4',            bg:'bg-red-100 text-red-800',     short:'L4' },
   szkolenie:       { l:'Szkolenie',     bg:'bg-yellow-100 text-yellow-800', short:'Sz' },
-  delegacja:       { l:'Wyjazd cateringowy',     bg:'bg-orange-100 text-orange-800', short:'D' },
+  delegacja:       { l:'Delegacja',     bg:'bg-orange-100 text-orange-800', short:'D' },
   swieto:          { l:'Święto',        bg:'bg-gray-100 text-gray-500',   short:'Św' },
   nieobecnosc_inna:{ l:'Nieobecność',   bg:'bg-gray-100 text-gray-600',   short:'N' },
   nadgodziny:      { l:'Nadgodziny',    bg:'bg-green-100 text-green-800', short:'NG' },
@@ -17,6 +18,8 @@ const inp = "w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ou
 const NORM_DZIEN = 8
 
 export default function CzasPracyPage() {
+  const S = useSlownik()
+  const RODZ = { ...RODZAJE, delegacja: { ...RODZAJE.delegacja, l: S.delegacja.etykieta } }
   const supabase = createClient()
   const now = new Date()
   const [rok, setRok] = useState(now.getFullYear())
@@ -246,7 +249,7 @@ th{background:#f0f0f0;font-weight:bold}.name{text-align:left;min-width:120px}
         const ws=getWpisyPrac(p.id,d)
         const w=ws[0]
         if(isWeekend(d)){html+=`<td style="background:#fecaca"></td>`}
-        else if(w){const sh=RODZAJE[w.rodzaj as keyof typeof RODZAJE]?.short||'?';html+=`<td class="${sh}">${sh}</td>`}
+        else if(w){const sh=RODZ[w.rodzaj as keyof typeof RODZAJE]?.short||'?';html+=`<td class="${sh}">${sh}</td>`}
         else{html+=`<td></td>`}
       })
       html+=`<td><b>${sumGodziny(p.id)}</b></td><td>${sumUrlop(p.id)}</td><td>${sumL4(p.id)}</td></tr>`
@@ -398,7 +401,7 @@ th{background:#f0f0f0;font-weight:bold}.name{text-align:left;min-width:120px}
 
         {kosztPerWydarzenie.length > 0 && (
           <div className="bg-white border border-gray-200 rounded-xl p-4 mb-4">
-            <h3 className="text-sm font-semibold text-gray-700 mb-2">💰 Koszty pracy per wydarzenie — {MIESIACE[miesiac-1]} {rok}</h3>
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">💰 Koszty pracy per {S.projekt.koszty} — {MIESIACE[miesiac-1]} {rok}</h3>
             <div className="flex flex-wrap gap-2">
               {kosztPerWydarzenie.map((inv,i)=>(
                 <div key={i} className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
@@ -444,9 +447,9 @@ th{background:#f0f0f0;font-weight:bold}.name{text-align:left;min-width:120px}
                         return (
                           <td key={d} className={`px-0.5 py-1 text-center cursor-pointer ${isWeekend(d)?'bg-red-50':''}`}
                             onClick={()=>w?openEdit(w):(!isWeekend(d)&&openAdd(p.id,dateStr))}>
-                            {w?(<div title={RODZAJE[w.rodzaj as keyof typeof RODZAJE]?.l}
-                              className={`rounded text-xs py-0.5 px-0.5 font-medium ${RODZAJE[w.rodzaj as keyof typeof RODZAJE]?.bg||'bg-gray-100'}`}>
-                              {RODZAJE[w.rodzaj as keyof typeof RODZAJE]?.short||'?'}
+                            {w?(<div title={RODZ[w.rodzaj as keyof typeof RODZAJE]?.l}
+                              className={`rounded text-xs py-0.5 px-0.5 font-medium ${RODZ[w.rodzaj as keyof typeof RODZAJE]?.bg||'bg-gray-100'}`}>
+                              {RODZ[w.rodzaj as keyof typeof RODZAJE]?.short||'?'}
                               {w.rodzaj==='praca'&&w.godziny!==NORM_DZIEN&&<span className="block text-xs">{w.godziny}h</span>}
                             {w.delegacja&&<span className="block text-xs text-orange-600">🚗</span>}
                             </div>):(<div className="text-gray-200 text-xs">{isWeekend(d)?'':'+'}</div>)}
@@ -549,7 +552,7 @@ th{background:#f0f0f0;font-weight:bold}.name{text-align:left;min-width:120px}
                         const ws=getWpisyPrac(p.id,d); const w=ws[0]
                         return (
                           <td key={d} className={`px-0.5 py-2 text-center border-r border-gray-100 ${isWeekend(d)?'bg-red-50':''}`}>
-                            {w?<span className={`text-xs font-bold ${RODZAJE[w.rodzaj as keyof typeof RODZAJE]?.bg||''} px-1 rounded`}>{RODZAJE[w.rodzaj as keyof typeof RODZAJE]?.short||'?'}</span>:''}
+                            {w?<span className={`text-xs font-bold ${RODZ[w.rodzaj as keyof typeof RODZAJE]?.bg||''} px-1 rounded`}>{RODZ[w.rodzaj as keyof typeof RODZAJE]?.short||'?'}</span>:''}
                           </td>
                         )
                       })}
@@ -593,7 +596,7 @@ th{background:#f0f0f0;font-weight:bold}.name{text-align:left;min-width:120px}
                 <div>
                   <label className="text-xs text-gray-500 block mb-1">Rodzaj</label>
                   <select value={fRodzaj} onChange={e=>setFRodzaj(e.target.value)} className={inp}>
-                    {Object.entries(RODZAJE).map(([k,v])=><option key={k} value={k}>{v.l}</option>)}
+                    {Object.entries(RODZ).map(([k,v])=><option key={k} value={k}>{v.l}</option>)}
                   </select>
                 </div>
               </div>
@@ -609,7 +612,7 @@ th{background:#f0f0f0;font-weight:bold}.name{text-align:left;min-width:120px}
                   <div className="flex items-center gap-3 mb-2">
                     <input type="checkbox" id="delegacja" checked={fDelegacja} onChange={e=>setFDelegacja(e.target.checked)} className="rounded" />
                     <label htmlFor="delegacja" className="text-sm font-medium text-orange-800 cursor-pointer">
-                      🚗 Wyjazd cateringowy (+{fDelegacjaStawka} zł do kosztu dnia)
+                      🚗 {S.delegacja.opis} (+{fDelegacjaStawka} zł do kosztu dnia)
                     </label>
                   </div>
                   {fDelegacja && (
@@ -622,7 +625,7 @@ th{background:#f0f0f0;font-weight:bold}.name{text-align:left;min-width:120px}
                 </div>
               )}
               <div>
-                <label className="text-xs text-gray-500 block mb-1">Wydarzenie / impreza (opcjonalnie)</label>
+                <label className="text-xs text-gray-500 block mb-1">{S.delegacja.wydarzenie}</label>
                 <select value={fInw} onChange={e=>setFInw(e.target.value)} className={inp}>
                   <option value="">— brak —</option>
                   {wydarzenia.map(i=><option key={i.id} value={i.id}>{i.nazwa}</option>)}
@@ -630,7 +633,7 @@ th{background:#f0f0f0;font-weight:bold}.name{text-align:left;min-width:120px}
               </div>
               <div>
                 <label className="text-xs text-gray-500 block mb-1">Opis / notatka</label>
-                <input value={fOpis} onChange={e=>setFOpis(e.target.value)} placeholder="np. obsługa wesela, catering zewnętrzny..." className={inp}/>
+                <input value={fOpis} onChange={e=>setFOpis(e.target.value)} placeholder={S.delegacja.placeholder} className={inp}/>
               </div>
             </div>
             {saveError && (

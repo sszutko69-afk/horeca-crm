@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSlownik } from '@/components/SlownikContext'
 
 type Faktura = {
   id: string; nr: string; data: string; klient: string; opis: string
@@ -27,11 +28,14 @@ const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
 function fmt(n: number) { return n.toLocaleString('pl-PL', { minimumFractionDigits: 2 }) }
 
 export default function SprzedazPage() {
+  const S = useSlownik()
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ klient: '', opis: '', kwota_netto: '', forma: 'faktura_vat', platnosc: 'przelew' })
-  const [faktury, setFaktury] = useState<Faktura[]>(DEMO)
+  // dane przykładowe tylko dla konta demo; nowe firmy zaczynają od pustej listy
+  const [faktury, setFaktury] = useState<Faktura[]>([])
+  useEffect(() => { if (S.demo) setFaktury(DEMO) }, [S.demo])
   const [saved, setSaved] = useState('')
 
   const filtered = faktury.filter(f =>
@@ -172,7 +176,7 @@ export default function SprzedazPage() {
                 <div className="flex flex-col gap-1.5">
                   <label className={lbl}>Opis usługi / towaru</label>
                   <input value={form.opis} onChange={e => setForm(p => ({ ...p, opis: e.target.value }))}
-                    placeholder="np. Catering — bankiet 60 osób" className={inp} />
+                    placeholder={S.przykladZamowienia} className={inp} />
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className={lbl}>Kwota netto (zł)</label>

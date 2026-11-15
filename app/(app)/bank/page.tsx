@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSlownik } from '@/components/SlownikContext'
 
 const WYCIAG = [
   { id: 1, data: '2026-11-08', opis: 'eService S.A. - rozl. terminali 07.11',  kwota:  1842.00, typ: 'wpływ',  dopasowane: true  },
@@ -13,7 +14,7 @@ const WYCIAG = [
   { id: 8, data: '2026-11-05', opis: 'eService S.A. - rozl. terminali 04.11',  kwota:  2340.00, typ: 'wpływ',  dopasowane: true  },
 ]
 
-const SALDO = 24_830.45
+const SALDO_DEMO = 24_830.45
 
 const BANKI = [
   { id: 'pko',   name: 'PKO Bank Polski',    logo: '🏦' },
@@ -25,6 +26,7 @@ const BANKI = [
 ]
 
 export default function BankPage() {
+  const S = useSlownik()
   const [filter, setFilter] = useState<'wszystkie' | 'wpływ' | 'wydatek' | 'niedopasowane'>('wszystkie')
   const [tab, setTab] = useState<'dashboard' | 'connect'>('dashboard')
   const [step, setStep] = useState<1 | 2 | 3>(1)
@@ -32,7 +34,10 @@ export default function BankPage() {
   const [creds, setCreds] = useState({ iban: '', apiKey: '', clientId: '', consent: false })
   const [testing, setTesting] = useState(false)
   const [testResult, setTestResult] = useState<null | 'ok' | 'err'>(null)
-  const [wyciag, setWyciag] = useState(WYCIAG)
+  // wyciąg i saldo przykładowe tylko dla konta demo; nowe firmy widzą pusty widok do czasu podłączenia banku
+  const [wyciag, setWyciag] = useState<typeof WYCIAG>([])
+  useEffect(() => { if (S.demo) setWyciag(WYCIAG) }, [S.demo])
+  const SALDO = S.demo ? SALDO_DEMO : 0
 
   const filtered = wyciag.filter(w => {
     if (filter === 'wpływ')        return w.typ === 'wpływ'
@@ -151,7 +156,7 @@ export default function BankPage() {
               </div>
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#374151', cursor: 'pointer', marginBottom: 16 }}>
                 <input type="checkbox" checked={creds.consent} onChange={e => setCreds(p => ({ ...p, consent: e.target.checked }))} />
-                Akceptuję regulamin integracji bankowej HoReCa CRM
+                Akceptuję regulamin integracji bankowej Skrojo
               </label>
               {testResult === null && (
                 <button onClick={testConnection} disabled={testing || !creds.consent}

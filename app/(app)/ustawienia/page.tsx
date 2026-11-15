@@ -22,13 +22,13 @@ const KATEGORIE_DANE: Record<string, { label: string; icon: string }> = {
 
 const KATEGORIE_DOK: Record<string, { label: string; icon: string }> = {
   referencje:       { label: 'Referencje / Poświadczenia',   icon: '📜' },
-  koncesje:         { label: 'Zezwolenia (alkohol, Sanepid, HACCP)', icon: '✅' },
+  koncesje:         { label: 'Zezwolenia i koncesje', icon: '✅' },
   ubezpieczenie:    { label: 'Polisa OC',                    icon: '🛡' },
   krs:              { label: 'KRS / Rejestr działalności',   icon: '🏛' },
   uprawnienia:      { label: 'Szkolenia i uprawnienia pracowników', icon: '👷' },
   bilans:           { label: 'Sprawozdania finansowe',       icon: '📊' },
   certyfikaty:      { label: 'Certyfikaty i normy',          icon: '🏅' },
-  wzory_ofert:      { label: 'Wzory ofert i umów (catering, bankiet)', icon: '📋' },
+  wzory_ofert:      { label: 'Wzory ofert i umów', icon: '📋' },
   inne:             { label: 'Inne dokumenty',               icon: '📁' },
 }
 
@@ -180,7 +180,7 @@ export default function UstawieniaPage() {
   async function saveNotif() {
     setNotifSaving(true); setNotifMsg(null)
     const wpisy = [
-      { klucz: 'notif_email',         wartosc: notif.email,          kategoria: 'powiadomienia', opis: 'Email do powiadomień (rezerwacje, zamówienia)' },
+      { klucz: 'notif_email',         wartosc: notif.email,          kategoria: 'powiadomienia', opis: 'Email do powiadomień (zamówienia, akceptacje)' },
       { klucz: 'notif_min_wartosc',   wartosc: notif.minWartosc,     kategoria: 'powiadomienia', opis: 'Minimalna wartość zamówienia (PLN netto)' },
       { klucz: 'notif_aktywne',       wartosc: String(notif.aktywne),kategoria: 'powiadomienia', opis: 'Czy powiadomienia są aktywne' },
       { klucz: 'notif_godziny_wstecz',wartosc: notif.godzinyWstecz,  kategoria: 'powiadomienia', opis: 'Ile godzin wstecz sprawdzać nowe zamówienia' },
@@ -222,7 +222,7 @@ export default function UstawieniaPage() {
           <div>
             <h1 className="text-lg font-semibold text-gray-900">Dane firmy</h1>
             <p className="text-xs text-gray-500 mt-0.5">
-              AI korzysta z tych danych i dokumentów przy generowaniu ofert cateringowych i bankietowych
+              AI korzysta z tych danych i dokumentów przy generowaniu ofert i dokumentów firmy
             </p>
           </div>
           {success && (
@@ -336,7 +336,7 @@ export default function UstawieniaPage() {
               <p className="font-medium mb-1">📌 Jak AI używa tych dokumentów?</p>
               <p className="text-xs text-blue-700 leading-relaxed">
                 Dokumenty oznaczone jako <strong>aktywne</strong> są automatycznie wczytywane przez AI przy generowaniu ofert i dokumentów dla klientów.
-                Dodaj tutaj: referencje, polisę OC, zezwolenia (alkohol, Sanepid), certyfikaty HACCP, wzory umów na wesela i bankiety — AI będzie z nich korzystać wypełniając dokumenty danymi firmy.
+                Dodaj tutaj: referencje, polisę OC, zezwolenia i koncesje, certyfikaty, wzory umów i ofert — AI będzie z nich korzystać wypełniając dokumenty danymi firmy.
               </p>
             </div>
 
@@ -347,7 +347,7 @@ export default function UstawieniaPage() {
                 <div>
                   <label className="text-xs text-gray-500 block mb-1">Nazwa dokumentu</label>
                   <input value={newDokNazwa} onChange={e => setNewDokNazwa(e.target.value)}
-                    placeholder="np. Polisa OC 2026, Referencja - Hotel X" className={inputCls} />
+                    placeholder="np. Polisa OC 2026, Referencja - Klient X" className={inputCls} />
                 </div>
                 <div>
                   <label className="text-xs text-gray-500 block mb-1">Kategoria</label>
@@ -461,7 +461,7 @@ export default function UstawieniaPage() {
                         {notif.aktywne ? '🔔 Powiadomienia aktywne' : '🔕 Powiadomienia wyłączone'}
                       </h2>
                       <p className="text-xs text-gray-500 mt-1">
-                        System wysyła email o nowych rezerwacjach, zamówieniach cateringowych i pozycjach do akceptacji.
+                        System wysyła email o nowych zamówieniach i pozycjach do akceptacji.
                       </p>
                     </div>
                     <button onClick={() => setNotif(p => ({ ...p, aktywne: !p.aktywne }))}
@@ -482,7 +482,7 @@ export default function UstawieniaPage() {
                     <input type="email" value={notif.email}
                       onChange={e => setNotif(p => ({ ...p, email: e.target.value }))}
                       placeholder="twoj@email.pl" className={inputCls} />
-                    <p className="text-xs text-gray-400 mt-1">Na ten adres będą wysyłane powiadomienia o nowych rezerwacjach i zamówieniach.</p>
+                    <p className="text-xs text-gray-400 mt-1">Na ten adres będą wysyłane powiadomienia o nowych zamówieniach i akceptacjach.</p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -514,7 +514,7 @@ export default function UstawieniaPage() {
                   <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200">
                     <div>
                       <p className="text-sm font-medium text-gray-700">📊 Raport tygodniowy</p>
-                      <p className="text-xs text-gray-500">Podsumowanie sprzedaży, zakupów, rezerwacji i budżetu. Wysyłane w każdy poniedziałek o 7:05.</p>
+                      <p className="text-xs text-gray-500">Podsumowanie sprzedaży, zakupów i budżetu. Wysyłane w każdy poniedziałek o 7:05.</p>
                     </div>
                     <button onClick={() => setNotif(p => ({ ...p, raportAktywny: !p.raportAktywny }))}
                       className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors flex-shrink-0 ml-3 ${notif.raportAktywny ? 'bg-blue-600' : 'bg-gray-300'}`}>

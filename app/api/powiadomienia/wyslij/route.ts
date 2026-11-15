@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
 
     const html = `
 <div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;padding:24px">
-  <p style="margin:0 0 4px 0;font-size:13px;color:#5A6472">HoReCa CRM</p>
+  <p style="margin:0 0 4px 0;font-size:13px;color:#5A6472">Skrojo</p>
   <h1 style="margin:0 0 16px 0;font-size:20px;color:#14171C">
     ${moje.length === 1 ? 'Jedna pozycja czeka na Ciebie' : `${moje.length} pozycji czeka na Ciebie`}
   </h1>
@@ -131,7 +131,7 @@ export async function POST(req: NextRequest) {
 
     try {
       await wyslijMail(token, mail,
-        moje.length === 1 ? moje[0].tytul : `HoReCa CRM — ${moje.length} pozycji do przejrzenia`,
+        moje.length === 1 ? moje[0].tytul : `Skrojo — ${moje.length} pozycji do przejrzenia`,
         html)
 
       await supabase.from('powiadomienia')

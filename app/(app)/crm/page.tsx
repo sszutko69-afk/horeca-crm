@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, useMemo } from 'react'
 import { createClient } from '@/lib/supabase'
+import { useSlownik } from '@/components/SlownikContext'
 
 const TYPY = {
   telefon:   { l:'Telefon',   icon:'📞', bg:'bg-blue-100 text-blue-800' },
@@ -36,6 +37,7 @@ function timeAgo(dt: string) {
 }
 
 export default function CrmPage() {
+  const S = useSlownik()
   const supabase = createClient()
   const [klienci, setKlienci] = useState<any[]>([])
   const [aktywnosci, setAktywnosci] = useState<any[]>([])
@@ -576,7 +578,7 @@ export default function CrmPage() {
                 </select>
               </div>
               <div>
-                <label className="text-xs text-gray-500 block mb-1">Wydarzenie (opcjonalnie)</label>
+                <label className="text-xs text-gray-500 block mb-1">{S.projekt.jedn} (opcjonalnie)</label>
                 <select value={fInwId} onChange={e => setFInwId(e.target.value)} className={inp}>
                   <option value="">— brak —</option>
                   {wydarzeniaLista.filter(i => !selectedKlient || i.klient_id === selectedKlient.id || !i.klient_id).map(i => <option key={i.id} value={i.id}>{i.nazwa}</option>)}
@@ -644,7 +646,7 @@ export default function CrmPage() {
                 </select>
               </div>
               <div>
-                <label className="text-xs text-gray-500 block mb-1">Wydarzenie</label>
+                <label className="text-xs text-gray-500 block mb-1">{S.projekt.jedn}</label>
                 <select value={fZInw} onChange={e => setFZInw(e.target.value)} className={inp}>
                   <option value="">— brak —</option>
                   {wydarzeniaLista.map(i => <option key={i.id} value={i.id}>{i.nazwa}</option>)}

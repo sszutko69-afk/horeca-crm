@@ -6,6 +6,9 @@ import { createClient } from '@/lib/supabase'
 import GazekAssistant from './GazekAssistant'
 import MalaAssistant  from './MalaAssistant'
 import PlanBanner from './PlanBanner'
+import { SlownikProvider } from './SlownikContext'
+import { slownik, rolaDomyslneModuly } from '@/lib/slownik'
+import { WSZYSTKIE_MODULY } from '@/lib/moduly'
 import { modulyFirmy, type FirmaPlan } from '@/lib/plany'
 
 // Maskotki (Chef / Mala) wyłączone w demo — ustaw true, aby włączyć dla klienta
@@ -79,26 +82,26 @@ const PALETTE = [
 // ================================================================
 const HELP_MODULES = [
   { icon: '🏠', name: 'Dashboard',         desc: 'Ekran główny z kafelkami skrótów, statystykami i powiadomieniami. Możliwość wyboru motywu tła.' },
-  { icon: '✅', name: 'Akceptacje',         desc: 'Kolejka pozycji czekających na decyzję — czas pracy, zamówienia, rezerwacje. Akceptacja, odrzucenie lub odesłanie do poprawy z komentarzem.' },
+  { icon: '✅', name: 'Akceptacje',         desc: 'Kolejka pozycji czekających na decyzję — czas pracy, zamówienia, zakupy i inne wnioski. Akceptacja, odrzucenie lub odesłanie do poprawy z komentarzem.' },
   { icon: '📅', name: 'Rezerwacje',         desc: 'Zarządzanie rezerwacjami stolików — widok kalendarza, lista gości, statusy, SMS/email potwierdzenia. Integracja z systemem POS.' },
   { icon: '🪑', name: 'Stoły',              desc: 'Plan sali — rozmieszczenie stolików, pojemność, statusy (wolny/zajęty/zarezerwowany). Drag & drop edycja planu.' },
   { icon: '📖', name: 'Menu',               desc: 'Zarządzanie kartą menu — dania, napoje, ceny, alergeny, dostępność. Kategorie i sezonowe wersje menu.' },
   { icon: '📞', name: 'CRM',                desc: 'Zarządzanie zadaniami sprzedażowymi i kontaktami z kontrahentami. Terminy, statusy, przypomnienia.' },
-  { icon: '📋', name: 'Leady',              desc: 'Pipeline sprzedaży — potencjalni klienci (hotele, restauracje) od pierwszego kontaktu do realizacji. Kanban, historia rozmów, dokumenty.' },
+  { icon: '📋', name: 'Leady',              desc: 'Pipeline sprzedaży — potencjalni klienci od pierwszego kontaktu do realizacji. Kanban, historia rozmów, dokumenty.' },
   { icon: '📦', name: 'Zamówienia',         desc: 'Zamówienia do dostawców i od klientów — z leadów lub ręcznie. Zarządzanie statusami, terminy dostaw.' },
-  { icon: '👥', name: 'Klienci',            desc: 'Baza klientów — restauracje, hotele, catering — z danymi kontaktowymi, historią transakcji.' },
-  { icon: '🛒', name: 'Zakupy',             desc: 'Rejestrowanie zakupów produktów spożywczych i napojów — ilości, ceny, dostawcy, faktury.' },
+  { icon: '👥', name: 'Klienci',            desc: 'Baza klientów i kontrahentów z danymi kontaktowymi i historią transakcji.' },
+  { icon: '🛒', name: 'Zakupy',             desc: 'Rejestrowanie zakupów — ilości, ceny, dostawcy, faktury.' },
   { icon: '📈', name: 'Sprzedaż',           desc: 'Rejestr sprzedaży, faktury, statystyki sprzedaży według produktów i klientów.' },
-  { icon: '📊', name: 'Raporty',            desc: 'Raporty sprzedaży, zakupów, frekwencji, aktywności. Eksport do PDF i CSV.' },
-  { icon: '🤖', name: 'AI — Finanse',       desc: 'Analityk AI oparty na Claude — analizuje dane finansowe, frekwencję, marże i odpowiada na pytania w języku naturalnym.' },
+  { icon: '📊', name: 'Raporty',            desc: 'Raporty sprzedaży, zakupów i aktywności. Eksport do PDF i CSV.' },
+  { icon: '🤖', name: 'AI — Finanse',       desc: 'Analityk AI oparty na Claude — analizuje dane finansowe i marże oraz odpowiada na pytania w języku naturalnym.' },
   { icon: '💰', name: 'Budżet',             desc: 'Planowanie i kontrola budżetu firmy, porównanie planu z wykonaniem.' },
   { icon: '🖥', name: 'POS',                desc: 'Integracja z systemem POS (punkt sprzedaży) — synchronizacja zamówień, paragonów i stanów magazynowych w czasie rzeczywistym.' },
   { icon: '💳', name: 'eService',           desc: 'Integracja z bramką płatniczą eService — obsługa płatności kartą, terminale, rozliczenia, raporty transakcji.' },
   { icon: '🏦', name: 'Bank',               desc: 'Połączenie z rachunkiem bankowym — automatyczne pobieranie wyciągów, dopasowywanie płatności do faktur, kontrola płynności.' },
   { icon: '📧', name: 'Google Workspace',   desc: 'Integracja z Gmail i Kalendarzem Google — odczyt poczty i zdarzeń bez opuszczania CRM.' },
-  { icon: '👷', name: 'Kadry',              desc: 'Kartoteka pracowników z danymi kadrowymi, uprawnieniami (np. sanepid), wymiarem etatu, danymi do wypłaty.' },
+  { icon: '👷', name: 'Kadry',              desc: 'Kartoteka pracowników z danymi kadrowymi, uprawnieniami i badaniami, wymiarem etatu, danymi do wypłaty.' },
   { icon: '⏱', name: 'Czas pracy',         desc: 'Miesięczna ewidencja czasu pracy — godziny, urlopy, L4, delegacje, nadgodziny.' },
-  { icon: '📅', name: 'Plan pracy',         desc: 'Grafik zmian — planowanie dyżurów kelnerów, kucharzy i obsługi na dany miesiąc.' },
+  { icon: '📅', name: 'Plan pracy',         desc: 'Grafik zmian — planowanie zmian i dyżurów zespołu na dany miesiąc.' },
   { icon: '💵', name: 'Płace',              desc: 'Naliczanie wynagrodzeń UoP — ZUS pracownika i pracodawcy, PIT, delegacje, premie. Pasek wynagrodzenia.' },
   { icon: '🧾', name: 'Księgowość',         desc: 'Integracja z inFakt — faktury, przychody, koszty.' },
   { icon: '📥', name: 'Import danych',      desc: 'Import danych z plików CSV/Excel do bazy systemu.' },
@@ -213,15 +216,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       const { data: profile } = await supabase
         .from('profiles').select('moduly,rola').eq('id', user.id).single()
       if (profile) {
-        const domyslne: Record<string, string[]> = {
-          admin: ['Dashboard','Akceptacje','Rezerwacje','Stoły','Menu','CRM','Leady','Zamówienia','Klienci','Zakupy','Sprzedaż','Raporty','AI — Finanse','Budżet','POS','eService','Bank','Google Workspace','inFakt','Import danych','Archiwizacja','Użytkownicy','Dane firmy','Kadry','Czas pracy','Plan pracy','Płace'],
-          menedzer: ['Dashboard','Akceptacje','Rezerwacje','Stoły','Menu','CRM','Leady','Zamówienia','Klienci','Zakupy','Sprzedaż','Raporty','AI — Finanse','Budżet','POS','eService','Kadry','Czas pracy','Plan pracy','Płace'],
-          kelner: ['Dashboard','Akceptacje','Rezerwacje','Stoły'],
-          kucharz: ['Dashboard','Akceptacje','Menu','Zamówienia'],
-        }
-        const ml: string[] = profile.moduly ?? domyslne[profile.rola] ?? ['Dashboard']
         const { data: f } = await supabase.from('firmy')
           .select('id,nazwa,demo,status,trial_do,stripe_status,subskrypcja_do,branza,moduly,onboarding_zakonczony').maybeSingle()
+        const domyslneRoli = profile.rola === 'admin' ? WSZYSTKIE_MODULY : rolaDomyslneModuly(profile.rola, (f as FirmaPlan | null)?.branza)
+        const ml: string[] = profile.moduly ?? domyslneRoli ?? ['Dashboard']
         setFirma(f as FirmaPlan | null)
         // dostęp = moduły użytkownika ∩ moduły firmy (wybór branży) z uwzględnieniem planu (pełna / podstawowa)
         const dozwolone = modulyFirmy(f as FirmaPlan | null)
@@ -603,7 +601,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         {/* ── TREŚĆ STRONY ── */}
         <main style={{ flex: 1 }}>
           <PlanBanner firma={firma} />
-          {children}
+          <SlownikProvider value={slownik(firma?.branza, !!firma?.demo)}>{children}</SlownikProvider>
         </main>
       </div>
 
@@ -644,7 +642,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               </div>
 
               {MASCOTS_ENABLED && <div className="mt-4 p-3 bg-amber-50 border border-amber-100 rounded-xl text-xs text-amber-800">
-                <strong>🤖 Asystent AI</strong> — asystent w prawym dolnym rogu — wita, informuje o terminach, rezerwacjach i pilnych sprawach.
+                <strong>🤖 Asystent AI</strong> — asystent w prawym dolnym rogu — wita, informuje o terminach i pilnych sprawach.
                 Można go przeciągać, zwijać i pytać o pomoc klikając przycisk <em>Pomoc</em> w dymku.
               </div>}
               <div className="mt-2 p-3 bg-blue-50 border border-blue-100 rounded-xl text-xs text-blue-800">

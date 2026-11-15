@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, useMemo } from 'react'
 import { createClient } from '@/lib/supabase'
+import { useSlownik } from '@/components/SlownikContext'
 
 const STATUSY = {
   planowany:    { l:'Planowany',  bg:'bg-blue-100 text-blue-700',   border:'border-blue-200' },
@@ -30,6 +31,7 @@ function getWeekDates(rok: number, tydzien: number): Date[] {
 }
 
 export default function PlanPracyPage() {
+  const S = useSlownik()
   const supabase = createClient()
   const now = new Date()
   const [rok, setRok] = useState(now.getFullYear())
@@ -249,7 +251,7 @@ export default function PlanPracyPage() {
   ).join('')}
 </div>
 <div class="footer">
-  <div>HoReCa CRM · Plan pracy · Tydzień ${tydzien}/${rok}</div>
+  <div>Skrojo · Plan pracy · Tydzień ${tydzien}/${rok}</div>
   <div style="display:flex;gap:40px">
     <div class="sign">Sporządził</div>
     <div class="sign">Zatwierdził</div>
@@ -364,7 +366,7 @@ export default function PlanPracyPage() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  {['Pracownik','Data od','Data do','Godziny','Strefa / Wydarzenie','Status','Opis','Akcje'].map(h => (
+                  {['Pracownik','Data od','Data do','Godziny',S.projekt.strefa,'Status','Opis','Akcje'].map(h => (
                     <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">{h}</th>
                   ))}
                 </tr>
@@ -573,11 +575,11 @@ export default function PlanPracyPage() {
               <div>
                 <label className="text-xs font-medium text-gray-600 block mb-1">Strefa / stanowisko pracy</label>
                 <select value={fStrefa} onChange={e => setFStrefa(e.target.value)} className={inp}>
-                  {['Sala','Kuchnia','Bar','Recepcja','Catering / wydarzenie','Dostawy','Zaplecze / magazyn','Administracja'].map(s => <option key={s} value={s}>{s}</option>)}
+                  {S.dzialy.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-600 block mb-1">Wydarzenie (opcjonalnie)</label>
+                <label className="text-xs font-medium text-gray-600 block mb-1">{S.projekt.jedn} (opcjonalnie)</label>
                 <select value={fInw} onChange={e => setFInw(e.target.value)} className={inp}>
                   <option value="">— brak —</option>
                   {wydarzenia.map(i => <option key={i.id} value={i.id}>{i.nazwa}</option>)}
@@ -586,7 +588,7 @@ export default function PlanPracyPage() {
               <div>
                 <label className="text-xs font-medium text-gray-600 block mb-1">Opis / notatka</label>
                 <textarea value={fOpis} onChange={e => setFOpis(e.target.value)} rows={2}
-                  placeholder="Np. zmiana poranna 8-16, obsługa wesela..."
+                  placeholder={S.planPracyPlaceholder}
                   className={inp + ' resize-none'} />
               </div>
             </div>
