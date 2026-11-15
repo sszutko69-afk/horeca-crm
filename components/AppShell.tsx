@@ -601,7 +601,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         {/* ── TREŚĆ STRONY ── */}
         <main style={{ flex: 1 }}>
           <PlanBanner firma={firma} />
-          <SlownikProvider value={slownik(firma?.branza, !!firma?.demo)}>{children}</SlownikProvider>
+          <SlownikProvider value={slownik(firma?.branza, !!firma?.demo && firma?.branza === 'horeca')}>{children}</SlownikProvider>
         </main>
       </div>
 
