@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase'
+import { plikHref } from '@/lib/pliki'
 
 type DaneFirmy = {
   id: string; klucz: string; wartosc: string; kategoria: string; opis: string
@@ -428,7 +429,7 @@ export default function UstawieniaPage() {
                             <p className="text-xs text-gray-400 mt-0.5">{formatSize(doc.rozmiar)}</p>
                           </div>
                           <div className="flex items-center gap-2 flex-shrink-0">
-                            <a href={doc.url} target="_blank" rel="noopener noreferrer"
+                            <a href={plikHref(doc.url)} target="_blank" rel="noopener noreferrer"
                               className="text-xs text-blue-600 hover:underline px-2 py-1 bg-blue-50 rounded-lg">
                               ↗ Otwórz
                             </a>

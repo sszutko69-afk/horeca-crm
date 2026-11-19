@@ -328,8 +328,7 @@ export default function InFaktPage() {
       const fileName = `infakt_${Date.now()}_${uploadFile.name}`
       const { data: up, error } = await sb.storage.from('dokumenty').upload(fileName, uploadFile, { contentType: uploadFile.type })
       if (error) throw error
-      const { data: { publicUrl } } = sb.storage.from('dokumenty').getPublicUrl(fileName)
-      setUploadMsg(`✓ Plik zapisany: ${publicUrl}`)
+      setUploadMsg(`✓ Plik zapisany: ${fileName}`)
       setUploadFile(null)
     } catch(e: any) { setUploadMsg('Błąd: ' + e.message) }
     setUploadLoading(false)

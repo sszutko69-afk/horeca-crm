@@ -27,3 +27,4 @@ Wpisy 001–015 uzupełniono wstecznie z historii zmian (data i godzina = commit
 | 020 | 2026-11-19 | [Google Workspace: bezpieczne łączenie konta i czytelny błąd konfiguracji](020_2026-11-19_google-workspace-bezpieczne-logowanie.md) |
 | 021 | 2026-11-19 | [Ponowne wdrożenie: dane aplikacji Google dla Google Workspace](021_2026-11-19_ponowne-wdrozenie-dane-google.md) |
 | 022 | 2026-11-19 | [Audyt separacji danych między firmami: poprawki krytyczne](022_2026-11-19_audyt-separacji-danych-firm.md) |
+| 023 | 2026-11-19 | [Prywatne buckety plików (podpisane linki)](023_2026-11-19_prywatne-buckety-plikow.md) |

@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, useMemo, useRef } from 'react'
 import { createClient } from '@/lib/supabase'
+import { plikHref } from '@/lib/pliki'
 import { useSlownik } from '@/components/SlownikContext'
 
 // ================================================================
@@ -832,7 +833,7 @@ export default function LeadyPage() {
                           {d.rozmiar&&<p className="text-xs text-gray-400">{(d.rozmiar/1024).toFixed(1)} KB</p>}
                         </div>
                         <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <a href={d.url} target="_blank" rel="noopener noreferrer"
+                          <a href={plikHref(d.url)} target="_blank" rel="noopener noreferrer"
                             className="text-xs text-blue-600 hover:underline px-2 py-1 bg-blue-50 rounded">Otwórz</a>
                           <button onClick={()=>removeDoc(d.id,d.url)}
                             className="text-xs text-red-500 px-2 py-1 bg-red-50 rounded hover:bg-red-100">Usuń</button>

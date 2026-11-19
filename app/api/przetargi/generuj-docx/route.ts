@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { wymagajModulu } from '@/lib/dostep-api'
+import { podpiszDlaSerwera } from '@/lib/pliki-serwer'
 
 export const maxDuration = 60
 
@@ -35,7 +36,7 @@ async function getFirmaDokumenty(supabase: Sb): Promise<string> {
     // Pobierz treść PDF i TXT server-side
     if (['pdf', 'txt', 'md'].includes(ext)) {
       try {
-        const res = await fetch(doc.url, { signal: AbortSignal.timeout(10000) })
+        const res = await fetch(await podpiszDlaSerwera(supabase as any, doc.url), { signal: AbortSignal.timeout(10000) })
         if (res.ok) {
           if (ext === 'pdf') {
             const buf = await res.arrayBuffer()

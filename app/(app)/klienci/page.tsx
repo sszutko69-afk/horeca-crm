@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import CzatPanel from '@/components/CzatPanel'
 import Zalaczniki from '@/components/Zalaczniki'
+import { plikHref } from '@/lib/pliki'
 import { createClient } from '@/lib/supabase'
 import * as XLSX from 'xlsx'
 
@@ -167,8 +168,8 @@ function KlientForm({ f, setF, onSubmit, onCancel, saving, title, docs, onUpload
               <div className="grid grid-cols-4 gap-2 mb-2">
                 {docs.map((url, i) => (
                   <div key={i} className="relative group border border-gray-200 rounded-lg overflow-hidden">
-                    {isImage(url) ? <a href={url} target="_blank" rel="noopener noreferrer"><img src={url} alt="" className="w-full h-16 object-cover" /></a> : (
-                      <a href={url} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center h-16 bg-gray-50 hover:bg-gray-100">
+                    {isImage(url) ? <a href={plikHref(url)} target="_blank" rel="noopener noreferrer"><img src={plikHref(url)} alt="" className="w-full h-16 object-cover" /></a> : (
+                      <a href={plikHref(url)} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center h-16 bg-gray-50 hover:bg-gray-100">
                         <span className="text-lg">📄</span>
                       </a>
                     )}

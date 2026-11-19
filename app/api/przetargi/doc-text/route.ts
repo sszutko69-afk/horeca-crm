@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { wymagajModulu } from '@/lib/dostep-api'
 import { bezpiecznyFetch } from '@/lib/bezpieczny-fetch'
+import { podpiszDlaSerwera } from '@/lib/pliki-serwer'
 
 export const maxDuration = 30
 
@@ -10,7 +11,8 @@ export async function POST(req: NextRequest) {
   try {
     const dostep = await wymagajModulu('Przetargi')
     if ('blad' in dostep) return dostep.blad
-    const { url, name } = await req.json()
+    const { url: adres, name } = await req.json()
+    const url: string = adres ? await podpiszDlaSerwera(dostep.supabase, String(adres)) : ''
     if (!url) return NextResponse.json({ error: 'Brak URL' }, { status: 400 })
 
     const ext = (name || url).split('.').pop()?.toLowerCase() ?? ''
