@@ -9,38 +9,30 @@ function serviceClient() {
   )
 }
 
-// Pobierz userId z bazy — najpierw z auth.users (admin), fallback z profiles
-async function resolveUserId(stateParam: string | null): Promise<string | null> {
-  const supabase = serviceClient()
-  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-
-  // 1. state z OAuth — jeśli to prawidłowy UUID, użyj go
-  if (stateParam && UUID_RE.test(stateParam)) return stateParam
-
-  // 2. admin.listUsers — najnowszy użytkownik
-  try {
-    const { data } = await supabase.auth.admin.listUsers({ perPage: 1 })
-    if (data?.users?.[0]?.id) return data.users[0].id
-  } catch { /* admin API niedostępne */ }
-
-  // 3. profiles table
-  try {
-    const { data } = await supabase.from('profiles').select('id').limit(1).maybeSingle()
-    if (data?.id) return data.id
-  } catch { /* brak tabeli profiles */ }
-
-  return null
-}
+const COOKIE_STATE = 'google_oauth_state'
 
 // Krok 1: Redirect do Google OAuth
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url)
+  const { searchParams, origin } = new URL(req.url)
   const action = searchParams.get('action')
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || origin
+  const clientId = process.env.GOOGLE_CLIENT_ID
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET
+  if (!clientId || !clientSecret) {
+    return NextResponse.redirect(new URL('/google?google_error=' + encodeURIComponent('Integracja z Google nie jest jeszcze skonfigurowana (brak danych aplikacji Google).'), req.url))
+  }
+
+  // użytkownik wyłącznie z sesji
+  const sesja = await createServerSupabaseClient()
+  const { data: { user: uzytkownik } } = await sesja.auth.getUser()
+  if (!uzytkownik) return NextResponse.redirect(new URL('/login', req.url))
 
   // ── Callback z Google ────────────────────────────────────────────────────
   if (action === 'callback') {
     const code = searchParams.get('code')
     const state = searchParams.get('state')
+    const oczekiwany = req.cookies.get(COOKIE_STATE)?.value
+    if (!oczekiwany || !state || state !== oczekiwany) return NextResponse.redirect(new URL('/google?google_error=nieprawidlowy+stan+logowania', req.url))
     if (!code) return NextResponse.redirect(new URL('/google?google_error=brak+kodu', req.url))
 
     try {
@@ -50,9 +42,9 @@ export async function GET(req: NextRequest) {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
           code,
-          client_id: process.env.GOOGLE_CLIENT_ID!,
-          client_secret: process.env.GOOGLE_CLIENT_SECRET!,
-          redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL}/api/google/auth?action=callback`,
+          client_id: clientId,
+          client_secret: clientSecret,
+          redirect_uri: `${appUrl}/api/google/auth?action=callback`,
           grant_type: 'authorization_code',
         }),
       })
@@ -72,11 +64,7 @@ export async function GET(req: NextRequest) {
         if (ui.ok) googleEmail = (await ui.json()).email ?? null
       } catch { /* nieistotne */ }
 
-      // Ustal Supabase userId
-      const saveUserId = await resolveUserId(state)
-      if (!saveUserId) {
-        return NextResponse.redirect(new URL('/google?google_error=nie+znaleziono+uzytkownika', req.url))
-      }
+      const saveUserId = uzytkownik.id
 
       // Usuń stary token (jeśli istnieje) i wstaw nowy — unika konfliktów upsert
       const supabase = serviceClient()
@@ -99,7 +87,9 @@ export async function GET(req: NextRequest) {
 
       const ok = new URL('/google?google_connected=1', req.url)
       if (googleEmail) ok.searchParams.set('google_email', googleEmail)
-      return NextResponse.redirect(ok)
+      const odp = NextResponse.redirect(ok)
+      odp.cookies.delete(COOKIE_STATE)
+      return odp
 
     } catch (err: unknown) {
       const msg = (err as Error).message ?? 'nieznany błąd'
@@ -107,12 +97,11 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // ── Krok 1: Przekieruj do Google ────────────────────────────────────────
-  const userId = searchParams.get('userId') ?? ''
-
+  // ── Krok 1: Przekieruj do Google (state = jednorazowy nonce w ciasteczku) ──
+  const nonce = crypto.randomUUID()
   const googleUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
-  googleUrl.searchParams.set('client_id', process.env.GOOGLE_CLIENT_ID!)
-  googleUrl.searchParams.set('redirect_uri', `${process.env.NEXT_PUBLIC_APP_URL}/api/google/auth?action=callback`)
+  googleUrl.searchParams.set('client_id', clientId)
+  googleUrl.searchParams.set('redirect_uri', `${appUrl}/api/google/auth?action=callback`)
   googleUrl.searchParams.set('response_type', 'code')
   googleUrl.searchParams.set('scope', [
     'https://www.googleapis.com/auth/calendar',
@@ -121,9 +110,10 @@ export async function GET(req: NextRequest) {
   ].join(' '))
   googleUrl.searchParams.set('access_type', 'offline')
   googleUrl.searchParams.set('prompt', 'consent')
-  googleUrl.searchParams.set('state', userId)
-
-  return NextResponse.redirect(googleUrl)
+  googleUrl.searchParams.set('state', nonce)
+  const odp = NextResponse.redirect(googleUrl)
+  odp.cookies.set(COOKIE_STATE, nonce, { httpOnly: true, secure: true, sameSite: 'lax', maxAge: 600, path: '/' })
+  return odp
 }
 
 // Odłącz konto Google

@@ -1,3 +1,4 @@
+import { idUzytkownikaZSesji } from '@/lib/google-sesja'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
@@ -38,8 +39,8 @@ const BASE = 'https://tasks.googleapis.com/tasks/v1'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
-  const userId = searchParams.get('userId')
-  if (!userId) return NextResponse.json({ error: 'Brak userId' }, { status: 400 })
+  const userId = await idUzytkownikaZSesji()
+  if (!userId) return NextResponse.json({ error: 'Zaloguj się.' }, { status: 401 })
   const token = await getToken(userId)
   if (!token) return NextResponse.json({ error: 'no_token' }, { status: 401 })
 
@@ -59,8 +60,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { userId, task, listId } = await req.json()
-  if (!userId) return NextResponse.json({ error: 'Brak userId' }, { status: 400 })
+  const { task, listId } = await req.json()
+  const userId = await idUzytkownikaZSesji()
+  if (!userId) return NextResponse.json({ error: 'Zaloguj się.' }, { status: 401 })
   const token = await getToken(userId)
   if (!token) return NextResponse.json({ error: 'no_token' }, { status: 401 })
 

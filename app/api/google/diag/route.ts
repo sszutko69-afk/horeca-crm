@@ -1,18 +1,16 @@
 import { NextResponse } from 'next/server'
+import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { czyWlasciciel } from '@/lib/wlasciciel'
 
-// Diagnostyczny endpoint — sprawdza konfigurację Google OAuth bez ujawniania pełnych wartości
-export async function GET() {
-  const clientId = process.env.GOOGLE_CLIENT_ID ?? ''
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET ?? ''
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
-
+// Diagnostyka konfiguracji Google OAuth: tylko dla właściciela platformy, bez ujawniania fragmentów sekretów.
+export async function GET(req: Request) {
+  const sb = await createServerSupabaseClient()
+  const { data: { user } } = await sb.auth.getUser()
+  if (!czyWlasciciel(user)) return NextResponse.json({ error: 'Brak uprawnień.' }, { status: 403 })
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || new URL(req.url).origin
   return NextResponse.json({
-    client_id_set: !!clientId,
-    client_id_prefix: clientId.substring(0, 20),
-    client_secret_set: !!clientSecret,
-    client_secret_length: clientSecret.length,
-    client_secret_prefix: clientSecret.substring(0, 6),
-    client_secret_suffix: clientSecret.substring(clientSecret.length - 4),
+    client_id_set: !!process.env.GOOGLE_CLIENT_ID,
+    client_secret_set: !!process.env.GOOGLE_CLIENT_SECRET,
     app_url: appUrl,
     redirect_uri: `${appUrl}/api/google/auth?action=callback`,
   })

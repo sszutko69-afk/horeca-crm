@@ -1,3 +1,4 @@
+import { idUzytkownikaZSesji } from '@/lib/google-sesja'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
@@ -27,8 +28,8 @@ async function getToken(userId: string): Promise<string | null> {
 }
 
 export async function GET(req: NextRequest) {
-  const userId = new URL(req.url).searchParams.get('userId')
-  if (!userId) return NextResponse.json({ error: 'Brak userId' }, { status: 400 })
+  const userId = await idUzytkownikaZSesji()
+  if (!userId) return NextResponse.json({ error: 'Zaloguj się.' }, { status: 401 })
   const token = await getToken(userId)
   if (!token) return NextResponse.json({ error: 'no_token' }, { status: 401 })
   const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${new Date().toISOString()}&maxResults=20&orderBy=startTime&singleEvents=true`, { headers: { Authorization: `Bearer ${token}` } })
@@ -38,7 +39,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { userId, event } = await req.json()
+  const { event } = await req.json()
+  const userId = await idUzytkownikaZSesji()
+  if (!userId) return NextResponse.json({ error: 'Zaloguj się.' }, { status: 401 })
   const token = await getToken(userId)
   if (!token) return NextResponse.json({ error: 'no_token' }, { status: 401 })
   const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
@@ -50,7 +53,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const { userId, eventId } = await req.json()
+  const { eventId } = await req.json()
+  const userId = await idUzytkownikaZSesji()
+  if (!userId) return NextResponse.json({ error: 'Zaloguj się.' }, { status: 401 })
   const token = await getToken(userId)
   if (!token) return NextResponse.json({ error: 'no_token' }, { status: 401 })
   await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })

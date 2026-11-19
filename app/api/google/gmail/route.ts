@@ -1,3 +1,4 @@
+import { idUzytkownikaZSesji } from '@/lib/google-sesja'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
@@ -51,9 +52,9 @@ function fmtDate(ts: string): string {
 
 export async function GET(req: NextRequest) {
   const sp = new URL(req.url).searchParams
-  const userId = sp.get('userId')
+  const userId = await idUzytkownikaZSesji()
   const action = sp.get('action') ?? 'list'
-  if (!userId) return NextResponse.json({ error: 'Brak userId' }, { status: 400 })
+  if (!userId) return NextResponse.json({ error: 'Zaloguj się.' }, { status: 401 })
   const token = await getToken(userId)
   if (!token) return NextResponse.json({ error: 'no_token' }, { status: 401 })
 
@@ -124,8 +125,9 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
-  const { userId, action } = body
-  if (!userId) return NextResponse.json({ error: 'Brak userId' }, { status: 400 })
+  const { action } = body
+  const userId = await idUzytkownikaZSesji()
+  if (!userId) return NextResponse.json({ error: 'Zaloguj się.' }, { status: 401 })
   const token = await getToken(userId)
   if (!token) return NextResponse.json({ error: 'no_token' }, { status: 401 })
 
