@@ -1,7 +1,7 @@
 # 022. Audyt separacji danych między firmami: poprawki krytyczne
 
 - **Data wdrożenia:** 2026-11-19
-- **Commit:** (uzupełnić po wdrożeniu)
+- **Commit:** 2659d52
 - **Środowisko:** produkcja (app.skrojo.pl)
 
 ## Znaleziska i poprawki (migracje: 20261127_separacja_danych, storage_firma_prefix)
