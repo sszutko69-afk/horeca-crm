@@ -1,7 +1,7 @@
 # 019. Pełny dostęp dla konta właściciela (testy na produkcji)
 
 - **Data wdrożenia:** 2026-11-19
-- **Commit:** (uzupełnić po wdrożeniu)
+- **Commit:** b2eb0d8
 - **Środowisko:** produkcja (app.skrojo.pl)
 
 ## Zmiany
