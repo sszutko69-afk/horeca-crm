@@ -15,7 +15,7 @@ const COOKIE_STATE = 'google_oauth_state'
 export async function GET(req: NextRequest) {
   const { searchParams, origin } = new URL(req.url)
   const action = searchParams.get('action')
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || origin
+  const appUrl = origin
   const clientId = process.env.GOOGLE_CLIENT_ID
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET
   if (!clientId || !clientSecret) {
