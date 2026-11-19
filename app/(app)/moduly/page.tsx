@@ -60,6 +60,8 @@ export default function ModulyPage() {
         {dostep?.powod === 'trial' && ' — w okresie próbnym masz dostęp do wszystkich wybranych modułów.'}
       </p>
 
+      <p className="text-xs text-gray-500 mt-2">Wersja bezpłatna obejmuje do 3 użytkowników; w subskrypcji bez tego limitu.</p>
+
       {podswietl && !wybrane.includes(podswietl) ? null : podswietl && (
         <div className="mt-4 text-sm rounded-lg px-3 py-2" style={{ background: '#E8F5EE', color: '#14532d', border: '1px solid #BFE3CF' }}>
           Zaznaczono moduł „{podswietl}”. Zapisz zmiany, aby go uruchomić.
@@ -68,11 +70,11 @@ export default function ModulyPage() {
 
       <div className="mt-5 bg-white border border-gray-200 rounded-xl divide-y divide-gray-100">
         {lista.map(m => {
-          const wl = wybrane.includes(m)
           const free = darmowe.includes(m)
+          const wl = free || wybrane.includes(m)
           return (
-            <label key={m} className={`flex items-center gap-3 px-4 py-3 ${admin ? 'cursor-pointer' : 'opacity-70'} ${m === podswietl ? 'bg-green-50' : ''}`}>
-              <input type="checkbox" checked={wl} disabled={!admin}
+            <label key={m} className={`flex items-center gap-3 px-4 py-3 ${admin && !free ? 'cursor-pointer' : 'opacity-70'} ${m === podswietl ? 'bg-green-50' : ''}`}>
+              <input type="checkbox" checked={wl} disabled={!admin || free}
                 onChange={e => setWybrane(p => e.target.checked ? [...p, m] : p.filter(x => x !== m))} className="w-4 h-4" />
               <span className="flex-1">
                 <span className="block text-sm font-medium text-gray-900">{m}</span>

@@ -44,9 +44,18 @@ export function modulyFirmy(f: FirmaPlan | null | undefined, teraz = new Date())
   if (!f) return [...MODULY_SYSTEMOWE]
   if (f.demo) return f.moduly && f.moduly.length ? f.moduly : Object.values(SCIEZKA_MODUL)
   const d = liczDostep(f, teraz)
-  const wybrane = f.moduly ?? []
-  const baza = d.wersja === 'pelna' ? wybrane : wybrane.filter(m => modulyDarmowe(f.branza).includes(m))
+  if (!f.moduly) return [...MODULY_SYSTEMOWE]   // przed ukończeniem wyboru branży (/start)
+  const darmowe = modulyDarmowe(f.branza)
+  // moduły bezpłatne zawsze dostępne; pozostałe wybrane tylko w pełnej wersji (okres próbny/subskrypcja)
+  const baza = d.wersja === 'pelna' ? [...f.moduly, ...darmowe] : darmowe
   return Array.from(new Set([...MODULY_SYSTEMOWE, ...baza]))
+}
+
+// Limit kont użytkowników: wersja podstawowa (bezpłatna) do 3 kont; pełna wersja bez limitu (dodatkowi użytkownicy w subskrypcji)
+export const LIMIT_UZYTKOWNIKOW_DARMOWA = 3
+export function limitUzytkownikow(f: FirmaPlan | null | undefined): number | null {
+  if (!f || f.demo) return null
+  return liczDostep(f).wersja === 'pelna' ? null : LIMIT_UZYTKOWNIKOW_DARMOWA
 }
 
 const NIEDOSTEPNE = /^\/(mapa|cysterna|przetargi|kosztorysowanie|inwestycje|emcs|edd|gps)(\/|$)/

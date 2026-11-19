@@ -76,7 +76,7 @@ export function modulyDlaBranzy(slug: string): string[] {
 }
 
 // Moduły darmowej wersji podstawowej: rdzeń CRM + moduły startowe branży (np. rezerwacje dla HoReCa).
-export const MODULY_DARMOWE_BAZA = ['CRM', 'Leady', 'Klienci']
+export const MODULY_DARMOWE_BAZA = ['CRM', 'Leady', 'Klienci', 'Sprzedaż', 'Zakupy', 'Zamówienia', 'Raporty', 'Google Workspace', 'Import danych', 'Archiwizacja']
 export function modulyDarmowe(slug: string | null | undefined): string[] {
   const b = BRANZE_ONB.find(x => x.slug === slug)
   return [...MODULY_DARMOWE_BAZA, ...(b?.darmowe ?? [])]

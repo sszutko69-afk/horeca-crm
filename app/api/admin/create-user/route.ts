@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { ROLE, WSZYSTKIE_MODULY } from '@/lib/moduly'
 import { rolaDomyslneModuly } from '@/lib/slownik'
+import { limitUzytkownikow, type FirmaPlan } from '@/lib/plany'
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,8 +38,17 @@ export async function POST(request: NextRequest) {
       { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
-    const { data: firmaInfo } = await supabase.from('firmy').select('branza').single()
+    const { data: firmaInfo } = await supabase.from('firmy')
+      .select('id,demo,status,trial_do,stripe_status,subskrypcja_do,branza,nazwa').single()
     const firmaBranza: string | null = firmaInfo?.branza ?? null
+    // Limit kont w wersji bezpłatnej (podstawowej): 3 użytkowników
+    const limit = limitUzytkownikow(firmaInfo as FirmaPlan | null)
+    if (limit !== null) {
+      const { count } = await adminClient.from('profiles').select('id', { count: 'exact', head: true }).eq('firma_id', profile.firma_id)
+      if ((count ?? 0) >= limit) {
+        return NextResponse.json({ error: `Wersja bezpłatna obejmuje do ${limit} użytkowników. Wykup subskrypcję, aby dodać kolejnych.` }, { status: 403 })
+      }
+    }
     const rolaVal = rola ?? 'kelner'
     if (!(ROLE as string[]).includes(rolaVal)) {
       return NextResponse.json({ error: 'Nieprawidłowa rola.' }, { status: 400 })
