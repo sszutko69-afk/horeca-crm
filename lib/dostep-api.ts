@@ -9,7 +9,7 @@ export async function wymagajModulu(modul: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { blad: NextResponse.json({ error: 'Zaloguj się.' }, { status: 401 }) } as const
   const { data: firma } = await supabase.from('firmy')
-    .select('id,nazwa,demo,status,trial_do,stripe_status,subskrypcja_do,branza,moduly,onboarding_zakonczony').maybeSingle()
+    .select('id,nazwa,demo,status,trial_do,stripe_status,subskrypcja_do,pelny_dostep,branza,moduly,onboarding_zakonczony').maybeSingle()
   if (!firma || !modulyFirmy(firma as FirmaPlan).includes(modul)) {
     return { blad: NextResponse.json({ error: `Moduł „${modul}” nie jest dostępny w Twoim planie.` }, { status: 403 }) } as const
   }

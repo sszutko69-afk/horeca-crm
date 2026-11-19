@@ -1,5 +1,6 @@
 // Plany Skrojo: okres próbny (pełna wersja 7 dni) -> wersja podstawowa (0 zł) albo subskrypcja (od 29 zł / mies.)
 import { MODULY_SYSTEMOWE, SCIEZKA_MODUL, modulyDarmowe } from './branze'
+import { WSZYSTKIE_MODULY } from './moduly'
 
 export const TRIAL_DNI = 7
 export const CENA_OD = '29 zł'
@@ -16,6 +17,7 @@ export type FirmaPlan = {
   branza?: string | null
   moduly?: string[] | null            // moduły wybrane przez firmę (sufit dostępu)
   onboarding_zakonczony?: boolean
+  pelny_dostep?: boolean              // ustawiane tylko po stronie serwera: wszystkie moduły, bez okresu próbnego i bez limitu użytkowników
 }
 
 export type Dostep = {
@@ -27,6 +29,7 @@ export type Dostep = {
 export function liczDostep(f: FirmaPlan | null | undefined, teraz = new Date()): Dostep {
   if (!f) return { wersja: 'podstawowa', powod: 'podstawowa', dniDoKonca: null }
   if (f.demo) return { wersja: 'pelna', powod: 'demo', dniDoKonca: null }
+  if (f.pelny_dostep) return { wersja: 'pelna', powod: 'subskrypcja', dniDoKonca: null }
   const stripeOk = f.stripe_status === 'active' || f.stripe_status === 'trialing'
   const oplacone = f.subskrypcja_do ? new Date(f.subskrypcja_do) > teraz : false
   if (stripeOk || (f.status === 'aktywny' && oplacone)) return { wersja: 'pelna', powod: 'subskrypcja', dniDoKonca: null }
@@ -43,6 +46,7 @@ export function liczDostep(f: FirmaPlan | null | undefined, teraz = new Date()):
 export function modulyFirmy(f: FirmaPlan | null | undefined, teraz = new Date()): string[] {
   if (!f) return [...MODULY_SYSTEMOWE]
   if (f.demo) return f.moduly && f.moduly.length ? f.moduly : Object.values(SCIEZKA_MODUL)
+  if (f.pelny_dostep) return [...WSZYSTKIE_MODULY]
   const d = liczDostep(f, teraz)
   if (!f.moduly) return [...MODULY_SYSTEMOWE]   // przed ukończeniem wyboru branży (/start)
   const darmowe = modulyDarmowe(f.branza)

@@ -23,7 +23,7 @@ export default function ModulyPage() {
       const { data: { user } } = await supabase.auth.getUser()
       const { data: p } = await supabase.from('profiles').select('rola').eq('id', user?.id ?? '').single()
       setAdmin(p?.rola === 'admin')
-      const { data: f } = await supabase.from('firmy').select('id,nazwa,demo,status,trial_do,stripe_status,subskrypcja_do,branza,moduly,onboarding_zakonczony').maybeSingle()
+      const { data: f } = await supabase.from('firmy').select('id,nazwa,demo,status,trial_do,stripe_status,subskrypcja_do,pelny_dostep,branza,moduly,onboarding_zakonczony').maybeSingle()
       setFirma(f as FirmaPlan | null)
       const mod = ((f as FirmaPlan | null)?.moduly ?? []).filter(m => !MODULY_SYSTEMOWE.includes(m))
       const dodaj = new URLSearchParams(window.location.search).get('dodaj')

@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     )
 
     const { data: firmaInfo } = await supabase.from('firmy')
-      .select('id,demo,status,trial_do,stripe_status,subskrypcja_do,branza,nazwa').single()
+      .select('id,demo,status,trial_do,stripe_status,subskrypcja_do,pelny_dostep,branza,nazwa').single()
     const firmaBranza: string | null = firmaInfo?.branza ?? null
     // Limit kont w wersji bezpłatnej (podstawowej): 3 użytkowników
     const limit = limitUzytkownikow(firmaInfo as FirmaPlan | null)

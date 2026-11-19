@@ -23,7 +23,7 @@ export default function StartPage() {
       const { data: p } = await supabase.from('profiles').select('rola').eq('id', user.id).single()
       setRola(p?.rola ?? '')
       const { data: f } = await supabase.from('firmy')
-        .select('id,nazwa,demo,status,trial_do,stripe_status,subskrypcja_do,branza,moduly,onboarding_zakonczony').maybeSingle()
+        .select('id,nazwa,demo,status,trial_do,stripe_status,subskrypcja_do,pelny_dostep,branza,moduly,onboarding_zakonczony').maybeSingle()
       const ff = f as FirmaPlan | null
       setFirma(ff)
       if (ff?.branza) {

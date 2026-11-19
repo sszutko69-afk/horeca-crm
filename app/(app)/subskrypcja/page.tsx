@@ -28,7 +28,7 @@ export default function SubskrypcjaPage() {
         const { data: p } = await supabase.from('profiles').select('rola').eq('id', user.id).single()
         setRola(p?.rola ?? '')
       }
-      const { data } = await supabase.from('firmy').select('id,nazwa,demo,status,trial_do,stripe_status,subskrypcja_do,stripe_customer_id,branza,moduly,onboarding_zakonczony').maybeSingle()
+      const { data } = await supabase.from('firmy').select('id,nazwa,demo,status,trial_do,stripe_status,subskrypcja_do,pelny_dostep,stripe_customer_id,branza,moduly,onboarding_zakonczony').maybeSingle()
       setFirma(data as FirmaPlan | null)
     })()
     // eslint-disable-next-line react-hooks/exhaustive-deps

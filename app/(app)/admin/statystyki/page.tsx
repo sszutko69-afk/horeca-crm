@@ -39,7 +39,7 @@ export default async function StatystykiPlatformy() {
     konta.push(...u.map(x => ({ id: x.id, email: x.email, created_at: x.created_at, email_confirmed_at: x.email_confirmed_at, last_sign_in_at: x.last_sign_in_at })))
     if (u.length < 1000) break
   }
-  const { data: firmyRaw } = await admin.from('firmy').select('id,nazwa,demo,status,trial_do,stripe_status,subskrypcja_do,branza,moduly,onboarding_zakonczony,created_at,zgoda_marketing')
+  const { data: firmyRaw } = await admin.from('firmy').select('id,nazwa,demo,status,trial_do,stripe_status,subskrypcja_do,pelny_dostep,branza,moduly,onboarding_zakonczony,created_at,zgoda_marketing')
   const { data: profile } = await admin.from('profiles').select('id,firma_id,rola')
   const firmy = (firmyRaw ?? []) as (FirmaPlan & { created_at: string; zgoda_marketing: boolean })[]
   const firmaPoId = new Map(firmy.map(f => [f.id, f]))
@@ -172,9 +172,9 @@ export default async function StatystykiPlatformy() {
                 <tr key={f.id} className="border-t border-gray-100">
                   <td className="py-1.5">{f.nazwa}</td>
                   <td>{BRANZE_ONB.find(b => b.slug === f.branza)?.nazwa ?? '(nie wybrano)'}</td>
-                  <td>{d.powod === 'subskrypcja' ? 'Płatna' : d.powod === 'trial' ? `Pełna (próba, ${d.dniDoKonca} dni)` : 'Podstawowa'}</td>
+                  <td>{f.pelny_dostep ? 'Pełny dostęp (właściciel)' : d.powod === 'subskrypcja' ? 'Płatna' : d.powod === 'trial' ? `Pełna (próba, ${d.dniDoKonca} dni)` : 'Podstawowa'}</td>
                   <td className="whitespace-nowrap">{fmtData(f.trial_do)}</td>
-                  <td>{d.powod !== 'subskrypcja' && <PrzedluzProbe firmaId={f.id} />}</td>
+                  <td>{d.powod !== 'subskrypcja' && !f.pelny_dostep && <PrzedluzProbe firmaId={f.id} />}</td>
                 </tr>
               )
             })}

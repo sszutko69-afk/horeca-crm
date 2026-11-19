@@ -37,7 +37,7 @@ export async function proxy(request: NextRequest) {
   if (user && !isPublic && !path.startsWith('/api')) {
     const { data: firma } = await supabase
       .from('firmy')
-      .select('id,nazwa,demo,status,trial_do,stripe_status,subskrypcja_do,branza,moduly,onboarding_zakonczony')
+      .select('id,nazwa,demo,status,trial_do,stripe_status,subskrypcja_do,pelny_dostep,branza,moduly,onboarding_zakonczony')
       .maybeSingle()
     const f = firma as FirmaPlan | null
     if (f && !f.demo && !f.onboarding_zakonczony && path !== '/start' && !path.startsWith('/subskrypcja')) {

@@ -23,3 +23,4 @@ Wpisy 001–015 uzupełniono wstecznie z historii zmian (data i godzina = commit
 | 016 | 2026-11-19 | [Naprawa menu: nowe moduły widoczne po zapisaniu wyboru](016_2026-11-19_naprawa-menu-nowe-moduly-widoczne-po-zapisaniu-wyb.md) |
 | 017 | 2026-11-19 | [Moduły z kłódką po zakończeniu okresu próbnego](017_2026-11-19_moduly-z-klodka-po-zakonczeniu-okresu-probnego.md) |
 | 018 | 2026-11-19 | [Status modułów na ekranie wyboru i przedłużanie okresu próbnego](018_2026-11-19_status-modulow-i-przedluzanie-proby.md) |
+| 019 | 2026-11-19 | [Pełny dostęp dla konta właściciela (testy na produkcji)](019_2026-11-19_pelny-dostep-konta-wlasciciela.md) |

@@ -232,7 +232,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         .from('profiles').select('moduly,rola').eq('id', user.id).single()
       if (profile) {
         const { data: f } = await supabase.from('firmy')
-          .select('id,nazwa,demo,status,trial_do,stripe_status,subskrypcja_do,branza,moduly,onboarding_zakonczony').maybeSingle()
+          .select('id,nazwa,demo,status,trial_do,stripe_status,subskrypcja_do,pelny_dostep,branza,moduly,onboarding_zakonczony').maybeSingle()
         const domyslneRoli = profile.rola === 'admin' ? WSZYSTKIE_MODULY : rolaDomyslneModuly(profile.rola, (f as FirmaPlan | null)?.branza)
         // Administrator: wszystkie moduły dostępne firmie (lista z profilu powstaje przy rejestracji i nie zna nowych modułów)
         const ml: string[] = profile.rola === 'admin' ? WSZYSTKIE_MODULY : (profile.moduly ?? domyslneRoli ?? ['Dashboard'])

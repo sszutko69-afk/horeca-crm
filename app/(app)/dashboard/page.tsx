@@ -124,7 +124,7 @@ export default function DashboardPage() {
     }
 
     const { data: firmaDane } = await supabase.from('firmy')
-      .select('id,nazwa,demo,status,trial_do,stripe_status,subskrypcja_do,branza,moduly,onboarding_zakonczony').maybeSingle()
+      .select('id,nazwa,demo,status,trial_do,stripe_status,subskrypcja_do,pelny_dostep,branza,moduly,onboarding_zakonczony').maybeSingle()
     setDozwolone(modulyFirmy(firmaDane as FirmaPlan | null))
 
     const [
