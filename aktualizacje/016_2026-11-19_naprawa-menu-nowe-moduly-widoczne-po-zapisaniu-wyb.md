@@ -1,7 +1,7 @@
 # 016. Naprawa menu: nowe moduły widoczne po zapisaniu wyboru
 
 - **Data wdrożenia:** 2026-11-19
-- **Commit:** (ta aktualizacja)
+- **Commit:** aedc3ce
 - **Środowisko:** produkcja (app.skrojo.pl)
 
 ## Zmiany
