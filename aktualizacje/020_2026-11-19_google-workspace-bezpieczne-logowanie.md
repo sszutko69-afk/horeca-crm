@@ -1,7 +1,7 @@
 # 020. Google Workspace: bezpieczne łączenie konta i czytelny błąd konfiguracji
 
 - **Data wdrożenia:** 2026-11-19
-- **Commit:** (uzupełnić po wdrożeniu)
+- **Commit:** 635c299
 - **Środowisko:** produkcja (app.skrojo.pl)
 
 ## Zmiany
