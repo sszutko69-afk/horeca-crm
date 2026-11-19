@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase-admin'
 import { czyWlasciciel } from '@/lib/wlasciciel'
 import { BRANZE_ONB } from '@/lib/branze'
 import { liczDostep, type FirmaPlan } from '@/lib/plany'
+import PrzedluzProbe from '@/components/PrzedluzProbe'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Statystyki platformy: Skrojo' }
@@ -153,6 +154,30 @@ export default async function StatystykiPlatformy() {
                 <td className="whitespace-nowrap">{fmtData(k.last_sign_in_at)}</td>
               </tr>
             ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="mt-6 bg-white border border-gray-200 rounded-xl p-4 overflow-x-auto">
+        <p className="font-medium text-gray-900">Firmy klientów i okres próbny</p>
+        <table className="mt-2 w-full text-sm min-w-[720px]">
+          <thead>
+            <tr className="text-left text-xs text-gray-500">
+              <th className="py-1.5 font-medium">Firma</th><th className="font-medium">Branża</th><th className="font-medium">Plan</th><th className="font-medium">Okres próbny do</th><th className="font-medium">Akcja</th>
+            </tr>
+          </thead>
+          <tbody>
+            {firmyKlientow.map(f => {
+              const d = liczDostep(f)
+              return (
+                <tr key={f.id} className="border-t border-gray-100">
+                  <td className="py-1.5">{f.nazwa}</td>
+                  <td>{BRANZE_ONB.find(b => b.slug === f.branza)?.nazwa ?? '(nie wybrano)'}</td>
+                  <td>{d.powod === 'subskrypcja' ? 'Płatna' : d.powod === 'trial' ? `Pełna (próba, ${d.dniDoKonca} dni)` : 'Podstawowa'}</td>
+                  <td className="whitespace-nowrap">{fmtData(f.trial_do)}</td>
+                  <td>{d.powod !== 'subskrypcja' && <PrzedluzProbe firmaId={f.id} />}</td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
