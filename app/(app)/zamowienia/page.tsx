@@ -2,6 +2,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useSlownik } from '@/components/SlownikContext'
+import Zalaczniki from '@/components/Zalaczniki'
 
 // ================================================================
 // TYPY
@@ -16,6 +17,7 @@ type Zamowienie = {
   data_zamowienia:string; data_planowanej_dostawy:string|null
   status:ZamStatus; do_dostawy:boolean; priorytet:number
   notatki:string|null; created_at:string
+  dokumenty?:string[]|null
 }
 type ZamStatus = 'nowe'|'potwierdzone'|'do_dostawy'|'w_dostawie'|'dostarczone'|'anulowane'
 
@@ -51,6 +53,9 @@ export default function ZamowieniaPage() {
   const [zamowienia, setZamowienia] = useState<Zamowienie[]>([])
   const [klienci,    setKlienci]    = useState<any[]>([])
   const [loading,    setLoading]    = useState(true)
+  const [katalog,    setKatalog]    = useState<string[]>([])
+  const [leady,      setLeady]      = useState<any[]>([])
+  const [modalMsg,   setModalMsg]   = useState('')
   const [saving,     setSaving]     = useState(false)
 
   const [zaznaczone, setZaznaczone] = useState<Set<string>>(new Set())
@@ -73,8 +78,14 @@ export default function ZamowieniaPage() {
     setLoading(true)
     const [{data:z},{data:k}] = await Promise.all([
       supabase.from('zamowienia').select('*').eq('stan_akceptacji','zaakceptowany').order('created_at',{ascending:false}),
-      supabase.from('klienci').select('id,nazwa,telefon,email,adres,nip,lat,lng').order('nazwa').limit(300),
+      supabase.from('klienci').select('id,nazwa,telefon,email,adres,nip').order('nazwa').limit(500),
     ])
+    const {data:pk} = await supabase.from('crm_produkty').select('nazwa').eq('aktywny',true).order('kolejnosc')
+    setKatalog((pk??[]).map((p:any)=>p.nazwa))
+    const {data:ld} = await supabase.from('crm_leady')
+      .select('id,numer,tytul,klient_id,klient_nazwa,klient_telefon,klient_email,klient_adres,klient_nip,ilosc,jednostka,cena_jednostkowa,produkt:crm_produkty(nazwa)')
+      .eq('usuniete',false).order('created_at',{ascending:false}).limit(300)
+    setLeady(ld??[])
     setZamowienia(z??[])
     setKlienci(k??[])
     setLoading(false)
@@ -82,8 +93,15 @@ export default function ZamowieniaPage() {
 
   function showMsg(msg:string){ setSuccess(msg); setTimeout(()=>setSuccess(''),3000) }
 
+  useEffect(()=>{ setModalMsg('') },[openZam?.id])
+
   async function handleSave(data:any){
     setSaving(true); setError('')
+    // Produkt wpisany ręcznie: opcjonalnie dodaj do katalogu produktów firmy
+    if(data._dodaj_do_bazy && data.produkt?.trim() && !katalog.some(n=>n.trim().toLowerCase()===data.produkt.trim().toLowerCase())){
+      await supabase.from('crm_produkty').insert({nazwa:data.produkt.trim(),kategoria:'inne',aktywny:true,kolejnosc:katalog.length+1})
+    }
+    delete data._dodaj_do_bazy
     if(editZam){
       const {error:e} = await supabase.from('zamowienia').update({...data,updated_at:new Date().toISOString()}).eq('id',editZam.id)
       if(e){setError(e.message);setSaving(false);return}
@@ -103,8 +121,22 @@ export default function ZamowieniaPage() {
   }
 
   async function toggleDoDostawy(id:string, val:boolean){
-    await supabase.from('zamowienia').update({do_dostawy:val,status:val?'do_dostawy':undefined,updated_at:new Date().toISOString()}).eq('id',id)
+    const patch:any = {do_dostawy:val,updated_at:new Date().toISOString()}
+    if(val) patch.status='do_dostawy'
+    const {error:e} = await supabase.from('zamowienia').update(patch).eq('id',id)
+    if(e){ setModalMsg('Błąd zapisu: '+e.message); return }
     setZamowienia(prev=>prev.map(z=>z.id===id?{...z,do_dostawy:val,status:val?'do_dostawy':z.status}:z))
+    setOpenZam(z=>z&&z.id===id?{...z,do_dostawy:val,status:val?'do_dostawy':z.status}:z)
+    setModalMsg('')
+  }
+
+  // Przekazanie jednego (otwartego) zamówienia do realizacji, z widocznym potwierdzeniem w oknie zamówienia
+  async function przekazJedno(id:string){
+    const {error:e} = await supabase.from('zamowienia').update({do_dostawy:true,status:'w_dostawie',updated_at:new Date().toISOString()}).eq('id',id)
+    if(e){ setModalMsg('Nie udało się przekazać do realizacji: '+e.message); return }
+    setZamowienia(prev=>prev.map(z=>z.id===id?{...z,do_dostawy:true,status:'w_dostawie'}:z))
+    setOpenZam(z=>z&&z.id===id?{...z,do_dostawy:true,status:'w_dostawie'}:z)
+    setModalMsg(`✓ Zamówienie przekazane do realizacji (${S.zamowienia.przekazanie}).`)
   }
 
   async function toggleCheckbox(id:string){
@@ -175,7 +207,7 @@ export default function ZamowieniaPage() {
           {doDostawyCount>0&&(
             <button onClick={wyslijDoRealizacji}
               className="text-sm bg-orange-600 text-white rounded-lg px-4 py-2 hover:bg-orange-700 flex items-center gap-2">
-              🍽 Przekaż do realizacji ({doDostawyCount})
+              ➡️ Przekaż do realizacji ({doDostawyCount})
             </button>
           )}
           {zaznaczone.size>0&&(
@@ -334,7 +366,7 @@ export default function ZamowieniaPage() {
       {doDostawyCount>0&&(
         <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center justify-between">
           <p className="text-sm text-amber-800">
-            🍽 <strong>{doDostawyCount}</strong> zamówień gotowych do przekazania do realizacji
+            📦 <strong>{doDostawyCount}</strong> zamówień gotowych do przekazania do realizacji
           </p>
           <button onClick={wyslijDoRealizacji}
             className="text-sm bg-orange-600 text-white rounded-lg px-4 py-1.5 hover:bg-orange-700">
@@ -399,6 +431,12 @@ export default function ZamowieniaPage() {
                   <p className="text-sm text-gray-700">{openZam.notatki}</p>
                 </div>
               )}
+              {openZam.dokumenty&&openZam.dokumenty.length>0&&(
+                <div>
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Załączniki ({openZam.dokumenty.length})</h3>
+                  <Zalaczniki urls={openZam.dokumenty}/>
+                </div>
+              )}
               {/* Oznacz do dostawy */}
               <div className="border border-dashed border-gray-200 rounded-xl p-4">
                 <div className="flex items-center justify-between">
@@ -411,12 +449,14 @@ export default function ZamowieniaPage() {
                     onChange={e=>{ toggleDoDostawy(openZam.id,e.target.checked); setOpenZam(z=>z?{...z,do_dostawy:e.target.checked}:z) }}
                     className="w-6 h-6 rounded border-gray-300 text-orange-500"/>
                 </div>
-                {openZam.do_dostawy&&(
-                  <button onClick={wyslijDoRealizacji}
+                {openZam.do_dostawy&&openZam.status!=='w_dostawie'&&openZam.status!=='dostarczone'&&(
+                  <button onClick={()=>przekazJedno(openZam.id)}
                     className="w-full mt-3 px-4 py-2 bg-orange-600 text-white text-sm rounded-lg hover:bg-orange-700">
-                    🍽 Przekaż do realizacji
+                    ➡️ Przekaż do realizacji
                   </button>
                 )}
+                {openZam.status==='w_dostawie'&&<p className="mt-3 text-sm text-green-700">✓ Przekazane do realizacji</p>}
+                {modalMsg&&<p className="mt-2 text-sm" style={{color:modalMsg.startsWith('✓')?'#15803d':'#b91c1c'}}>{modalMsg}</p>}
               </div>
             </div>
             <div className="p-5 border-t border-gray-100 flex gap-2">
@@ -437,6 +477,8 @@ export default function ZamowieniaPage() {
         <ZamowienieForm
           zam={editZam}
           klienci={klienci}
+          katalog={katalog}
+          leady={leady}
           saving={saving}
           onSave={handleSave}
           onClose={()=>{setShowForm(false);setEditZam(null)}}
@@ -449,13 +491,47 @@ export default function ZamowieniaPage() {
 // ================================================================
 // FORMULARZ ZAMÓWIENIA
 // ================================================================
-function ZamowienieForm({zam,klienci,saving,onSave,onClose}:{
-  zam:Zamowienie|null; klienci:any[]; saving:boolean; onSave:(d:any)=>void; onClose:()=>void
+const INNY = '__inny'
+function ZamowienieForm({zam,klienci,katalog,leady,saving,onSave,onClose}:{
+  zam:Zamowienie|null; klienci:any[]; katalog:string[]; leady:any[]; saving:boolean; onSave:(d:any)=>void; onClose:()=>void
 }){
   const S = useSlownik()
+  const supabase = createClient()
   const PRODUKTY = S.produktyZamowien
   const JEDNOSTKI = S.jednostki
+  // Lista produktów: katalog firmy + podpowiedzi branżowe (bez duplikatów)
+  const lista = Array.from(new Set([...katalog, ...PRODUKTY, ...S.zamowienia.uslugi]))
   const [zrodlo, setZrodlo] = useState(zam?.zrodlo??'manual')
+  const [leadId, setLeadId] = useState(zam?.lead_id??'')
+  const [docs, setDocs] = useState<string[]>(zam?.dokumenty??[])
+  const [uploading, setUploading] = useState(false)
+  const [produktTryb, setProduktTryb] = useState<string>(zam?.produkt && !lista.includes(zam.produkt) ? INNY : (zam?.produkt??''))
+  const [dodajDoBazy, setDodajDoBazy] = useState(true)
+
+  async function wgraj(files:FileList|null){
+    if(!files||!files.length) return
+    setUploading(true)
+    const nowe:string[]=[]
+    for(const file of Array.from(files)){
+      const ext=file.name.split('.').pop()
+      const path=`zamowienia/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`
+      const {error:ue}=await supabase.storage.from('dokumenty').upload(path,file)
+      if(ue){ alert('Nie udało się przesłać pliku '+file.name+': '+ue.message); continue }
+      nowe.push(supabase.storage.from('dokumenty').getPublicUrl(path).data.publicUrl)
+    }
+    setDocs(d=>[...d,...nowe]); setUploading(false)
+  }
+
+  function handleLead(e:React.ChangeEvent<HTMLSelectElement>){
+    const id=e.target.value; setLeadId(id)
+    const l=leady.find((x:any)=>x.id===id); if(!l) return
+    const pn=l.produkt?.nazwa??''
+    setForm(f=>({...f,klient_id:l.klient_id??'',klient_nazwa:l.klient_nazwa??'',klient_adres:l.klient_adres??'',klient_telefon:l.klient_telefon??'',
+      klient_email:l.klient_email??'',klient_nip:l.klient_nip??'',produkt:pn||f.produkt,
+      ilosc:l.ilosc?String(l.ilosc):f.ilosc,jednostka:l.jednostka??f.jednostka,
+      cena_netto:l.cena_jednostkowa?String(Math.round(Number(l.cena_jednostkowa)/1.23*100)/100):f.cena_netto}))
+    if(pn) setProduktTryb(lista.includes(pn)?pn:INNY)
+  }
   const [form, setForm] = useState({
     klient_id:              zam?.klient_id??'',
     klient_nazwa:           zam?.klient_nazwa??'',
@@ -481,9 +557,13 @@ function ZamowienieForm({zam,klienci,saving,onSave,onClose}:{
 
   function handleSubmit(e:React.FormEvent){
     e.preventDefault()
+    if(!form.produkt.trim()){ alert('Wybierz produkt z listy albo wybierz „Inny” i wpisz własny.'); return }
     onSave({
       ...form,
       zrodlo,
+      lead_id: zrodlo==='lead'&&leadId ? leadId : null,
+      dokumenty: docs.length?docs:null,
+      _dodaj_do_bazy: produktTryb===INNY && dodajDoBazy,
       klient_id: form.klient_id||null,
       ilosc: parseFloat(form.ilosc)||1,
       cena_netto: form.cena_netto?parseFloat(form.cena_netto):null,
@@ -522,6 +602,22 @@ function ZamowienieForm({zam,klienci,saving,onSave,onClose}:{
                   <option value="">— Wybierz klienta —</option>
                   {klienci.map((k:any)=><option key={k.id} value={k.id}>{k.nazwa} {k.adres?`(${k.adres})`:''}</option>)}
                 </select>
+                {klienci.length===0&&<p className="text-xs text-amber-600 mt-1">Brak klientów w bazie — dodaj klienta w module Klienci lub wpisz dane ręcznie poniżej.</p>}
+              </div>
+            )}
+            {zrodlo==='lead'&&(
+              <div className="col-span-2">
+                <label className={lbl}>Wybierz lead</label>
+                <select value={leadId} onChange={handleLead} className={inp}>
+                  <option value="">— Wybierz lead —</option>
+                  {leady.map((l:any)=><option key={l.id} value={l.id}>{l.numer} · {l.tytul}{l.klient_nazwa?` — ${l.klient_nazwa}`:''}</option>)}
+                </select>
+                {leady.length===0&&<p className="text-xs text-amber-600 mt-1">Brak leadów — dodaj lead w module Leady.</p>}
+                <label className={lbl+' mt-3'}>Klient z bazy (opcjonalnie)</label>
+                <select value={form.klient_id} onChange={handleKlient} className={inp}>
+                  <option value="">— Wybierz klienta —</option>
+                  {klienci.map((k:any)=><option key={k.id} value={k.id}>{k.nazwa}</option>)}
+                </select>
               </div>
             )}
 
@@ -549,23 +645,32 @@ function ZamowienieForm({zam,klienci,saving,onSave,onClose}:{
             </div>
 
             {/* Produkt */}
-            <div>
-              <label className={lbl}>Produkt *</label>
-              <select value={form.produkt} onChange={e=>setForm(f=>({...f,produkt:e.target.value}))} className={inp} required>
+            <div className="col-span-2">
+              <label className={lbl}>Produkt / usługa *</label>
+              <select value={produktTryb} className={inp}
+                onChange={e=>{ const v=e.target.value; setProduktTryb(v); setForm(f=>({...f,produkt:v===INNY?'':v})) }}>
                 <option value="">— Wybierz —</option>
-                <optgroup label={S.zamowienia.grupa}>
-                  {PRODUKTY.map(p=><option key={p} value={p}>{p}</option>)}
-                </optgroup>
-                <optgroup label="Inne">
-                  {S.zamowienia.uslugi.map(u=><option key={u} value={u}>{u}</option>)}
-                  <option value="Inne">Inne</option>
-                </optgroup>
+                {lista.map(p=><option key={p} value={p}>{p}</option>)}
+                <option value={INNY}>✏️ Inny — wpisz ręcznie</option>
               </select>
+              {produktTryb===INNY&&(
+                <div className="mt-2">
+                  <input value={form.produkt} onChange={e=>setForm(f=>({...f,produkt:e.target.value}))}
+                    placeholder="Wpisz nazwę produktu / usługi" className={inp} autoFocus/>
+                  <label className="flex items-center gap-2 text-xs text-gray-600 mt-2">
+                    <input type="checkbox" checked={dodajDoBazy} onChange={e=>setDodajDoBazy(e.target.checked)}/>
+                    Dodaj do bazy produktów (będzie dostępny na liście w zamówieniach i leadach)
+                  </label>
+                </div>
+              )}
             </div>
-            <div>
-              <label className={lbl}>Produkt (własny)</label>
-              <input value={form.produkt} onChange={e=>setForm(f=>({...f,produkt:e.target.value}))}
-                placeholder="lub wpisz własny" className={inp}/>
+            <div className="col-span-2">
+              <label className={lbl}>Załączniki (opcjonalnie)</label>
+              {docs.length>0&&<div className="mb-2"><Zalaczniki urls={docs}/></div>}
+              <label className="inline-block cursor-pointer text-xs font-medium px-3 py-2 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">
+                {uploading?'Przesyłanie…':'+ Dodaj plik'}
+                <input type="file" multiple className="hidden" onChange={e=>{wgraj(e.target.files); e.target.value=''}}/>
+              </label>
             </div>
             <div>
               <label className={lbl}>Ilość *</label>

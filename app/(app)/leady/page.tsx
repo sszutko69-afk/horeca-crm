@@ -206,7 +206,7 @@ export default function LeadyPage() {
     const [{data:l},{data:pr},{data:kl},{data:pc}] = await Promise.all([
       supabase.from('crm_leady').select('*,produkt:crm_produkty(id,nazwa,kategoria)').eq('usuniete',false).order('created_at',{ascending:false}),
       supabase.from('crm_produkty').select('*').eq('aktywny',true).order('kolejnosc'),
-      supabase.from('klienci').select('id,nazwa,telefon,email,adres,nip,miasto,kod_pocztowy,lat,lng').order('nazwa').limit(300),
+      supabase.from('klienci').select('id,nazwa,telefon,email,adres,nip,miasto,kod_pocztowy').order('nazwa').limit(300),
       supabase.from('pracownicy').select('id,imie,nazwisko,stanowisko').eq('aktywny',true).order('nazwisko'),
     ])
     setLeady(l??[])
@@ -246,8 +246,19 @@ export default function LeadyPage() {
       }).select('id').single()
       if(nowyKlient) data.klient_id = nowyKlient.id
     }
+    // Produkt/usługa wpisana ręcznie ("Inna"): zapisz w katalogu firmy (jeśli nie istnieje) i podepnij do leadu
+    if(data._produkt_wlasny){
+      const nazwa = String(data._produkt_wlasny).trim()
+      const istn = produkty.find(p=>p.nazwa.trim().toLowerCase()===nazwa.toLowerCase())
+      if(istn){ data.produkt_id = istn.id }
+      else {
+        const {data:np,error:pe} = await supabase.from('crm_produkty').insert({nazwa,kategoria:'inne',aktywny:true,kolejnosc:produkty.length+1}).select('id').single()
+        if(pe||!np){ setError('Nie udało się zapisać produktu/usługi: '+(pe?.message??'')); setSaving(false); return }
+        data.produkt_id = np.id
+      }
+    }
     // Usuń pomocnicze pola spoza schematu crm_leady
-    delete data._klient_miasto; delete data._klient_kod
+    delete data._klient_miasto; delete data._klient_kod; delete data._produkt_wlasny
 
     if(editLead){
       const {error:e} = await supabase.from('crm_leady').update({...data,updated_at:new Date().toISOString()}).eq('id',editLead.id)
@@ -855,6 +866,7 @@ export default function LeadyPage() {
 // ================================================================
 // FORMULARZ LEADU
 // ================================================================
+const INNA = '__inna'
 function LeadForm({lead,produkty,klienci,pracownicy,saving,onSave,onClose}:{
   lead:Lead|null; produkty:Produkt[]; klienci:any[]; pracownicy:any[];
   saving:boolean; onSave:(d:any)=>void; onClose:()=>void
@@ -872,7 +884,8 @@ function LeadForm({lead,produkty,klienci,pracownicy,saving,onSave,onClose}:{
     klient_miasto:     '',
     klient_kod:        '',
     produkt_id:        lead?.produkt_id??'',
-    etap:              lead?.etap??'Pierwszy kontakt',
+    produkt_wlasny:    '',
+    etap:            lead?.etap??'Pierwszy kontakt',
     status:            lead?.status??'aktywny',
     wartosc_szacunkowa:lead?.wartosc_szacunkowa?.toString()??'',
     prawdopodobienstwo:lead?.prawdopodobienstwo?.toString()??'50',
@@ -908,6 +921,7 @@ function LeadForm({lead,produkty,klienci,pracownicy,saving,onSave,onClose}:{
   function handleProduktChange(e:React.ChangeEvent<HTMLSelectElement>){
     const id = e.target.value
     const p = produkty.find(x=>x.id===id)
+    if(id===INNA){ setForm(f=>({...f, produkt_id:INNA})); return }
     const noweEtapy = p?.kategoria==='catering' ? ETAPY_CATERING : ETAPY_DOMYSLNE
     setForm(f=>({...f, produkt_id:id, etap: noweEtapy.includes(f.etap)?f.etap:noweEtapy[0]}))
   }
@@ -934,13 +948,16 @@ function LeadForm({lead,produkty,klienci,pracownicy,saving,onSave,onClose}:{
 
   function handleSubmit(e:React.FormEvent){
     e.preventDefault()
+    if(!form.produkt_id){ alert('Wybierz produkt / usługę z listy albo wybierz „Inna” i wpisz własną.'); return }
+    if(form.produkt_id===INNA && !form.produkt_wlasny.trim()){ alert('Wpisz nazwę produktu / usługi.'); return }
     onSave({
+      _produkt_wlasny: form.produkt_id===INNA ? form.produkt_wlasny.trim() : '',
       tytul: form.tytul,
       klient_id: form.klient_id||null,
       klient_nazwa: form.klient_nazwa, klient_kontakt: form.klient_kontakt,
       klient_email: form.klient_email, klient_telefon: form.klient_telefon,
       klient_adres: form.klient_adres, klient_nip: form.klient_nip,
-      produkt_id: form.produkt_id||null,
+      produkt_id: form.produkt_id===INNA ? null : (form.produkt_id||null),
       etap: form.etap, status: form.status,
       // dla cateringu: wartość = cena × ilość; dla reszty: wartość ręczna
       wartosc_szacunkowa: dostawa ? (wartoscBrutto||null) : (form.wartosc_szacunkowa?parseFloat(form.wartosc_szacunkowa):null),
@@ -1025,14 +1042,22 @@ function LeadForm({lead,produkty,klienci,pracownicy,saving,onSave,onClose}:{
             {/* Produkt */}
             <div className="col-span-2">
               <label className={lbl}>Produkt / Usługa *</label>
-              <select value={form.produkt_id} onChange={handleProduktChange} className={inp} required>
+              <select value={form.produkt_id} onChange={handleProduktChange} className={inp}>
                 <option value="">— Wybierz —</option>
-                {['wydarzenie','catering','inne'].map(kat=>(
-                  <optgroup key={kat} label={kat==='wydarzenie'?S.leady.grupaWydarzenie:kat==='catering'?S.leady.grupaCatering:'📋 Inne'}>
+                {Array.from(new Set(produkty.map(p=>p.kategoria))).map(kat=>(
+                  <optgroup key={kat} label={kat==='wydarzenie'?S.leady.grupaWydarzenie:kat==='catering'?S.leady.grupaCatering:'📋 Produkty i usługi'}>
                     {produkty.filter(p=>p.kategoria===kat).map(p=><option key={p.id} value={p.id}>{p.nazwa}</option>)}
                   </optgroup>
                 ))}
+                <option value={INNA}>✏️ Inna — wpisz ręcznie</option>
               </select>
+              {form.produkt_id===INNA&&(
+                <div className="mt-2">
+                  <input value={form.produkt_wlasny} onChange={e=>setForm(f=>({...f,produkt_wlasny:e.target.value}))}
+                    placeholder="Wpisz nazwę produktu / usługi" className={inp} autoFocus/>
+                  <p className="text-xs text-gray-400 mt-1">Zostanie zapisany w katalogu i dostępny na liście przy kolejnych leadach.</p>
+                </div>
+              )}
             </div>
 
             {/* ── POLA SPECYFICZNE DLA CATERINGU ── */}

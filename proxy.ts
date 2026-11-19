@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { blokadaSciezki, type FirmaPlan } from '@/lib/plany'
+import { SCIEZKA_MODUL } from '@/lib/branze'
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request })
@@ -44,7 +45,14 @@ export async function proxy(request: NextRequest) {
     }
     const blokada = blokadaSciezki(path, f)
     if (blokada === 'plan') return NextResponse.redirect(new URL('/subskrypcja?zablokowane=1', request.url))
-    if (blokada === 'wybor' || blokada === 'niedostepny') return NextResponse.redirect(new URL('/dashboard', request.url))
+    if (blokada === 'wybor') {
+      // moduł spoza wyboru firmy: przekieruj do dodania modułu (zamiast pulpitu bez wyjaśnienia)
+      const klucz = Object.keys(SCIEZKA_MODUL).find(k => path === k || path.startsWith(k + '/'))
+      const url = new URL('/moduly', request.url)
+      if (klucz) url.searchParams.set('dodaj', SCIEZKA_MODUL[klucz])
+      return NextResponse.redirect(url)
+    }
+    if (blokada === 'niedostepny') return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
   return response

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import CzatPanel from '@/components/CzatPanel'
+import Zalaczniki from '@/components/Zalaczniki'
 import { createClient } from '@/lib/supabase'
 import * as XLSX from 'xlsx'
 
@@ -166,7 +167,7 @@ function KlientForm({ f, setF, onSubmit, onCancel, saving, title, docs, onUpload
               <div className="grid grid-cols-4 gap-2 mb-2">
                 {docs.map((url, i) => (
                   <div key={i} className="relative group border border-gray-200 rounded-lg overflow-hidden">
-                    {isImage(url) ? <img src={url} alt="" className="w-full h-16 object-cover" /> : (
+                    {isImage(url) ? <a href={url} target="_blank" rel="noopener noreferrer"><img src={url} alt="" className="w-full h-16 object-cover" /></a> : (
                       <a href={url} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center h-16 bg-gray-50 hover:bg-gray-100">
                         <span className="text-lg">📄</span>
                       </a>
@@ -829,19 +830,13 @@ export default function KlienciPage() {
               {detail.dokumenty && detail.dokumenty.length > 0 && (
                 <div className="pt-2 border-t border-gray-100">
                   <p className="text-gray-500 mb-2 text-xs font-medium uppercase tracking-wide">Załączniki ({detail.dokumenty.length})</p>
-                  <div className="grid grid-cols-4 gap-2">
-                    {detail.dokumenty.map((url, i) => (
-                      /\.(jpg|jpeg|png|webp)$/i.test(url)
-                        ? <img key={i} src={url} alt="" className="w-full h-14 object-cover rounded-lg border border-gray-200" />
-                        : <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center h-14 bg-gray-50 rounded-lg border border-gray-200 text-xs text-gray-500 hover:bg-gray-100">📄 PDF</a>
-                    ))}
-                  </div>
+                  <Zalaczniki urls={detail.dokumenty} />
                 </div>
               )}
             </div>
             <div className="flex gap-2">
               <button onClick={() => { setDetailId(null); openEdit(detail) }} className="flex-1 px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50">Edytuj</button>
-              <a href="/sprzedaz" className="flex-1 px-4 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-700 text-center">Dodaj sprzedaż →</a>
+              <a href="/sprzedaz" style={{ background: '#111827', color: '#FFFFFF', textDecoration: 'none' }} className="flex-1 px-4 py-2 text-sm rounded-lg text-center">Dodaj sprzedaż →</a>
             </div>
           </div>
         </div>

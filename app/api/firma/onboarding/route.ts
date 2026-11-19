@@ -31,5 +31,7 @@ export async function POST(request: Request) {
     .update({ branza, moduly: [...MODULY_SYSTEMOWE, ...moduly], onboarding_zakonczony: true })
     .eq('id', firma.id)
   if (error) return NextResponse.json({ error: 'Nie udało się zapisać wyboru: ' + error.message }, { status: 500 })
+  // Domyślne katalogi (produkty/usługi leadów, kategorie budżetu) wg branży: listy wyboru nie są puste
+  await admin.rpc('seed_katalogi_firmy', { p_firma: firma.id, p_branza: branza })
   return NextResponse.json({ ok: true })
 }
