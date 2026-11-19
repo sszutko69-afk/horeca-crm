@@ -1,7 +1,7 @@
 # 017. Moduły z kłódką po zakończeniu okresu próbnego
 
 - **Data wdrożenia:** 2026-11-19
-- **Commit:** (uzupełnić po wdrożeniu)
+- **Commit:** e9e54c1
 - **Środowisko:** produkcja (app.skrojo.pl)
 
 ## Zmiany
