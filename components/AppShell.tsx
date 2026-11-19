@@ -161,6 +161,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [userEmail,    setUserEmail]    = useState('')
   const [userInitials, setUserInitials] = useState('U')
   const [moduly,       setModuly]       = useState<string[] | null>(null)
+  const [zablokowane,  setZablokowane]  = useState<string[]>([])
   const [firma,         setFirma]        = useState<FirmaPlan | null>(null)
   const [wlasciciel,    setWlasciciel]   = useState(false)
   const [nieprzeczytane, setNieprzeczytane] = useState(0)
@@ -239,6 +240,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         // dostęp = moduły użytkownika ∩ moduły firmy (wybór branży) z uwzględnieniem planu (pełna / podstawowa)
         const dozwolone = modulyFirmy(f as FirmaPlan | null)
         setModuly(ml.filter(m => dozwolone.includes(m)))
+        // moduły wybrane przez firmę, ale niedostępne w jej planie (np. po zakończeniu okresu próbnego): pokazujemy je z kłódką
+        setZablokowane((((f as FirmaPlan | null)?.moduly) ?? []).filter(m => !dozwolone.includes(m) && ml.includes(m)))
       }
     })
   }, [])
@@ -263,11 +266,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     window.location.href = '/login'
   }
 
-  const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/')
+  const isActive = (href: string) => !href.startsWith('/subskrypcja?') && (pathname === href || pathname.startsWith(href + '/'))
 
   const navFiltered = nav.map(g => ({
     ...g,
-    items: g.items.filter(i => i.modul === 'Platforma' ? wlasciciel : (i.modul === 'Subskrypcja' || !moduly || moduly.includes(i.modul))),
+    items: g.items
+      .filter(i => i.modul === 'Platforma' ? wlasciciel : (i.modul === 'Subskrypcja' || !moduly || moduly.includes(i.modul) || zablokowane.includes(i.modul)))
+      .map(i => zablokowane.includes(i.modul) ? { ...i, href: '/subskrypcja?zablokowane=1', label: i.label + ' 🔒', zablokowany: true as const } : { ...i, zablokowany: false as const }),
   })).filter(g => g.items.length > 0)
 
   const currentLabel = navFiltered.flatMap(g => g.items).find(i => isActive(i.href))?.label ?? 'Skrojo'
@@ -356,7 +361,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               {group.items.map(item => {
                 const active = isActive(item.href)
                 return (
-                  <a key={item.href} href={item.href}
+                  <a key={item.label} href={item.href}
                     onClick={() => setMobileOpen(false)}
                     title={isMini ? item.label : undefined}
                     style={{
