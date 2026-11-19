@@ -1,7 +1,7 @@
 # 023. Prywatne buckety plików (podpisane linki)
 
 - **Data wdrożenia:** 2026-11-19
-- **Commit:** (uzupełnić po wdrożeniu)
+- **Commit:** 68b5d6e
 - **Środowisko:** produkcja (app.skrojo.pl)
 
 ## Zmiany
