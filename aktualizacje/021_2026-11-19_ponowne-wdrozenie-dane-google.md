@@ -1,7 +1,7 @@
 # 021. Ponowne wdrożenie: dane aplikacji Google dla Google Workspace
 
 - **Data wdrożenia:** 2026-11-19
-- **Commit:** (uzupełnić po wdrożeniu)
+- **Commit:** cdc8b47
 - **Środowisko:** produkcja (app.skrojo.pl)
 
 ## Zmiany
