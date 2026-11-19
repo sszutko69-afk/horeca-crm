@@ -15,3 +15,17 @@ export async function wymagajModulu(modul: string) {
   }
   return { supabase, user, firma: firma as FirmaPlan } as const
 }
+
+// Wariant: dostęp, jeśli firma ma którykolwiek z podanych modułów (np. trasa używana przez dwa moduły).
+export async function wymagajDowolnegoModulu(moduly: string[]) {
+  const supabase = await createServerSupabaseClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { blad: NextResponse.json({ error: 'Zaloguj się.' }, { status: 401 }) } as const
+  const { data: firma } = await supabase.from('firmy')
+    .select('id,nazwa,demo,status,trial_do,stripe_status,subskrypcja_do,pelny_dostep,branza,moduly,onboarding_zakonczony').maybeSingle()
+  const dozwolone = firma ? modulyFirmy(firma as FirmaPlan) : []
+  if (!firma || !moduly.some(m => dozwolone.includes(m))) {
+    return { blad: NextResponse.json({ error: 'Moduł nie jest dostępny w Twoim planie.' }, { status: 403 }) } as const
+  }
+  return { supabase, user, firma: firma as FirmaPlan } as const
+}

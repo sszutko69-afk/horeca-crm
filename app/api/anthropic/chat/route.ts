@@ -1,15 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createServerSupabaseClient } from '@/lib/supabase-server'
 
 export const maxDuration = 60
 
 export async function POST(req: NextRequest) {
   try {
+    const sesja = await createServerSupabaseClient()
+    const { data: { user } } = await sesja.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Zaloguj się.' }, { status: 401 })
     const { systemPrompt, messages, maxTokens } = await req.json()
+    if (!Array.isArray(messages) || JSON.stringify(messages).length > 400_000) return NextResponse.json({ error: 'Nieprawidłowe lub zbyt duże zapytanie.' }, { status: 400 })
 
     const body = {
       model: 'claude-sonnet-4-20250514',
-      max_tokens: maxTokens ?? 2000,
-      system: systemPrompt ?? 'Jesteś pomocnym asystentem dla firmy ON Gaz.',
+      max_tokens: Math.min(Math.max(Number(maxTokens) || 2000, 1), 4000),
+      system: systemPrompt ?? 'Jesteś pomocnym asystentem w systemie CRM Skrojo.',
       messages: messages ?? [],
     }
 

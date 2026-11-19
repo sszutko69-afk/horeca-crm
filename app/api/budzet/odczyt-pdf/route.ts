@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { wymagajModulu } from '@/lib/dostep-api'
 
 export const maxDuration = 60
 
 export async function POST(req: NextRequest) {
   try {
+    const dostep = await wymagajModulu('Budżet')
+    if ('blad' in dostep) return dostep.blad
     const { base64, filename } = await req.json()
     if (!base64) return NextResponse.json({ error: 'Brak danych PDF' }, { status: 400 })
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { wymagajDowolnegoModulu } from '@/lib/dostep-api'
 
 // inFakt API v3 — https://api.infakt.pl/api/v3/
 // Auth: nagłówek X-inFakt-ApiKey
@@ -11,8 +12,8 @@ function getKey(req: NextRequest): string {
   // 1. Z nagłówka requestu (gdy frontend podaje klucz użytkownika)
   const hdr = req.headers.get('X-inFakt-ApiKey')
   if (hdr && hdr.length > 10) return hdr
-  // 2. Z env Vercel (klucz firmowy ustawiony w projekcie)
-  return process.env.INFAKT_API_KEY ?? ''
+  // Brak wspólnego klucza z env: każda firma używa własnego klucza inFakt (wspólny klucz dałby dostęp do danych jednej firmy wszystkim)
+  return ''
 }
 
 async function infaktFetch(
@@ -42,6 +43,8 @@ async function infaktFetch(
 }
 
 export async function GET(req: NextRequest) {
+  const dostep = await wymagajDowolnegoModulu(['inFakt', 'Budżet'])
+  if ('blad' in dostep) return dostep.blad
   const key = getKey(req)
   if (!key) {
     return NextResponse.json({
@@ -281,6 +284,8 @@ export async function GET(req: NextRequest) {
 // ─── POST — utwórz fakturę VAT w inFakt ──────────────────────────────────────
 // Body: { klient_nazwa, klient_nip?, klient_typ, data, opis_uslugi, ilosc?, jednostka?, cena_brutto, forma_platnosci, uwagi? }
 export async function POST(req: NextRequest) {
+  const dostep = await wymagajDowolnegoModulu(['inFakt', 'Budżet'])
+  if ('blad' in dostep) return dostep.blad
   const key = getKey(req)
   if (!key) return NextResponse.json({ error: 'Brak klucza API inFakt (INFAKT_API_KEY)' }, { status: 401 })
 
