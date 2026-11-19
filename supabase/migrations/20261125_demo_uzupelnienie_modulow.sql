@@ -1,0 +1,4 @@
+-- Uzupełnienie demo (zastosowano w bazie jako "demo_uzupelnienie_modulow"):
+-- EMCS PL 2 w demo gazowym; Cysterna i GPS (pojazdy, dostawy) w demo transportu i logistyki;
+-- Przetargi (branże CPV, 2 ogłoszenia) w demo kancelarii; współrzędne klientów demo dla Mapy klientów.
+-- Pełna treść: patrz historia migracji projektu Supabase (demo_uzupelnienie_modulow).
