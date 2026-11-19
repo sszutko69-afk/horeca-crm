@@ -1,7 +1,7 @@
 # 018. Status modułów na ekranie wyboru i przedłużanie okresu próbnego
 
 - **Data wdrożenia:** 2026-11-19
-- **Commit:** (uzupełnić po wdrożeniu)
+- **Commit:** 4a8fac6
 - **Środowisko:** produkcja (app.skrojo.pl)
 
 ## Zmiany
