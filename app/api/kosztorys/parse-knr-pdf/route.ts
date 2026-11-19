@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server'
+import { wymagajModulu } from '@/lib/dostep-api'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -15,6 +16,8 @@ Zasady:
 
 export async function POST(req: NextRequest) {
   try {
+    const dostep = await wymagajModulu('Kosztorysowanie')
+    if ('blad' in dostep) return dostep.blad
     const body = await req.json()
     const apiKey = process.env.ANTHROPIC_API_KEY
     if (!apiKey) return Response.json({ error: 'Brak klucza ANTHROPIC_API_KEY' }, { status: 500 })

@@ -27,6 +27,7 @@ export default function CzasPracyPage() {
   const [viewMode, setViewMode] = useState<'miesiac'|'tydzien'|'dzien'|'roczny'|'lista_obecnosci'>('miesiac')
   const [pracownicy, setPracownicy] = useState<any[]>([])
   const [wydarzenia, setWydarzenia] = useState<any[]>([])
+  const [inwestycjeL, setInwestycjeL] = useState<any[]>([])
   const [wpisy, setWpisy] = useState<any[]>([])
   const [wpisyRok, setWpisyRok] = useState<any[]>([])
   const [loadingRoczne, setLoadingRoczne] = useState(false)
@@ -129,10 +130,12 @@ export default function CzasPracyPage() {
     const [{data:pr},{data:inv},{data:wp}] = await Promise.all([
       supabase.from('pracownicy').select('id,imie,nazwisko,stanowisko,stawka_godzinowa,wynagrodzenie_brutto').eq('aktywny',true).order('nazwisko'),
       supabase.from('wydarzenia').select('id,nazwa').order('nazwa'),
-      supabase.from('czas_pracy').select('*,pracownicy(imie,nazwisko),wydarzenia(nazwa)').eq('stan_akceptacji','zaakceptowany').gte('data',dateOd).lte('data',dateDo).order('data'),
+      supabase.from('czas_pracy').select('*,pracownicy(imie,nazwisko),wydarzenia(nazwa),inwestycje(nazwa)').eq('stan_akceptacji','zaakceptowany').gte('data',dateOd).lte('data',dateDo).order('data'),
     ])
     setPracownicy(pr??[])
     setWydarzenia(inv??[])
+    const { data: invL } = await supabase.from('inwestycje').select('id,nazwa').order('nazwa')
+    setInwestycjeL(invL??[])
     setWpisy(wp??[])
     setLoading(false)
   }
@@ -176,7 +179,7 @@ export default function CzasPracyPage() {
     setFPrac(w.pracownik_id); setFData(w.data)
     setFOd(w.godzina_od||'08:00'); setFDo(w.godzina_do||'16:00')
     setFRodzaj(w.rodzaj); setFGodziny(String(w.godziny))
-    setFInw(w.wydarzenie_id||''); setFDelegacja(w.delegacja||false); setFDelegacjaStawka(String(w.delegacja_stawka||45)); setFOpis(w.opis||'')
+    setFInw(w.inwestycja_id ? 'i:'+w.inwestycja_id : (w.wydarzenie_id ? 'w:'+w.wydarzenie_id : '')); setFDelegacja(w.delegacja||false); setFDelegacjaStawka(String(w.delegacja_stawka||45)); setFOpis(w.opis||'')
     setShowModal(true)
   }
 
@@ -195,7 +198,8 @@ export default function CzasPracyPage() {
       delegacja:fDelegacja,
       delegacja_stawka:parseFloat(fDelegacjaStawka)||45,
       koszt_calkowity:kosztCalkowity,
-      wydarzenie_id:fInw||null,
+      wydarzenie_id:fInw.startsWith('w:') ? fInw.slice(2) : null,
+      inwestycja_id:fInw.startsWith('i:') ? fInw.slice(2) : null,
       opis:fOpis,
     }
     let err: any = null
@@ -269,10 +273,11 @@ th{background:#f0f0f0;font-weight:bold}.name{text-align:left;min-width:120px}
   // Koszty per wydarzenie (z widocznych wpisów)
   const kosztPerWydarzenie = useMemo(() => {
     const map: Record<string, {nazwa:string, koszt:number, godziny:number}> = {}
-    wpisy.filter(w => w.wydarzenie_id && (!filterPrac || w.pracownik_id === filterPrac)).forEach((w:any) => {
-      if (!map[w.wydarzenie_id]) map[w.wydarzenie_id] = { nazwa: w.wydarzenia?.nazwa || '?', koszt: 0, godziny: 0 }
-      map[w.wydarzenie_id].koszt += (+w.koszt_calkowity || 0)
-      map[w.wydarzenie_id].godziny += (+w.godziny || 0)
+    wpisy.filter(w => (w.wydarzenie_id || w.inwestycja_id) && (!filterPrac || w.pracownik_id === filterPrac)).forEach((w:any) => {
+      const k = w.inwestycja_id || w.wydarzenie_id
+      if (!map[k]) map[k] = { nazwa: w.inwestycje?.nazwa || w.wydarzenia?.nazwa || '?', koszt: 0, godziny: 0 }
+      map[k].koszt += (+w.koszt_calkowity || 0)
+      map[k].godziny += (+w.godziny || 0)
     })
     return Object.values(map).sort((a,b) => b.koszt - a.koszt)
   }, [wpisy, filterPrac])
@@ -628,7 +633,8 @@ th{background:#f0f0f0;font-weight:bold}.name{text-align:left;min-width:120px}
                 <label className="text-xs text-gray-500 block mb-1">{S.delegacja.wydarzenie}</label>
                 <select value={fInw} onChange={e=>setFInw(e.target.value)} className={inp}>
                   <option value="">— brak —</option>
-                  {wydarzenia.map(i=><option key={i.id} value={i.id}>{i.nazwa}</option>)}
+                  {inwestycjeL.length>0&&<optgroup label="Inwestycje">{inwestycjeL.map(i=><option key={i.id} value={'i:'+i.id}>{i.nazwa}</option>)}</optgroup>}
+                  {wydarzenia.length>0&&<optgroup label={S.delegacja.wydarzenie}>{wydarzenia.map(i=><option key={i.id} value={'w:'+i.id}>{i.nazwa}</option>)}</optgroup>}
                 </select>
               </div>
               <div>

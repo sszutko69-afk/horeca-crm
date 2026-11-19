@@ -1,14 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { wymagajModulu } from '@/lib/dostep-api'
 
 export const maxDuration = 120
-
-function getSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
-}
 
 function calcPoz(
   ilosc: number, r_j: number, m_j: number, s_j: number,
@@ -44,7 +37,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Brak opisu projektu lub pliku' }, { status: 400 })
     }
 
-    const supabase = getSupabase()
+    // Sesja użytkownika (RLS): kontekst KNR i cenników wyłącznie z danych własnej firmy
+    const dostep = await wymagajModulu('Kosztorysowanie')
+    if ('blad' in dostep) return dostep.blad
+    const supabase = dostep.supabase
 
     // Pobierz kontekst KNR i cennik
     const [{ data: knrPoz }, { data: cenPoz }] = await Promise.all([
@@ -71,17 +67,17 @@ export async function POST(req: NextRequest) {
     const cenSprzet = (cenPoz || []).filter((p: any) => p.typ === 'S')
       .map((p: any) => `${p.nazwa}|${p.jm}|${p.cena}`).join('\n')
 
-    const systemPrompt = `Jesteś ekspertem kosztorysanta budowlanego specjalizującym sie w gazownictwie i instalacjach.
+    const systemPrompt = `Jesteś ekspertem kosztorysanta budowlanego specjalizującym sie w budownictwie, remontach i instalacjach.
 Twoje zadanie to przygotowanie szczegolowego kosztorysu inwestorskiego na podstawie opisu projektu.
 
 DOSTEPNE POZYCJE KNR (format: katalog kod|nazwa|jm|R_norma|M_norma|S_norma):
 ${knrContext || '(brak pozycji KNR - uzyj wlasnej wiedzy)'}
 
 CENNIK ROBOCIZNA [zl/r-g]:
-${cenRobocizna || 'Monter gazociagow|r-g|45\nSlusarz|r-g|42\nRobotnik budowlany|r-g|38'}
+${cenRobocizna || 'Monter instalacji|r-g|45\nSlusarz|r-g|42\nRobotnik budowlany|r-g|38'}
 
 CENNIK MATERIALY [zl/jm]:
-${cenMaterialy || 'Rura PE100 DN110|m|38\nRura PE100 DN63|m|18\nZlaczka PE DN110|szt|85\nPiasek podsypkowy|m3|65'}
+${cenMaterialy || 'Beton B25|m3|420\nStal zbrojeniowa|kg|4.2\nCegla|szt|1.4\nPiasek podsypkowy|m3|65'}
 
 CENNIK SPRZET [zl/m-g]:
 ${cenSprzet || 'Koparka gabsienicowa|m-g|185\nSamochod|m-g|75\nAggregat spawalniczy|m-g|45'}
@@ -104,7 +100,7 @@ Zwroc WYLACZNIE poprawny JSON (bez markdown, bez komentarzy) w formacie:
 Zasady:
 - Przygotuj MINIMUM 15 pozycji kosztorysowych z podzialem na dzialy (typ:dzial)
 - Uzywaj kodow KNR z dostarczonej listy jesli pasuja do zakresu robot
-- Ceny R/M/S pobieraj z cennika lub szacuj rynkowo dla budownictwa gazowego
+- Ceny R/M/S pobieraj z cennika lub szacuj rynkowo dla budownictwa
 - Oblicz wszystkie wartosci: r_wartosc=ilosc*r_j, m_wartosc=ilosc*m_j, s_wartosc=ilosc*s_j
 - bezposrednie = r_wartosc+m_wartosc+s_wartosc
 - kp_wartosc = (r_wartosc+s_wartosc)*kp_procent/100

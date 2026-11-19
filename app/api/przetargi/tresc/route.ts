@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { wymagajModulu } from '@/lib/dostep-api'
 
 const BZP_API = 'https://ezamowienia.gov.pl/mo-board/api/v1/notice'
 
 export async function GET(request: NextRequest) {
+  const dostep = await wymagajModulu('Przetargi')
+  if ('blad' in dostep) return dostep.blad
   const { searchParams } = new URL(request.url)
   const noticeNumber = searchParams.get('noticeNumber')
   const dateFrom = searchParams.get('dateFrom')
@@ -23,7 +26,7 @@ export async function GET(request: NextRequest) {
     })
 
     const res = await fetch(`${BZP_API}?${params.toString()}`, {
-      headers: { 'Accept': 'application/json', 'User-Agent': 'GazCRM/1.0' },
+      headers: { 'Accept': 'application/json', 'User-Agent': 'Skrojo/1.0' },
       next: { revalidate: 3600 } // Cache 1h
     })
 

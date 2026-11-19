@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import { ONGAZ_LOGO_B64 } from '../../../../lib/ongaz-logo'
+import { wymagajModulu } from '@/lib/dostep-api'
 
 export const maxDuration = 60
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+// Klient z sesją użytkownika (RLS): dane firmy i dokumenty wyłącznie z firmy zalogowanego użytkownika
+type Sb = Awaited<ReturnType<typeof wymagajModulu>> extends infer R ? R extends { supabase: infer C } ? C : never : never
 
 // Pobierz dane firmy z bazy
-async function getFirmaDane(): Promise<Record<string, string>> {
+async function getFirmaDane(supabase: Sb): Promise<Record<string, string>> {
   const { data } = await supabase.from('firma_dane').select('klucz, wartosc')
   const dane: Record<string, string> = {}
   for (const row of data ?? []) {
@@ -20,7 +17,7 @@ async function getFirmaDane(): Promise<Record<string, string>> {
 }
 
 // Pobierz aktywne dokumenty firmy i ich treść
-async function getFirmaDokumenty(): Promise<string> {
+async function getFirmaDokumenty(supabase: Sb): Promise<string> {
   const { data } = await supabase
     .from('firma_dokumenty')
     .select('nazwa, kategoria, opis, url, mime_type')
@@ -79,7 +76,7 @@ async function generateDocContent(
   const dzisiaj = new Date().toLocaleDateString('pl-PL')
 
   const systemPrompt = [
-    'Jesteś ekspertem od dokumentacji przetargowej w Polsce. Generujesz profesjonalne dokumenty przetargowe dla firmy ON Gaz. Odpowiadaj TYLKO treścią dokumentu, bez komentarzy ani wstępów.',
+    'Jesteś ekspertem od dokumentacji przetargowej w Polsce. Generujesz profesjonalne dokumenty przetargowe dla firmy zalogowanego użytkownika. Odpowiadaj TYLKO treścią dokumentu, bez komentarzy ani wstępów.',
     '',
     'DANE FIRMY:',
     'Nazwa: ' + firma.nazwa,
@@ -159,27 +156,12 @@ async function textToDocx(content: string, tytul: string, firma: Record<string, 
   const border = { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC' }
   const borders = { top: border, bottom: border, left: border, right: border }
 
-  // Logo ON Gaz — base64 PNG → Buffer
-  const logoBase64 = ONGAZ_LOGO_B64.split(',')[1] ?? ''
-  const logoBuffer = Buffer.from(logoBase64, 'base64')
-
   // Parsuj tekst na paragrafy
   const lines = content.split('\n')
   const children: any[] = []
 
   // Nagłówek dokumentu — logo (lewy), potem dane firmy wyśrodkowane
   children.push(
-    new Paragraph({
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 160 },
-      children: [
-        new ImageRun({
-          data: logoBuffer,
-          transformation: { width: 90, height: 90 },
-          type: 'png',
-        } as never),
-      ],
-    }),
     new Paragraph({
       alignment: AlignmentType.CENTER,
       spacing: { after: 120 },
@@ -343,8 +325,11 @@ async function textToDocx(content: string, tytul: string, firma: Record<string, 
 
 export async function POST(req: NextRequest) {
   try {
+    const dostep = await wymagajModulu('Przetargi')
+    if ('blad' in dostep) return dostep.blad
+    const supabase = dostep.supabase
     const body = await req.json()
-    const firma = await getFirmaDane()
+    const firma = await getFirmaDane(supabase)
 
     // ── Tryb: oferta z kosztorysu ────────────────────────────────────────────
     if (body.tryb === 'oferta_kosztorys') {
@@ -420,7 +405,7 @@ Struktura pisma:
     const { typ, przetarg, dokumentyTresc } = body
     if (!typ || !przetarg) return NextResponse.json({ error: 'Brak parametrów' }, { status: 400 })
 
-    const firmaDokStr = await getFirmaDokumenty()
+    const firmaDokStr = await getFirmaDokumenty(supabase)
     const content = await generateDocContent(typ, przetarg, firma, dokumentyTresc ?? '', firmaDokStr)
     const buffer = await textToDocx(content, TYPY_DOC[typ]?.label ?? typ, firma)
 

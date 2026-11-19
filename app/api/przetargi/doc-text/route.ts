@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { wymagajModulu } from '@/lib/dostep-api'
+import { bezpiecznyFetch } from '@/lib/bezpieczny-fetch'
 
 export const maxDuration = 30
 
@@ -6,14 +8,14 @@ export const maxDuration = 30
 // Działa server-side - omija CORS przeglądarki
 export async function POST(req: NextRequest) {
   try {
+    const dostep = await wymagajModulu('Przetargi')
+    if ('blad' in dostep) return dostep.blad
     const { url, name } = await req.json()
     if (!url) return NextResponse.json({ error: 'Brak URL' }, { status: 400 })
 
     const ext = (name || url).split('.').pop()?.toLowerCase() ?? ''
 
-    const res = await fetch(url, { 
-      signal: AbortSignal.timeout(20000) // 20s timeout
-    })
+    const res = await bezpiecznyFetch(url, { signal: AbortSignal.timeout(20000) })
     if (!res.ok) return NextResponse.json({ type: 'skip', error: `HTTP ${res.status}` })
 
     // PDF — zwróć jako base64 (max 8MB dla Anthropic)

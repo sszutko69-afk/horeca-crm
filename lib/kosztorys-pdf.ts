@@ -1,6 +1,5 @@
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import { ONGAZ_LOGO_B64 } from './ongaz-logo'
 
 const fmt = (v: number) =>
   new Intl.NumberFormat('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v)
@@ -59,7 +58,7 @@ function truncateFit(doc: jsPDF, text: string, maxMm: number): string {
   return text.slice(0, lo) + '…'
 }
 
-export async function generateKosztorysPDF(kos: Kosztorys, pozycje: Pozycja[]) {
+export async function generateKosztorysPDF(kos: Kosztorys, pozycje: Pozycja[], firmaNazwa = '') {
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
   const W = doc.internal.pageSize.getWidth()   // 297
   const marginL = 12, marginR = 12
@@ -92,7 +91,7 @@ export async function generateKosztorysPDF(kos: Kosztorys, pozycje: Pozycja[]) {
   const setB = () => doc.setFont(fontFamily, 'bold')
   const setI = () => doc.setFont(fontFamily, 'italic')
 
-  // ── Kolory ON Gaz ─────────────────────────────────────────────────────────
+  // ── Kolory ─────────────────────────────────────────────────────────
   const GREEN: [number, number, number] = [67, 160, 71]
   const DARK: [number, number, number] = [55, 55, 55]
   const LIGHT_GRAY: [number, number, number] = [245, 245, 245]
@@ -102,7 +101,10 @@ export async function generateKosztorysPDF(kos: Kosztorys, pozycje: Pozycja[]) {
   doc.setFillColor(...GREEN)
   doc.rect(0, 0, W, 22, 'F')
 
-  doc.addImage(ONGAZ_LOGO_B64, 'PNG', marginL, 2, 44, 18)
+  doc.setTextColor(255, 255, 255)
+  doc.setFontSize(10)
+  setB()
+  doc.text(firmaNazwa.slice(0, 38), marginL, 13)
 
   doc.setTextColor(255, 255, 255)
   doc.setFontSize(16)
@@ -344,7 +346,7 @@ export async function generateKosztorysPDF(kos: Kosztorys, pozycje: Pozycja[]) {
     doc.setFontSize(7)
     setN()
     doc.setTextColor(120, 120, 120)
-    doc.text('ON Gaz Sp. z o.o.', marginL, pH - 3)
+    doc.text(firmaNazwa, marginL, pH - 3)
     doc.text(`Strona ${i} / ${pageCount}`, W / 2, pH - 3, { align: 'center' })
     doc.text(`Wygenerowano: ${new Date().toLocaleDateString('pl-PL')}`, W - marginR, pH - 3, { align: 'right' })
   }

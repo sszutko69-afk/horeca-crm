@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { wymagajModulu } from '@/lib/dostep-api'
+import { bezpiecznyFetch } from '@/lib/bezpieczny-fetch'
 
 export async function GET(req: NextRequest) {
+  const dostep = await wymagajModulu('Przetargi')
+  if ('blad' in dostep) return dostep.blad
   const url = new URL(req.url).searchParams.get('url')
   if (!url) return NextResponse.json({ error: 'Brak URL' }, { status: 400 })
 
   try {
-    const res = await fetch(url, {
+    const res = await bezpiecznyFetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; GazCRM/1.0)',
+        'User-Agent': 'Mozilla/5.0 (compatible; Skrojo/1.0)',
         'Accept': 'text/html,application/xhtml+xml,*/*',
       },
       signal: AbortSignal.timeout(10000),
