@@ -196,7 +196,7 @@ export function rolaDomyslneModuly(rola: string, branza: string | null | undefin
   if (rola === 'admin') return []
   if (rola === 'menedzer') return horeca
     ? ['Dashboard', 'Akceptacje', 'Rezerwacje', 'Stoły', 'Menu', 'CRM', 'Leady', 'Zamówienia', 'Klienci', 'Zakupy', 'Sprzedaż', 'Raporty', 'AI — Finanse', 'Budżet', 'POS', 'eService', 'Kadry', 'Czas pracy', 'Plan pracy', 'Płace']
-    : ['Dashboard', 'Akceptacje', 'CRM', 'Leady', 'Zamówienia', 'Klienci', 'Zakupy', 'Sprzedaż', 'Raporty', 'AI — Finanse', 'Budżet', 'Kadry', 'Czas pracy', 'Plan pracy', 'Płace']
+    : ['Dashboard', 'Akceptacje', 'CRM', 'Leady', 'Zamówienia', 'Klienci', 'Mapa klientów', 'Zakupy', 'Sprzedaż', 'Raporty', 'AI — Finanse', 'Budżet', 'Kadry', 'Czas pracy', 'Plan pracy', 'Płace']
   if (rola === 'kelner') return horeca ? ['Dashboard', 'Akceptacje', 'Rezerwacje', 'Stoły'] : ['Dashboard', 'Akceptacje', 'Klienci', 'Zamówienia']
   if (rola === 'kucharz') return horeca ? ['Dashboard', 'Akceptacje', 'Menu', 'Zamówienia'] : ['Dashboard', 'Akceptacje', 'Zamówienia', 'Zakupy']
   return ['Dashboard']

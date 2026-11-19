@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { liczDostep, CENA_OD, type FirmaPlan } from '@/lib/plany'
-import { MODULY_OPIS, modulyDlaBranzy, modulyDarmowe, MODULY_SYSTEMOWE } from '@/lib/branze'
+import { MODULY_OPIS, modulyDlaBranzy, modulyDarmowe, modulyWkrotce, MODULY_SYSTEMOWE } from '@/lib/branze'
 
 // Moduły systemu: lista wszystkich modułów branży z informacją, które są w pakiecie bezpłatnym, a które w subskrypcji.
 // Administrator dodaje lub wyłącza moduły po rejestracji.
@@ -36,6 +36,7 @@ export default function ModulyPage() {
   const branza = firma?.branza ?? 'inna'
   const lista = useMemo(() => modulyDlaBranzy(branza), [branza])
   const darmowe = useMemo(() => modulyDarmowe(branza), [branza])
+  const wkrotce = useMemo(() => modulyWkrotce(branza), [branza])
   const dostep = firma ? liczDostep(firma) : null
 
   async function zapisz() {
@@ -88,6 +89,16 @@ export default function ModulyPage() {
           )
         })}
       </div>
+
+      {wkrotce.length > 0 && (
+        <div className="mt-4 bg-white border border-gray-200 rounded-xl p-4">
+          <p className="text-sm font-medium text-gray-900">W przygotowaniu dla Twojej branży</p>
+          <p className="text-xs text-gray-500 mt-0.5">Te moduły przenosimy z naszego systemu branżowego; pojawią się tutaj do wyboru.</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {wkrotce.map(m => <span key={m} className="text-xs px-2 py-1 rounded-full" style={{ background: '#F3F4F6', color: '#374151' }}>{m}</span>)}
+          </div>
+        </div>
+      )}
 
       {platnePlan && (
         <p className="mt-3 text-xs text-amber-700">Masz wersję podstawową: moduły „W subskrypcji” zaznaczone poniżej uruchomią się po wykupieniu subskrypcji.</p>

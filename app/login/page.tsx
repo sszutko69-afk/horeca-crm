@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
+import GoogleButton from '@/components/GoogleButton'
 
 export default function LoginPage() {
   const supabase = createClient()
@@ -64,6 +65,12 @@ export default function LoginPage() {
             <p className="text-sm text-gray-500 mt-1">Przekierowanie do dashboardu...</p>
           </div>
         ) : (
+          <>
+          <GoogleButton etykieta="Zaloguj się przez Google" onBlad={setError} />
+          <p className="text-[11px] text-gray-400 text-center mt-2">
+            Logując się przez Google po raz pierwszy, zakładasz konto i akceptujesz <a href="/regulamin" target="_blank" style={{ color: '#2563EB' }} className="underline">regulamin</a> oraz <a href="/polityka-prywatnosci" target="_blank" style={{ color: '#2563EB' }} className="underline">politykę prywatności</a>.
+          </p>
+          <div className="flex items-center gap-3 my-4 text-xs text-gray-400"><div className="flex-1 h-px bg-gray-200" />lub<div className="flex-1 h-px bg-gray-200" /></div>
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">
@@ -109,6 +116,7 @@ export default function LoginPage() {
               <a href="/rejestracja" className="text-blue-600 hover:underline font-medium">Zarejestruj się</a>
             </div>
           </form>
+          </>
         )}
       </div>
     </div>

@@ -5,6 +5,8 @@ export const MODULY_GRUPY: { grupa: string; moduly: string[] }[] = [
   { grupa: 'Sprzedaż & Zakupy', moduly: ['CRM', 'Leady', 'Klienci', 'Zamówienia', 'Zakupy', 'Sprzedaż'] },
   { grupa: 'Analityka', moduly: ['Raporty', 'AI — Finanse', 'Budżet'] },
   { grupa: 'Integracje', moduly: ['POS', 'eService', 'Bank', 'Google Workspace'] },
+  { grupa: 'Logistyka', moduly: ['Mapa klientów', 'Cysterna i GPS'] },
+  { grupa: 'Projekty i paliwa', moduly: ['Ewidencja EDD', 'EMCS PL 2', 'Inwestycje', 'Kosztorysowanie', 'Przetargi'] },
   { grupa: 'Kadry', moduly: ['Kadry', 'Czas pracy', 'Plan pracy', 'Płace'] },
   { grupa: 'System', moduly: ['inFakt', 'Import danych', 'Archiwizacja', 'Użytkownicy', 'Dane firmy'] },
 ]

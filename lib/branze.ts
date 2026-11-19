@@ -6,6 +6,23 @@ export type BranzaSlug =
 
 // Moduły tylko dla HoReCa: klient z innej branży nigdy ich nie zobaczy.
 export const MODULY_HORECA_TYLKO = ['Rezerwacje', 'Stoły', 'Menu', 'POS', 'eService']
+// Moduły przeniesione z GazCRM: dostępne tylko w wybranych branżach i dopiero po przeniesieniu (MODULY_PRZENIESIONE).
+// Brak wpisu w MODULY_BRANZOWE = wszystkie branże.
+export const MODULY_BRANZOWE: Record<string, string[]> = {
+  'Cysterna i GPS': ['gazowa', 'transport', 'logistyka'],
+  'Ewidencja EDD': ['gazowa'],
+  'EMCS PL 2': ['gazowa'],
+  'Inwestycje': ['inwestycyjna'],
+  'Kosztorysowanie': ['inwestycyjna'],
+  'Przetargi': ['inwestycyjna', 'kancelarie'],
+}
+export const MODULY_Z_GAZCRM = ['Mapa klientów', 'Cysterna i GPS', 'Ewidencja EDD', 'EMCS PL 2', 'Inwestycje', 'Kosztorysowanie', 'Przetargi']
+export const MODULY_PRZENIESIONE = ['Mapa klientów']
+// Moduły branży jeszcze w przygotowaniu (pokazywane na liście jako „wkrótce”, bez możliwości wyboru)
+export function modulyWkrotce(slug: string): string[] {
+  return MODULY_Z_GAZCRM.filter(m => !MODULY_PRZENIESIONE.includes(m) && (!MODULY_BRANZOWE[m] || MODULY_BRANZOWE[m].includes(slug)))
+}
+
 // Moduły systemowe: zawsze dostępne (niezależnie od wyboru branży i planu).
 export const MODULY_SYSTEMOWE = ['Dashboard', 'Użytkownicy', 'Dane firmy']
 
@@ -37,6 +54,13 @@ export const MODULY_OPIS: Record<string, string> = {
   'Archiwizacja': 'Kopie zapasowe danych',
   'Użytkownicy': 'Konta, role i uprawnienia',
   'Dane firmy': 'Ustawienia firmy',
+  'Mapa klientów': 'Klienci na mapie z geokodowaniem adresów',
+  'Cysterna i GPS': 'Dostawy, pojazdy, trasy i pozycje GPS',
+  'Ewidencja EDD': 'Generator, walidator i ewidencja numerów EDD',
+  'EMCS PL 2': 'Generator komunikatów EMCS PL 2 (XML)',
+  'Inwestycje': 'Inwestycje z etapami, kosztami i zespołem',
+  'Kosztorysowanie': 'Kosztorysy, katalogi KNR i cenniki',
+  'Przetargi': 'Przetargi z BZP, oferty i terminy',
 }
 
 type Branza = { slug: BranzaSlug; nazwa: string; ikona: string; opis: string; domyslne: string[]; darmowe: string[]; uwaga?: string }
@@ -72,7 +96,8 @@ export const BRANZE_SLUGI: string[] = BRANZE_ONB.map(b => b.slug)
 // Moduły, które wolno wybrać w danej branży (wspólne + ewentualnie HoReCa); bez systemowych (te są zawsze).
 export function modulyDlaBranzy(slug: string): string[] {
   const horeca = slug === 'horeca'
-  return WSZYSTKIE_MODULY.filter(m => !MODULY_SYSTEMOWE.includes(m) && (horeca || !MODULY_HORECA_TYLKO.includes(m)))
+  return WSZYSTKIE_MODULY.filter(m => !MODULY_SYSTEMOWE.includes(m) && (horeca || !MODULY_HORECA_TYLKO.includes(m))
+    && (!MODULY_Z_GAZCRM.includes(m) || (MODULY_PRZENIESIONE.includes(m) && (!MODULY_BRANZOWE[m] || MODULY_BRANZOWE[m].includes(slug)))))
 }
 
 // Moduły darmowej wersji podstawowej: rdzeń CRM + moduły startowe branży (np. rezerwacje dla HoReCa).
@@ -88,5 +113,7 @@ export const SCIEZKA_MODUL: Record<string, string> = {
   '/crm': 'CRM', '/leady': 'Leady', '/klienci': 'Klienci', '/zamowienia': 'Zamówienia', '/zakupy': 'Zakupy', '/sprzedaz': 'Sprzedaż',
   '/raporty': 'Raporty', '/ai': 'AI — Finanse', '/budzet': 'Budżet', '/pos': 'POS', '/eservice': 'eService', '/bank': 'Bank',
   '/google': 'Google Workspace', '/kadry': 'Kadry', '/czasPracy': 'Czas pracy', '/planpracy': 'Plan pracy', '/place': 'Płace',
+  '/mapa': 'Mapa klientów', '/cysterna': 'Cysterna i GPS', '/edd': 'Ewidencja EDD', '/emcs': 'EMCS PL 2',
+  '/inwestycje': 'Inwestycje', '/kosztorysowanie': 'Kosztorysowanie', '/przetargi': 'Przetargi',
   '/infakt': 'inFakt', '/import': 'Import danych', '/backup': 'Archiwizacja', '/uzytkownicy': 'Użytkownicy', '/ustawienia': 'Dane firmy',
 }

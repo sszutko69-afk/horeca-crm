@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 import { BRANZE_ONB } from '@/lib/branze'
+import GoogleButton from '@/components/GoogleButton'
 
 const REGULAMIN_WERSJA = '2026-11'
 
@@ -130,6 +131,9 @@ export default function RejestracjaPage() {
               className="w-full py-2.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-60">
               {loading ? 'Zakładanie konta…' : 'Zarejestruj się'}
             </button>
+            <div className="flex items-center gap-3 text-xs text-gray-400"><div className="flex-1 h-px bg-gray-200" />lub<div className="flex-1 h-px bg-gray-200" /></div>
+            <GoogleButton etykieta="Zarejestruj się przez Google" wylaczony={!regulamin} onBlad={setError} />
+            {!regulamin && <p className="text-[11px] text-gray-400 text-center -mt-2">Aby użyć Google, zaznacz najpierw akceptację regulaminu. Branżę i moduły wybierzesz zaraz po zalogowaniu.</p>}
             <p className="text-center text-sm text-gray-500">Masz już konto? <Link href="/login" className="text-blue-600 hover:underline">Zaloguj się</Link></p>
           </form>
         )}
