@@ -5,6 +5,7 @@ export const TABELE_FIRMY = [
   'czas_pracy', 'firma_dane', 'firma_dokumenty', 'klienci', 'komentarze', 'kontakty', 'listy_obecnosci',
   'place', 'place_parametry', 'plan_pracy', 'powiadomienia', 'pracownicy', 'sprzedaz',
   'wydarzenia', 'zakupy', 'zamowienia', 'rezerwacje', 'stoly', 'menu_pozycje',
+  'pojazdy', 'bazy_trasy', 'dostawy', 'gps_pozycje', 'edd_ewidencja',
   'przetargi', 'przetargi_branze', 'przetargi_pracownicy',
   'kosztorysy', 'kosztorysy_pozycje', 'knr_katalogi', 'knr_pozycje', 'cenniki', 'cenniki_pozycje',
   'inwestycje', 'inwestycje_etapy', 'inwestycje_koszty', 'etapy_pracownicy',

@@ -1,12 +1,3 @@
 {
-  "crons": [
-    {
-      "path": "/api/raporty/tygodniowy?secret=gazcrm-notif-2025",
-      "schedule": "5 7 * * 1"
-    },
-    {
-      "path": "/api/emcs/sprawdz-aktualizacje?secret=gazcrm-notif-2025",
-      "schedule": "30 7 * * 1"
-    }
-  ]
+  "crons": []
 }

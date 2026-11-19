@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server'
+import { wymagajModulu } from '@/lib/dostep-api'
 
 export async function POST(req: Request) {
   try {
+    const dostep = await wymagajModulu('Cysterna i GPS')
+    if ('blad' in dostep) return dostep.blad
     const { dostawy, startAdres, koniecAdres } = await req.json()
 
     if (!dostawy || dostawy.length < 2) {
@@ -20,8 +23,8 @@ export async function POST(req: Request) {
       litry: d.ilosc_litry_plan || 0,
     }))
 
-    const prompt = `Jesteś ekspertem od optymalizacji tras dostaw LPG w Polsce.
-Masz do zaplanowania trasę dla cysterny z następującymi dostawami:
+    const prompt = `Jesteś ekspertem od optymalizacji tras dostaw w Polsce.
+Masz do zaplanowania trasę dla pojazdu z następującymi dostawami:
 
 ${listaDostawy.map((d: any) => `${d.idx}. ID: ${d.id} | Klient: ${d.klient} | Adres: ${d.adres} | Litry: ${d.litry}`).join('\n')}
 

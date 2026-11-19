@@ -17,7 +17,8 @@ export const MODULY_BRANZOWE: Record<string, string[]> = {
   'Przetargi': ['inwestycyjna', 'kancelarie'],
 }
 export const MODULY_Z_GAZCRM = ['Mapa klientów', 'Cysterna i GPS', 'Ewidencja EDD', 'EMCS PL 2', 'Inwestycje', 'Kosztorysowanie', 'Przetargi']
-export const MODULY_PRZENIESIONE = ['Mapa klientów', 'Inwestycje', 'Kosztorysowanie', 'Przetargi']
+export const MODULY_PRZENIESIONE = ['Mapa klientów', 'Inwestycje', 'Kosztorysowanie', 'Przetargi',
+  'Cysterna i GPS', 'Ewidencja EDD', 'EMCS PL 2']
 // Moduły branży jeszcze w przygotowaniu (pokazywane na liście jako „wkrótce”, bez możliwości wyboru)
 export function modulyWkrotce(slug: string): string[] {
   return MODULY_Z_GAZCRM.filter(m => !MODULY_PRZENIESIONE.includes(m) && (!MODULY_BRANZOWE[m] || MODULY_BRANZOWE[m].includes(slug)))
