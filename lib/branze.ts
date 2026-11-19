@@ -16,6 +16,8 @@ export const MODULY_BRANZOWE: Record<string, string[]> = {
   'Kosztorysowanie': ['inwestycyjna'],
   'Przetargi': ['inwestycyjna', 'kancelarie'],
 }
+// Czy moduł jest polecany dla branży (informacja na liście modułów; wybór jest dowolny)
+export const polecanyDlaBranzy = (m: string, slug: string) => !!MODULY_BRANZOWE[m] && MODULY_BRANZOWE[m].includes(slug)
 export const MODULY_Z_GAZCRM = ['Mapa klientów', 'Cysterna i GPS', 'Ewidencja EDD', 'EMCS PL 2', 'Inwestycje', 'Kosztorysowanie', 'Przetargi']
 export const MODULY_PRZENIESIONE = ['Mapa klientów', 'Inwestycje', 'Kosztorysowanie', 'Przetargi',
   'Cysterna i GPS', 'Ewidencja EDD', 'EMCS PL 2']
@@ -98,7 +100,7 @@ export const BRANZE_SLUGI: string[] = BRANZE_ONB.map(b => b.slug)
 export function modulyDlaBranzy(slug: string): string[] {
   const horeca = slug === 'horeca'
   return WSZYSTKIE_MODULY.filter(m => !MODULY_SYSTEMOWE.includes(m) && (horeca || !MODULY_HORECA_TYLKO.includes(m))
-    && (!MODULY_Z_GAZCRM.includes(m) || (MODULY_PRZENIESIONE.includes(m) && (!MODULY_BRANZOWE[m] || MODULY_BRANZOWE[m].includes(slug)))))
+    && (!MODULY_Z_GAZCRM.includes(m) || MODULY_PRZENIESIONE.includes(m)))
 }
 
 // Moduły darmowej wersji podstawowej: rdzeń CRM + moduły startowe branży (np. rezerwacje dla HoReCa).

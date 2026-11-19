@@ -48,6 +48,13 @@ const WSZYSTKIE_MODULY = [
   { nazwa: 'Google Workspace',href: '/google',      ikona: '📧', role: ['admin','menedzer'],                       opis: 'Gmail, Drive, Calendar' },
   { nazwa: 'inFakt',          href: '/infakt',      ikona: '🧾', role: ['admin'],                                  opis: 'Faktury inFakt' },
   { nazwa: 'Import danych',   href: '/import',      ikona: '📥', role: ['admin'],                                  opis: 'Import Excel/CSV' },
+  { nazwa: 'Mapa klientów',   href: '/mapa',        ikona: '🗺️', role: ['admin','menedzer'],                       opis: 'Klienci na mapie' },
+  { nazwa: 'Cysterna i GPS',  href: '/cysterna',    ikona: '🚛', role: ['admin','menedzer'],                       opis: 'Dostawy, trasy, GPS' },
+  { nazwa: 'Ewidencja EDD',   href: '/edd',         ikona: '📄', role: ['admin','menedzer'],                       opis: 'Numery EDD' },
+  { nazwa: 'EMCS PL 2',       href: '/emcs',        ikona: '🧾', role: ['admin','menedzer'],                       opis: 'Komunikaty EMCS' },
+  { nazwa: 'Inwestycje',      href: '/inwestycje',  ikona: '🏗️', role: ['admin','menedzer'],                       opis: 'Etapy i koszty' },
+  { nazwa: 'Kosztorysowanie', href: '/kosztorysowanie', ikona: '🧮', role: ['admin','menedzer'],                   opis: 'Kosztorysy i KNR' },
+  { nazwa: 'Przetargi',       href: '/przetargi',   ikona: '📑', role: ['admin','menedzer'],                       opis: 'Przetargi z BZP' },
 ]
 
 const DOMYSLNE = ['Rezerwacje', 'Stoły', 'Menu', 'POS', 'eService', 'Bank', 'Klienci', 'CRM', 'Sprzedaż', 'Zakupy', 'Zamówienia', 'Raporty']

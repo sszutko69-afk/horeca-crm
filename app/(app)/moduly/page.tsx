@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { liczDostep, CENA_OD, type FirmaPlan } from '@/lib/plany'
-import { MODULY_OPIS, modulyDlaBranzy, modulyDarmowe, modulyWkrotce, MODULY_SYSTEMOWE } from '@/lib/branze'
+import { MODULY_OPIS, modulyDlaBranzy, modulyDarmowe, modulyWkrotce, polecanyDlaBranzy, MODULY_SYSTEMOWE } from '@/lib/branze'
 
 // Moduły systemu: lista wszystkich modułów branży z informacją, które są w pakiecie bezpłatnym, a które w subskrypcji.
 // Administrator dodaje lub wyłącza moduły po rejestracji.
@@ -78,7 +78,7 @@ export default function ModulyPage() {
               <input type="checkbox" checked={wl} disabled={!admin || free}
                 onChange={e => setWybrane(p => e.target.checked ? [...p, m] : p.filter(x => x !== m))} className="w-4 h-4" />
               <span className="flex-1">
-                <span className="block text-sm font-medium text-gray-900">{m}</span>
+                <span className="block text-sm font-medium text-gray-900">{m}{polecanyDlaBranzy(m, branza) && <span className="ml-2 text-[11px] font-semibold px-1.5 py-0.5 rounded" style={{ background: '#FEF3C7', color: '#92400E' }}>polecany dla Twojej branży</span>}</span>
                 <span className="block text-xs text-gray-500">{MODULY_OPIS[m] ?? ''}</span>
               </span>
               <span className="text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap"
