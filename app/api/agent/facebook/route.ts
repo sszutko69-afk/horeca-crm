@@ -12,8 +12,17 @@ import { NextRequest, NextResponse } from 'next/server'
 //   FB_AUTOPUBLISH       "true" = publikuj od razu; brak = tryb roboczy (post niepublikowany, do akceptacji)
 // Ręczny test: GET /api/agent/facebook?dry=1 (z Bearer CRON_SECRET) → zwraca tekst bez wysyłania na Facebooka.
 
+import { podpisGrafiki } from '@/lib/agent-facebook'
+
 const GRAPH = 'https://graph.facebook.com/v21.0'
 const SITE = 'https://skrojo.pl'
+const APP = 'https://app.skrojo.pl'
+
+// Krótkie etykiety branż na grafice
+const ETYKIETY: Record<string, string> = {
+  horeca: 'HoReCa', kancelarie: 'Kancelarie', nieruchomosci: 'Nieruchomości', transport: 'Transport',
+  logistyka: 'Logistyka', sekretariaty: 'Sekretariaty', inwestycyjna: 'Inwestycje',
+}
 
 // Fakty, na których wolno opierać reklamy (źródło: strona skrojo.pl). Model nie może dodawać własnych.
 const FAKTY = `
@@ -60,8 +69,8 @@ async function ostatniePosty(pageId: string, token: string): Promise<string[]> {
   } catch { return [] }
 }
 
-async function generujPost(branza: string, kat: string, poprzednie: string[]): Promise<string> {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+async function generujPost(branza: string, kat: string, poprzednie: string[]): Promise<{ tekst: string; haslo: string }> {
+  const zapytanie = (thinking?: { type: string }) => fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -70,13 +79,15 @@ async function generujPost(branza: string, kat: string, poprzednie: string[]): P
     },
     body: JSON.stringify({
       model: 'claude-sonnet-5-5',
-      max_tokens: 700,
+      max_tokens: 8000,
+      ...(thinking ? { thinking } : {}),
       system:
         'Jesteś copywriterem marki Skrojo.pl. Piszesz krótkie, zachęcające posty na Facebooka po polsku do właścicieli małych firm. ' +
         'Ton: konkretny, ciepły, bez żargonu i bez przesady. 400–700 znaków, 1–3 emoji, bez hashtagów-spamu (maks. 3 na końcu). ' +
         'Zakończ wezwaniem do wejścia na stronę lub wypróbowania demo; sam link dołącza system, więc NIE wklejaj adresu URL w treści. ' +
         'Używaj WYŁĄCZNIE faktów z listy. Nie zmyślaj funkcji, liczb, opinii klientów ani nazw klientów. Nie wspominaj o paliwach ani gazie. ' +
-        'Zwróć wyłącznie treść posta, bez komentarzy i cudzysłowów.\n\nFAKTY:\n' + FAKTY,
+        'Dodatkowo wymyśl krótkie hasło na grafikę do posta: mocne, zrozumiałe, do 60 znaków, bez emoji, bez kropki na końcu. ' +
+        'Zwróć WYŁĄCZNIE obiekt JSON w postaci {"post":"treść posta","haslo":"hasło na grafikę"}, bez komentarzy i bez bloku kodu.\n\nFAKTY:\n' + FAKTY,
       messages: [{
         role: 'user',
         content:
@@ -85,11 +96,29 @@ async function generujPost(branza: string, kat: string, poprzednie: string[]): P
       }],
     }),
   })
+  // Model bywa wrażliwy na parametr "thinking": próbujemy wariantów, aż któryś przejdzie
+  let res = await zapytanie({ type: 'between_tools' })
+  if (res.status === 400) res = await zapytanie({ type: 'disabled' })
+  if (res.status === 400) res = await zapytanie()
   if (!res.ok) throw new Error('Claude: ' + (await res.text()).slice(0, 200))
   const j = await res.json()
-  const tekst: string = (j.content?.[0]?.text ?? '').trim()
-  if (tekst.length < 80 || tekst.length > 1500) throw new Error('Nieprawidłowa długość wygenerowanego tekstu')
-  return tekst
+  const surowy: string = ((j.content ?? []) as { type: string; text?: string }[])
+    .filter(b => b.type === 'text').map(b => b.text ?? '').join('\n').trim()
+
+  let tekst = surowy
+  let haslo = 'CRM szyty na miarę Twojej firmy'
+  try {
+    const m = surowy.match(/\{[\s\S]*\}/)
+    const o = JSON.parse(m ? m[0] : surowy)
+    if (typeof o.post === 'string') tekst = o.post.trim()
+    if (typeof o.haslo === 'string' && o.haslo.trim()) haslo = o.haslo.trim()
+  } catch { /* model nie zwrócił JSON: używamy surowego tekstu i hasła domyślnego */ }
+  haslo = haslo.replace(/\p{Extended_Pictographic}/gu, '').replace(/\s+/g, ' ').trim().slice(0, 100) || 'CRM szyty na miarę Twojej firmy'
+
+  if (tekst.length < 80 || tekst.length > 1500) {
+    throw new Error(`Nieprawidłowa długość tekstu (${tekst.length}), stop: ${j.stop_reason}, podgląd: ${JSON.stringify(j).slice(0, 300)}`)
+  }
+  return { tekst, haslo }
 }
 
 export async function GET(req: NextRequest) {
@@ -109,13 +138,20 @@ export async function GET(req: NextRequest) {
     const teraz = new Date()
     const { branza, kat, nr } = wybierz(teraz)
     const poprzednie = pageId && token ? await ostatniePosty(pageId, token) : []
-    const tekst = await generujPost(branza.nazwa, kat, poprzednie)
+    const { tekst, haslo } = await generujPost(branza.nazwa, kat, poprzednie)
 
     const link =
       `${SITE}/branze/${branza.slug}.html?utm_source=facebook&utm_medium=organic` +
       `&utm_campaign=agent-${teraz.toISOString().slice(0, 7)}&utm_content=${branza.slug}-${nr}`
 
-    if (dry) return NextResponse.json({ dry: true, tekst, link })
+    // Grafika (PNG) z hasłem w barwach marki; post ze zdjęciem nie ma podglądu linku, więc link dopisujemy do treści
+    const etykieta = ETYKIETY[branza.slug] ?? ''
+    const grafika =
+      `${APP}/api/agent/facebook/grafika?t=${encodeURIComponent(haslo)}&b=${encodeURIComponent(etykieta)}` +
+      `&sig=${podpisGrafiki(haslo.slice(0, 110), etykieta)}`
+    const wiadomosc = `${tekst}\n\n👉 ${link}`
+
+    if (dry) return NextResponse.json({ dry: true, tekst, link, haslo, grafika, wiadomosc })
 
     const publikuj = process.env.FB_AUTOPUBLISH === 'true'
     const body = new URLSearchParams({ message: tekst, link, published: String(publikuj), access_token: token! })

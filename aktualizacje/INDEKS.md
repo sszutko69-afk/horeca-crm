@@ -28,3 +28,4 @@ Wpisy 001–015 uzupełniono wstecznie z historii zmian (data i godzina = commit
 | 021 | 2026-11-19 | [Ponowne wdrożenie: dane aplikacji Google dla Google Workspace](021_2026-11-19_ponowne-wdrozenie-dane-google.md) |
 | 022 | 2026-11-19 | [Audyt separacji danych między firmami: poprawki krytyczne](022_2026-11-19_audyt-separacji-danych-firm.md) |
 | 023 | 2026-11-19 | [Prywatne buckety plików (podpisane linki)](023_2026-11-19_prywatne-buckety-plikow.md) |
+| 024 | 2026-11-20 | [Agent marketingowy Skrojo: posty na Facebooku z grafiką](024_2026-11-20_agent-facebook-skrojo.md) |
