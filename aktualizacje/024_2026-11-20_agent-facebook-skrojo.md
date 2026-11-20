@@ -1,7 +1,7 @@
 # 024. Agent marketingowy Skrojo: posty na Facebooku z grafiką
 
 - **Data wdrożenia:** 2026-11-20
-- **Commit:** (uzupełniany po commicie)
+- **Commit:** daf1f4e
 - **Środowisko:** produkcja (app.skrojo.pl)
 
 ## Zmiany
